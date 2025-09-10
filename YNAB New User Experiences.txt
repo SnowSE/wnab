@@ -1,0 +1,4 @@
+Aidan:
+	As a new user to YNAB I was frustrated with the program. Making an account went smoothly and hooking up my Bank Details was easy enough. When I made it to the actual use of the program, I disliked the way it made me 'assign money' to something. I would rather just say how much I need for something and then to have the app tell me if I can do that or if I can't do that. I want to be able to see a plan--YNAB isn't intuitive enough for me to understand the plan it is offering me.
+	I do like how it shows me sort of a "progress bar" towards what I've planned for, but I don't like the bar itself, I'd rather see some kind of simple graph with the expected/budgeted and the actual spent.
+
