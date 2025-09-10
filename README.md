@@ -14,7 +14,7 @@ WNAB is designed to be a comprehensive budgeting solution that provides users wi
 - **Cross-platform**: Supports iOS, Android, Windows, macOS, and Web
 
 ### Core Technologies
-- **.NET 8+**: Primary development framework
+- **.NET 9+**: Primary development framework
 - **Blazor**: Web UI framework
 - **MAUI**: Cross-platform mobile/desktop framework
 - **Entity Framework Core**: Database ORM
