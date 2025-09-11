@@ -1,0 +1,23 @@
+-- Like wants features --
+Allocating what I can spend on.
+Graph per section 
+	range, 
+	actual,
+	goal,
+	projected.
+Budget recommendation
+Default sections.
+	Food,
+	housing,
+	transportation,
+	fund manual, 
+	adding later
+Declare income.
+A daily budget.
+Option all percent allocations, instead of dollar amount.
+
+-- Dislikes --
+Declaring intentions on owned money.
+Assigning amounts to goals.
+Bad separation between goals and actual spending.
+Too many sections inserted on startup.
