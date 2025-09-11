@@ -1,0 +1,73 @@
+﻿@page "/"
+
+<PageTitle>Dashboard - WNAB</PageTitle>
+
+<div class="container-fluid">
+    <h1 class="mb-4">Dashboard</h1>
+
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <div class="card text-white bg-primary">
+                <div class="card-header">Total Balance</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Across all accounts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-white bg-success">
+                <div class="card-header">This Month Income</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Total earned</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-white bg-danger">
+                <div class="card-header">This Month Expenses</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Total spent</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <div class="card text-white bg-info">
+                <div class="card-header">Budget Remaining</div>
+                <div class="card-body">
+                    <h4 class="card-title">$0.00</h4>
+                    <p class="card-text">Available to spend</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">No transactions found. <a href="/transactions">Add your first transaction</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Account Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">No accounts configured. <a href="/accounts">Set up your first account</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

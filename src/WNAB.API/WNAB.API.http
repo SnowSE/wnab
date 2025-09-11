@@ -1,0 +1,6 @@
+@WNAB.API_HostAddress = http://localhost:5053
+
+GET {{WNAB.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
