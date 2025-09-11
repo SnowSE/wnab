@@ -15,6 +15,7 @@ Default sections.
 Declare income.
 A daily budget.
 Option all percent allocations, instead of dollar amount.
+Saving goals connected to savings account?
 
 -- Dislikes --
 Declaring intentions on owned money.
