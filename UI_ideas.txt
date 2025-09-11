@@ -1,0 +1,2 @@
+Categories/Expenses don't pop out of other ones.
+We want nice visualizations, but they take up a lot of screenspace, so each Expenditure can be unfolded to show more details.
