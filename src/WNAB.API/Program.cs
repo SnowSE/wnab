@@ -1,19 +1,62 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Npgsql;
+using WNAB.API;
 using WNAB.Logic.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// Configure EF Core with Npgsql using the Aspire-provided connection string
-var connectionString = builder.Configuration.GetConnectionString("wnabdb");
-builder.Services.AddDbContext<WnabContext>(options =>
-    options.UseNpgsql(connectionString));
+// Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
+var connectionString = builder.Configuration.GetConnectionString("wnabdb")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__wnabdb");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("No connection string found for 'wnabdb'. Run via AppHost or set env var ConnectionStrings__wnabdb.");
+}
+
+// Register a shared NpgsqlDataSource for efficient pooling and re-use it in EF Core.
+builder.Services.AddNpgsqlDataSource(connectionString);
+
+builder.Services.AddDbContextPool<WnabContext>((sp, options) =>
+{
+    var dataSource = sp.GetRequiredService<NpgsqlDataSource>();
+    options.UseNpgsql(dataSource);
+});
+
+// Database health check (no extra package): simple SELECT 1 using the shared data source.
+builder.Services.AddHealthChecks()
+    .AddCheck<PostgresHealthCheck>("postgresql-db");
 
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
 app.MapGet("/", () => "Hello World!");
+
+app.MapGet("/categories", async (WnabContext db) =>
+{
+    var categories = await db.Categories
+        .AsNoTracking()
+        .ToListAsync();
+    return Results.Ok(categories);
+});
+
+app.MapGet("/categories/create", async (string name, WnabContext db) =>
+{
+    var category = new Category { Name = name };
+    db.Categories.Add(category);
+    await db.SaveChangesAsync();
+    return Results.Ok(category);
+});
+
+// Apply EF Core migrations at startup so the database schema is up to date.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<WnabContext>();
+    db.Database.Migrate();
+}
 
 app.Run();
