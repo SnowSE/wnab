@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WNAB.Logic\WNAB.Logic.csproj" />
     <ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
+    <ProjectReference Include="..\wnab.ServiceDefaults\wnab.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
