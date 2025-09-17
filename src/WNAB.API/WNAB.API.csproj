@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WNAB.Logic\WNAB.Logic.csproj" />
     <ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
+    <ProjectReference Include="..\WNAB.ServiceDefaults\WNAB.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -10,5 +11,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  <PackageReference Include="Npgsql.DependencyInjection" Version="7.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.9">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
 
 </Project>

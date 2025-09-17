@@ -1,0 +1,1 @@
+dotnet-ef migrations add InitialCreate --project .\src\WNAB.Logic --startup-project .\src\WNAB.API --output-dir Data\Migrations
