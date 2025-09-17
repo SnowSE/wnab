@@ -7,9 +7,7 @@ public class Transaction
     public int TransactionId { get; set; }
     
     public int AccountId { get; set; }
-    
-    public int CategoryId { get; set; }
-    
+        
     [Required]
     [MaxLength(255)]
     public string Description { get; set; } = null!;
@@ -32,5 +30,5 @@ public class Transaction
     
     // Navigation properties
     public Account Account { get; set; } = null!;
-    public Category Category { get; set; } = null!;
+    public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
 }

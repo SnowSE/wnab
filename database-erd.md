@@ -1,11 +1,12 @@
 # WNAB Database Entity Relationship Diagram
 
+Here's a diagram
+
 ```mermaid
 erDiagram
     User {
         int UserId PK
         string Email UK
-        string PasswordHash
         string FirstName
         string LastName
         datetime CreatedAt
@@ -19,7 +20,6 @@ erDiagram
         string Name
         string Description
         string Color
-        decimal BudgetAmount
         bool IsIncome
         datetime CreatedAt
         datetime UpdatedAt
@@ -31,7 +31,8 @@ erDiagram
         int UserId FK
         string AccountName
         string AccountType
-        decimal Balance
+        decimal CachedBalance
+        datetime CachedBalanceDate
         string PlaidAccountId
         bool IsActive
         datetime CreatedAt
@@ -41,7 +42,6 @@ erDiagram
     Transaction {
         int TransactionId PK
         int AccountId FK
-        int CategoryId FK
         string Description
         decimal Amount
         datetime TransactionDate
@@ -52,7 +52,8 @@ erDiagram
         datetime UpdatedAt
     }
     
-    Budget {
+    %% Unique constraint: (CategoryId, Year, Month)
+    CatgeoryAllocation {
         int BudgetId PK
         int UserId FK
         int CategoryId FK
@@ -62,15 +63,26 @@ erDiagram
         datetime CreatedAt
         datetime UpdatedAt
     }
+
+    TransactionSplit {
+        int SplitId PK
+        int TransactionId FK
+        int CategoryId FK
+        decimal Amount
+        string Notes
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
     
     %% Relationships
     User ||--o{ Category : "creates"
     User ||--o{ Account : "owns"
-    User ||--o{ Budget : "sets"
+    User ||--o{ CatgeoryAllocation : "sets"
     
     Account ||--o{ Transaction : "contains"
-    Category ||--o{ Transaction : "categorizes"
-    Category ||--o{ Budget : "budgets"
+    Transaction ||--o{ TransactionSplit : "is split into"
+    Category ||--o{ TransactionSplit : "categorizes"
+    Category ||--o{ CatgeoryAllocation : "budgets"
 ```
 
 ## Entity Descriptions
@@ -83,30 +95,32 @@ erDiagram
 
 **Category**
 - Budget categories (e.g., "Groceries", "Rent", "Salary")
-- Can be income or expense categories
-- User-specific with budget amounts
 
 **Account**
 - Financial accounts (checking, savings, credit cards)
-- Linked to Plaid for automatic transaction import
-- Tracks current balance
+- Potentially linked to Plaid for automatic transaction import
+- Tracks current balance (cached, updated at times)
 
 **Transaction**
 - Individual financial transactions
-- Links accounts to categories
 - Can be imported from Plaid or manually entered
+
+**TransactionSplit**
+- Links transaction to category
+- If the transactions is not split (e.g. the entire transaction amount is for a single category, the system creates a single TransactionSplit behind the scenes for the entire amount).  
+- Every transaction has at least 1 TransactionSplit record.
 
 ### Supporting Entities
 
-**Budget**
+**CategoryAllocation**
 - Monthly budget allocations per category
 - Allows tracking spending vs. budgeted amounts
+- Unique constraint: (CategoryId, Year, Month)
 
 ## Key Design Features
 
 1. **User Isolation**: All entities are scoped to users for multi-tenant support
 2. **Plaid Integration**: Fields for storing Plaid IDs for automatic syncing
-3. **Soft Deletes**: IsActive flags instead of hard deletes
+3. **Soft Deletes**: IsActive flags instead of hard deletes for Account and Category
 4. **Audit Trail**: CreatedAt/UpdatedAt timestamps on all entities
-5. **Simple Design**: Clean MVP structure without complex splitting features
 6. **Budget Tracking**: Monthly budget allocations with comparison to actual spending

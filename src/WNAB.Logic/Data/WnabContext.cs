@@ -74,6 +74,8 @@ public class WnabContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict); // Don't delete category if transactions exist
         });
 
+        
+
         // Budget entity configuration
         modelBuilder.Entity<Budget>(entity =>
         {

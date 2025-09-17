@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WNAB.Logic.Data;
 
-public class Budget
+public class CategoryAllocation
 {
     public int BudgetId { get; set; }
     
