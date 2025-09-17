@@ -16,7 +16,12 @@ public class Account
     [MaxLength(50)]
     public string AccountType { get; set; } = null!;
     
-    public decimal Balance { get; set; }
+    [Required]
+    [Range(0, double.MaxValue)]
+    public decimal CachedBalance { get; set; }
+
+    [Required]
+    public DateTime CachedBalanceDate{ get; set; }
     
     [MaxLength(100)]
     public string? PlaidAccountId { get; set; }
