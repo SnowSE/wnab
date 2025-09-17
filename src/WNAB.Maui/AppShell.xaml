@@ -7,9 +7,15 @@
     Shell.FlyoutBehavior="Flyout"
     Title="WNAB.Maui">
 
+
     <ShellContent
         Title="Home"
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
+
+    <ShellContent
+        Title="New Transaction"
+        ContentTemplate="{DataTemplate local:NewTransactionPage}"
+        Route="NewTransactionPage" />
 
 </Shell>

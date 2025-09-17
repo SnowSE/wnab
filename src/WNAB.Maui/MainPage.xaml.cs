@@ -1,4 +1,5 @@
-﻿namespace WNAB.Maui;
+﻿
+namespace WNAB.Maui;
 
 public partial class MainPage : ContentPage
 {
@@ -7,6 +8,7 @@ public partial class MainPage : ContentPage
 	public MainPage()
 	{
 		InitializeComponent();
+		BindingContext = new MainPageViewModel();
 	}
 
 	private void OnCounterClicked(object sender, EventArgs e)
