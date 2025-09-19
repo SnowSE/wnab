@@ -1,15 +1,13 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
-namespace WNAB.Tests.MauiMVVM
+namespace WNAB.Tests.MauiMVVM;
+
+public class MauiMvvmBasicTests
 {
-    [TestClass]
-    public class MauiMvvmBasicTests
+    [Fact]
+    public void Test_Mvvm_Initialization()
     {
-        [TestMethod]
-        public void Test_Mvvm_Initialization()
-        {
-            // LLM-Dev: Add test logic for basic MVVM initialization in MAUI here.
-            Assert.IsTrue(true);
-        }
+        // LLM-Dev: Add test logic for basic MVVM initialization in MAUI here.
+        
     }
 }

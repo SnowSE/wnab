@@ -105,7 +105,7 @@ namespace WNAB.Tests.Unit
         
         private static global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages InitializeCucumberMessages()
         {
-            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("TransactionEntry.feature", 3);
+            return new global::Reqnroll.Formatters.RuntimeSupport.FeatureLevelCucumberMessages("TransactionEntry.feature", 5);
         }
         
         async global::System.Threading.Tasks.Task global::Xunit.IAsyncLifetime.InitializeAsync()
@@ -193,6 +193,126 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
                             "150.00"});
 #line 14
  await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table3, "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="Buy groceries and personal care")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "TransactionEntry")]
+        [global::Xunit.TraitAttribute("Description", "Buy groceries and personal care")]
+        public async global::System.Threading.Tasks.Task BuyGroceriesAndPersonalCare()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "1";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Buy groceries and personal care", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 18
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+                global::Reqnroll.Table table4 = new global::Reqnroll.Table(new string[] {
+                            "Date",
+                            "Payee",
+                            "Category",
+                            "Memo",
+                            "Amount"});
+                table4.AddRow(new string[] {
+                            "9/10/2025",
+                            "Walmart",
+                            "Groceries",
+                            "Walmart run",
+                            "150.00"});
+#line 19
+ await testRunner.GivenAsync("the following transaction", ((string)(null)), table4, "Given ");
+#line hidden
+#line 22
+ await testRunner.WhenAsync("I enter the transaction", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+                global::Reqnroll.Table table5 = new global::Reqnroll.Table(new string[] {
+                            "TransactionDate",
+                            "Amount",
+                            "Description"});
+                table5.AddRow(new string[] {
+                            "9/10/2025",
+                            "150.00",
+                            "Walmart run"});
+#line 23
+ await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table5, "Then ");
+#line hidden
+                global::Reqnroll.Table table6 = new global::Reqnroll.Table(new string[] {
+                            "Category",
+                            "Amount"});
+                table6.AddRow(new string[] {
+                            "Groceries",
+                            "100.00"});
+                table6.AddRow(new string[] {
+                            "Personal Care",
+                            "50.00"});
+#line 26
+ await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table6, "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [global::Xunit.SkippableFactAttribute(DisplayName="Buy groceries another way")]
+        [global::Xunit.TraitAttribute("FeatureTitle", "TransactionEntry")]
+        [global::Xunit.TraitAttribute("Description", "Buy groceries another way")]
+        public async global::System.Threading.Tasks.Task BuyGroceriesAnotherWay()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            global::System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new global::System.Collections.Specialized.OrderedDictionary();
+            string pickleIndex = "2";
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Buy groceries another way", null, tagsOfScenario, argumentsOfScenario, featureTags, pickleIndex);
+            string[] tagsOfRule = ((string[])(null));
+            global::Reqnroll.RuleInfo ruleInfo = null;
+#line 31
+this.ScenarioInitialize(scenarioInfo, ruleInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                await testRunner.SkipScenarioAsync();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 32
+ await testRunner.GivenAsync("I go spend $150 at Walmart", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 33
+ await testRunner.WhenAsync("I enter the transaction", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+                global::Reqnroll.Table table7 = new global::Reqnroll.Table(new string[] {
+                            "TransactionDate",
+                            "Amount",
+                            "Description"});
+                table7.AddRow(new string[] {
+                            "9/10/2025",
+                            "150.00",
+                            "Walmart run"});
+#line 34
+ await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table7, "Then ");
+#line hidden
+                global::Reqnroll.Table table8 = new global::Reqnroll.Table(new string[] {
+                            "Category",
+                            "Amount"});
+                table8.AddRow(new string[] {
+                            "Groceries",
+                            "100.00"});
+                table8.AddRow(new string[] {
+                            "Personal Care",
+                            "50.00"});
+#line 37
+ await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table8, "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
