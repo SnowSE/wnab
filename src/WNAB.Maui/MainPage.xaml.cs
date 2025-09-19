@@ -1,15 +1,12 @@
-﻿
+﻿using CommunityToolkit.Maui.Views;
+
 namespace WNAB.Maui;
 
 public partial class MainPage : ContentPage
 {
-
-
-	public MainPage()
-	{
-		InitializeComponent();
-		BindingContext = new MainPageViewModel();
-	}
-
-	
+    public MainPage(MainPageViewModel vm)
+    {
+        InitializeComponent();
+        BindingContext = vm;
+    }
 }

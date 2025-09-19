@@ -13,9 +13,6 @@
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
-    <ShellContent
-        Title="New Transaction"
-        ContentTemplate="{DataTemplate local:NewTransactionPage}"
-        Route="NewTransactionPage" />
+    <!-- Removed NewTransactionPage ShellContent; popup is used instead of navigation page -->
 
 </Shell>

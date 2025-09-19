@@ -17,6 +17,13 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
+		// DI registrations for MVVM
+		builder.Services.AddSingleton<IPopupService, PopupService>();
+		builder.Services.AddTransient<MainPageViewModel>();
+		builder.Services.AddTransient<NewTransactionViewModel>();
+		builder.Services.AddTransient<NewTransactionPopup>();
+		builder.Services.AddTransient<MainPage>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif

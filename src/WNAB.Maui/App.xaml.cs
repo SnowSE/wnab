@@ -9,6 +9,7 @@ public partial class App : Application
 
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
+		// Shell will resolve pages; MainPage constructor uses DI
 		return new Window(new AppShell());
 	}
 }
