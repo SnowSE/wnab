@@ -31,7 +31,7 @@ public class WnabContext : DbContext
         modelBuilder.Entity<Category>(entity =>
         {
             entity.HasKey(e => e.CategoryId);
-            entity.Property(e => e.BudgetAmount).HasColumnType("decimal(18,2)");
+           // entity.Property(e => e.BudgetAmount).HasColumnType("decimal(18,2)");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             
@@ -45,7 +45,7 @@ public class WnabContext : DbContext
         modelBuilder.Entity<Account>(entity =>
         {
             entity.HasKey(e => e.AccountId);
-            entity.Property(e => e.Balance).HasColumnType("decimal(18,2)");
+           // entity.Property(e => e.Balance).HasColumnType("decimal(18,2)");
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             
@@ -67,11 +67,11 @@ public class WnabContext : DbContext
                 .WithMany(a => a.Transactions)
                 .HasForeignKey(e => e.AccountId)
                 .OnDelete(DeleteBehavior.Cascade);
-                
-            entity.HasOne(e => e.Category)
-                .WithMany(c => c.Transactions)
-                .HasForeignKey(e => e.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict); // Don't delete category if transactions exist
+
+            // entity.HasOne(e => e.Category)
+            //     .WithMany(c => c.Transactions)
+            //     .HasForeignKey(e => e.CategoryId)
+            //     .OnDelete(DeleteBehavior.Restrict); // Don't delete category if transactions exist
         });
 
         
@@ -92,10 +92,10 @@ public class WnabContext : DbContext
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
                 
-            entity.HasOne(e => e.Category)
-                .WithMany(c => c.Budgets)
-                .HasForeignKey(e => e.CategoryId)
-                .OnDelete(DeleteBehavior.Restrict); // Don't delete category if budgets exist
+            // entity.HasOne(e => e.Category)
+            //     .WithMany(c => c.Budgets)
+            //     .HasForeignKey(e => e.CategoryId)
+            //     .OnDelete(DeleteBehavior.Restrict); // Don't delete category if budgets exist
         });
     }
 }
