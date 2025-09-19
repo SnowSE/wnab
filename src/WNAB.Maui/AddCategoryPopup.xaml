@@ -3,7 +3,7 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                x:Class="WNAB.Maui.AddCategoryPopup"
-               Color="#80000000">
+               Color="MidnightBlue">
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="260" BackgroundColor="#2D2D30">
         <Label Text="Add Category" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
         <Button Text="Close" Command="{Binding CloseCommand}" />
