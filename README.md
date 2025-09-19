@@ -35,11 +35,10 @@ The application is composed of several key modules:
 ### 📁 Proposed Directory Structure
 ```
 /src
-  /WNAB.Mobile          # MAUI mobile application
+  /WNAB.MAUI         	# MAUI mobile application
   /WNAB.Web             # Blazor web application  
   /WNAB.API             # ASP.NET Core Web API
-  /WNAB.Core            # Shared business logic and models
-  /WNAB.Data            # Entity Framework and database context
+  /WNAB.Logic           # Shared business logic, models, contexts
   /WNAB.Plaid           # Plaid integration services
 /tests
   /WNAB.Tests.Unit      # Unit tests
