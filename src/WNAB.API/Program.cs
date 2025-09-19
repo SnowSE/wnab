@@ -44,9 +44,17 @@ app.MapGet("/categories", async (WnabContext db) =>
     return Results.Ok(categories);
 });
 
-app.MapGet("/categories/create", async (string name, WnabContext db) =>
+app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
 {
-    var category = new Category { Name = name };
+    var user = new User { Email = email, FirstName = name, LastName = name };
+    db.Users.Add(user);
+    await db.SaveChangesAsync();
+    return Results.Ok(user);
+});
+
+app.MapGet("/categories/create", async (string name, int userId, WnabContext db) =>
+{
+    var category = new Category { Name = name, UserId = userId };
     db.Categories.Add(category);
     await db.SaveChangesAsync();
     return Results.Ok(category);

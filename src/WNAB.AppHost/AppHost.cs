@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 // Provision a PostgreSQL server and a database for the app
 var postgres = builder.AddPostgres("postgres")
-    .WithDataVolume();
+    .WithDataVolume("wnab_aspire_data");
 
 var db = postgres.AddDatabase("wnabdb");
 

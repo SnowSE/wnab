@@ -4,7 +4,7 @@ namespace WNAB.Logic.Data;
 
 public class Category
 {
-    public int CategoryId { get; set; }
+    public int Id { get; set; }
 
     public int UserId { get; set; }
 
