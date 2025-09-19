@@ -26,6 +26,11 @@
                 Text="Add New Transaction"
                 Command="{Binding OpenNewTransactionCommand}"
                 HorizontalOptions="Fill" />
+
+            <Button
+                Text="Add Category"
+                Command="{Binding OpenAddCategoryCommand}"
+                HorizontalOptions="Fill" />
         </VerticalStackLayout>
     </ScrollView>
 

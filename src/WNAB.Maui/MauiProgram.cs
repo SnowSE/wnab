@@ -22,6 +22,8 @@ public static class MauiProgram
 		builder.Services.AddTransient<MainPageViewModel>();
 		builder.Services.AddTransient<NewTransactionViewModel>();
 		builder.Services.AddTransient<NewTransactionPopup>();
+		builder.Services.AddTransient<AddCategoryViewModel>();
+		builder.Services.AddTransient<AddCategoryPopup>();
 		builder.Services.AddTransient<MainPage>();
 
 #if DEBUG
