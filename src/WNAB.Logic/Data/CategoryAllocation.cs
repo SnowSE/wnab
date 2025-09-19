@@ -4,9 +4,7 @@ namespace WNAB.Logic.Data;
 
 public class CategoryAllocation
 {
-    public int BudgetId { get; set; }
-    
-    public int UserId { get; set; }
+    public int Id { get; set; }
     
     public int CategoryId { get; set; }
     
@@ -21,7 +19,5 @@ public class CategoryAllocation
     
     public DateTime UpdatedAt { get; set; }
     
-    // Navigation properties
-    public User User { get; set; } = null!;
     public Category Category { get; set; } = null!;
 }

@@ -55,7 +55,6 @@ erDiagram
     %% Unique constraint: (CategoryId, Year, Month)
     CatgeoryAllocation {
         int BudgetId PK
-        int UserId FK
         int CategoryId FK
         decimal BudgetedAmount
         int Month
@@ -77,7 +76,6 @@ erDiagram
     %% Relationships
     User ||--o{ Category : "creates"
     User ||--o{ Account : "owns"
-    User ||--o{ CatgeoryAllocation : "sets"
     
     Account ||--o{ Transaction : "contains"
     Transaction ||--o{ TransactionSplit : "is split into"

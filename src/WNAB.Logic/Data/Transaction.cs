@@ -4,7 +4,7 @@ namespace WNAB.Logic.Data;
 
 public class Transaction
 {
-    public int TransactionId { get; set; }
+    public int Id { get; set; }
     
     public int AccountId { get; set; }
         
