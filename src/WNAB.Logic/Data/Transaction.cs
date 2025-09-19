@@ -20,10 +20,7 @@ public class Transaction
     public string? PlaidTransactionId { get; set; }
     
     public bool IsReconciled { get; set; } = false;
-    
-    [MaxLength(1000)]
-    public string? Notes { get; set; }
-    
+        
     public DateTime CreatedAt { get; set; }
     
     public DateTime UpdatedAt { get; set; }
