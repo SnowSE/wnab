@@ -60,6 +60,21 @@ app.MapGet("/categories/create", async (string name, int userId, WnabContext db)
     return Results.Ok(category);
 });
 
+app.MapGet("/users/accounts", (int userId, WnabContext db) =>
+{
+    var Accounts = db.Accounts.Where((p) => p.UserId == userId);
+    return Results.Ok(Accounts);
+});
+
+app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
+{
+    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = (User)db.Users.Where((p) => p.Id == userId)};
+    db.Accounts.Add(account);
+    await db.SaveChangesAsync();
+    return Results.Ok(account);
+});
+
+
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
 {
