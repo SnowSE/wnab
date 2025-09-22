@@ -1,7 +1,11 @@
 using System;
+using System.Linq;
 using Reqnroll;
 using Shouldly;
+using WNAB.Logic;
 using WNAB.Logic.Data;
+using WNAB.Logic.Interfaces;
+using WNAB.Logic.ViewModels;
 
 namespace WNAB.Tests.Unit
 {
@@ -9,10 +13,12 @@ namespace WNAB.Tests.Unit
     public class TransactionEntryStepDefinitions
     {
         private readonly ScenarioContext context;
+        private readonly ITransactionEntryService transactionEntryService;
 
         public TransactionEntryStepDefinitions(ScenarioContext context)
         {
             this.context = context;
+            this.transactionEntryService = new TransactionEntryService();
         }
 
         [Given("the following transaction")]
@@ -25,37 +31,72 @@ namespace WNAB.Tests.Unit
         [When("I enter the transaction")]
         public void WhenIEnterTheTransaction()
         {
-            var transactionEntryVM = context.Get<TransactionEntryViewModel>("TransactionEntryVM");
+            var transactionEntryVM = context.Get<TransactionEntryViewModel>("Transaction");
 
-            //todo: create that
-            var transaction = transactionEntryService.AddTransaction(transactionEntryVM);
-            context["Transaction"] = transaction;
+            var processedTransaction = transactionEntryService.AddTransaction(transactionEntryVM);
+            
+            context["Transaction"] = processedTransaction;
         }
 
         [Then("I should have the following transaction entry")]
         public void ThenIShouldHaveTheFollowingTransactionEntry(DataTable dataTable)
         {
             var expectedTransaction = dataTable.CreateInstance<TransactionEntryViewModel>();
-            var actualTransaction = context.Get<TransactionEntryViewModel>("Transaction");            
-            actualTransaction.ShouldBeEquivalentTo(expectedTransaction);
+            var actualTransaction = context.Get<TransactionEntryViewModel>("Transaction");
+            
+            // Only compare the properties that are specified in the feature file
+            actualTransaction.TransactionDate.ShouldBe(expectedTransaction.TransactionDate);
+            actualTransaction.Amount.ShouldBe(expectedTransaction.Amount);
+            actualTransaction.Memo.ShouldBe(expectedTransaction.Memo);
+        }
+
+        [When("I enter the transaction splits")]
+        public void WhenIEnterTheTransactionSplits(DataTable dataTable)
+        {
+            var transactionEntryVM = context.Get<TransactionEntryViewModel>("Transaction");
+            
+            // Convert the table to TransactionSplit objects
+            var splits = dataTable.Rows.Select(row => new TransactionSplit
+            {
+                Amount = decimal.Parse(row["Amount"].ToString()),
+                CategoryName = row["Category"].ToString()
+            }).ToList();
+            
+            var updatedTransaction = transactionEntryService.AddTransactionSplits(transactionEntryVM, splits);
+            
+            context["Transaction"] = updatedTransaction;
+        }
+
+        [When("I should have the following transaction splits")]
+        public void WhenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
+        {
+            throw new PendingStepException();
         }
 
         [Then("I should have the following transaction splits")]
         public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
         {
             var actualTransaction = context.Get<TransactionEntryViewModel>("Transaction");
-            var expectedSplits = dataTable.CreateSet<TransactionSplit>();
-            actualTransaction.Splits.ShouldBeEquivalentTo(expectedSplits);
+            
+            // Convert the expected data table to a list for comparison
+            var expectedSplits = dataTable.Rows.Select(row => new
+            {
+                Category = row["Category"].ToString(),
+                Amount = decimal.Parse(row["Amount"].ToString())
+            }).ToList();
+            
+            // Check that we have the right number of splits
+            actualTransaction.Splits.Count.ShouldBe(expectedSplits.Count);
+            
+            // Compare each split
+            for (int i = 0; i < expectedSplits.Count; i++)
+            {
+                var expectedSplit = expectedSplits[i];
+                var actualSplit = actualTransaction.Splits.ElementAt(i);
+                
+                actualSplit.Amount.ShouldBe(expectedSplit.Amount);
+                actualSplit.CategoryName.ShouldBe(expectedSplit.Category);
+            }
         }
-    }
-
-    //todo: move this into logic somewhere and actually make it a vm
-    public class TransactionEntryViewModel
-    {
-        public DateTime Date { get; set; }
-        public string Payee { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public decimal Amount { get; set; }
-        public string Memo { get; set; } = string.Empty;
     }
 }
