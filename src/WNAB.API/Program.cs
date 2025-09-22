@@ -52,6 +52,13 @@ app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
     return Results.Ok(user);
 });
 
+app.MapGet("/users", async (WnabContext db) => {
+	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
+    return Results.Ok(users.Select(u => new {
+		u.FirstName, u.LastName, Accounts = u.Accounts.Select(a => new {a.AccountName,a.AccountType,a.CachedBalance})
+	}));
+});
+
 app.MapGet("/categories/create", async (string name, int userId, WnabContext db) =>
 {
     var category = new Category { Name = name, UserId = userId };
@@ -68,10 +75,10 @@ app.MapGet("/users/accounts", (int userId, WnabContext db) =>
 
 app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
 {
-    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = (User)db.Users.Where((p) => p.Id == userId)};
+    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId)};
     db.Accounts.Add(account);
     await db.SaveChangesAsync();
-    return Results.Ok(account);
+    return Results.Ok(account.Id);
 });
 
 

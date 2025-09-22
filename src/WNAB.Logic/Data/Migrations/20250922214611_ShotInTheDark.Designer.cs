@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WNAB.Logic.Data;
@@ -11,9 +12,11 @@ using WNAB.Logic.Data;
 namespace WNAB.Logic.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
-    partial class WnabContextModelSnapshot : ModelSnapshot
+    [Migration("20250922214611_ShotInTheDark")]
+    partial class ShotInTheDark
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
