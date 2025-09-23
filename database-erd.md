@@ -53,7 +53,7 @@ erDiagram
     }
     
     %% Unique constraint: (CategoryId, Year, Month)
-    CatgeoryAllocation {
+    CategoryAllocation {
         int Id PK
         int CategoryId FK
         decimal BudgetedAmount
@@ -80,7 +80,7 @@ erDiagram
     Account ||--o{ Transaction : "contains"
     Transaction ||--o{ TransactionSplit : "is split into"
     Category ||--o{ TransactionSplit : "categorizes"
-    Category ||--o{ CatgeoryAllocation : "budgets"
+    Category ||--o{ CategoryAllocation : "budgets"
 ```
 
 ## Entity Descriptions

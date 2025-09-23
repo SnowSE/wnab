@@ -60,6 +60,21 @@ app.MapGet("/categories/create", async (string name, int userId, WnabContext db)
     return Results.Ok(category);
 });
 
+app.MapPost("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
+{
+    var allocation = new CategoryAllocation
+    {
+        CategoryId = categoryId,
+        BudgetedAmount = budgetedAmount,
+        Month = month,
+        Year = year
+    };
+    
+    db.Allocations.Add(allocation);
+    await db.SaveChangesAsync();
+    return Results.Ok(allocation);
+});
+
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
 {
