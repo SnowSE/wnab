@@ -1,13 +1,16 @@
 using WNAB.Web.Components;
+using Microsoft.Extensions.Hosting; // LLM-Dev: For AddServiceDefaults extension
 
 var builder = WebApplication.CreateBuilder(args);
 
-// LLM-Dev: Register a simple named HttpClient for the API.
-// Prefer appsetting "ApiBaseUrl" (e.g., "http://localhost:5xxx" when running via AppHost on localhost).
-// If not configured, default to a localhost placeholder so it's obvious what to change.
+// LLM-Dev: Enable Aspire service defaults (service discovery + resilience for HttpClient).
+builder.AddServiceDefaults();
+
+// LLM-Dev: Register a named HttpClient for the API.
+// - If ApiBaseUrl is provided (via AppHost env var), use it.
+// - Otherwise, default to logical service name "http://wnab-api" (resolved by service discovery when running under AppHost).
 var configuredApi = builder.Configuration["ApiBaseUrl"];
-var apiBase = string.IsNullOrWhiteSpace(configuredApi) ? "http://localhost:5001" : configuredApi!;
-// Ensure a scheme is present; if a bare host was provided, assume http.
+var apiBase = string.IsNullOrWhiteSpace(configuredApi) ? "http://wnab-api" : configuredApi!;
 if (!apiBase.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !apiBase.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
 {
     apiBase = $"http://{apiBase.TrimStart('/')}";

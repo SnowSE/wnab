@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WNAB.API\WNAB.API.csproj" />
+    <ProjectReference Include="..\WNAB.Web\WNAB.Web.csproj" />
   </ItemGroup>
 
 </Project>
