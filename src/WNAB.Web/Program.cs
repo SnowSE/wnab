@@ -9,13 +9,13 @@ builder.AddServiceDefaults();
 // LLM-Dev: Register a named HttpClient for the API.
 // - If ApiBaseUrl is provided (via AppHost env var), use it.
 // - Otherwise, default to logical service name "http://wnab-api" (resolved by service discovery when running under AppHost).
-var configuredApi = builder.Configuration["ApiBaseUrl"];
-var apiBase = string.IsNullOrWhiteSpace(configuredApi) ? "http://wnab-api" : configuredApi!;
-if (!apiBase.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !apiBase.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
-{
-    apiBase = $"http://{apiBase.TrimStart('/')}";
-}
-builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri(apiBase));
+
+
+
+
+
+
+builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
