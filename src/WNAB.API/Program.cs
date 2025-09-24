@@ -55,7 +55,7 @@ app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
 app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
-		u.FirstName, u.LastName, Accounts = u.Accounts.Select(a => new {a.AccountName,a.AccountType,a.CachedBalance})
+		u.Id, u.FirstName, u.LastName, Accounts = u.Accounts.Select(a => new {a.AccountName,a.AccountType,a.CachedBalance})
 	}));
 });
 
@@ -75,14 +75,22 @@ app.MapGet("/users/accounts", (int userId, WnabContext db) =>
 
 app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
 {
-    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId)};
+    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId) };
     db.Accounts.Add(account);
     await db.SaveChangesAsync();
     return Results.Ok(account.Id);
 });
 
+app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
+{
+    var allocations = await db.Allocations
+        .Where(a => a.CategoryId == categoryId)
+        .ToListAsync(); 
+        return Results.Ok(allocations);
+});
 
-app.MapPost("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
+
+app.MapGet("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
 {
     var allocation = new CategoryAllocation
     {
@@ -94,7 +102,7 @@ app.MapPost("/categories/allocation/create", async (int categoryId, decimal budg
     
     db.Allocations.Add(allocation);
     await db.SaveChangesAsync();
-    return Results.Ok(allocation);
+    return Results.Ok(allocation.Id);
 });
 
 // Apply EF Core migrations at startup so the database schema is up to date.
