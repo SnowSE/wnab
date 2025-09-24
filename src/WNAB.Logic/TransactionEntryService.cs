@@ -22,8 +22,7 @@ public class TransactionEntryService : ITransactionEntryService
             transactionEntryVM.Splits.Add(new TransactionSplit 
             { 
                 Amount = transactionEntryVM.Amount,
-                // Note: Category would be set via CategoryId in real implementation
-                // For now, we'll just add the split with amount
+                CategoryName = transactionEntryVM.Category  // LLM-Dev: Set CategoryName for BDD test compatibility
             });
         }
         // For "Split" category transactions, splits will be added separately

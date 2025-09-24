@@ -27,7 +27,7 @@ Scenario: Buy groceries and personal care
 		| Category      | Amount |
 		| Groceries     | 100.00 |
 		| Personal Care | 50.00  |
-	And I should have the following transaction splits
+	Then I should have the following transaction splits
 		| Category      | Amount |
 		| Groceries     | 100.00 |
 		| Personal Care | 50.00  |

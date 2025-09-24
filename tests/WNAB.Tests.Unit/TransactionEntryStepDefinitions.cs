@@ -67,12 +67,6 @@ namespace WNAB.Tests.Unit
             context["Transaction"] = updatedTransaction;
         }
 
-        [When("I should have the following transaction splits")]
-        public void WhenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
-        {
-            throw new PendingStepException();
-        }
-
         [Then("I should have the following transaction splits")]
         public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
         {

@@ -270,7 +270,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
                             "Personal Care",
                             "50.00"});
 #line 30
- await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table7, "And ");
+ await testRunner.ThenAsync("I should have the following transaction splits", ((string)(null)), table7, "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
