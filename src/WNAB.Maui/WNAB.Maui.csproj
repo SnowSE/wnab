@@ -69,7 +69,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\WNAB.Logic\WNAB.Logic.csproj" />
 	  <ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
-	  <ProjectReference Include="..\WNAB.API\WNAB.API.csproj" />
 	</ItemGroup>
 
 </Project>

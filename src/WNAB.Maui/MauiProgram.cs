@@ -31,7 +31,7 @@ public static class MauiProgram
 		// LLM-Dev: Categories feature DI wiring (hardcoded base URL)
 		builder.Services.AddSingleton<ICategoriesService>(sp =>
 		{
-			var http = new HttpClient { BaseAddress = new Uri("http://localhost:7077/") };
+			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
 			return new CategoriesService(http);
 		});
 		builder.Services.AddTransient<CategoriesViewModel>();
