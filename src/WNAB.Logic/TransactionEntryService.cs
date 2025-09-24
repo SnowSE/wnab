@@ -6,27 +6,29 @@ namespace WNAB.Logic;
 
 public class TransactionEntryService : ITransactionEntryService
 {
+    // Notes from kaden: I think we should refactor this functionality, but it depends on 
+    // how we want to do the flow of the transaction splits and whatnot
     // LLM-Dev: Minimal implementation to satisfy test compilation
     public TransactionEntryViewModel AddTransaction(TransactionEntryViewModel transactionEntryVM)
     {
         // Set the transaction date
         transactionEntryVM.TransactionDate = transactionEntryVM.Date;
-        
+
         // Clear any existing splits
         transactionEntryVM.Splits.Clear();
-        
+
         // For non-split transactions, create a single split with the transaction category
         if (transactionEntryVM.Category != "Split")
         {
             // Single category transaction - create one split with the full amount
-            transactionEntryVM.Splits.Add(new TransactionSplit 
-            { 
+            transactionEntryVM.Splits.Add(new TransactionSplit
+            {
                 Amount = transactionEntryVM.Amount,
                 CategoryName = transactionEntryVM.Category  // LLM-Dev: Set CategoryName for BDD test compatibility
             });
         }
         // For "Split" category transactions, splits will be added separately
-        
+
         return transactionEntryVM;
     }
 
