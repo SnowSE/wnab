@@ -1,0 +1,78 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+
+@baseUrl = https://localhost:7077
+
+# Common variables
+@userId = 1
+@userName = John
+@userEmail = john@example.com
+@accountName = Checking
+@categoryName = Transportation
+@categoryId = 1
+@budgetedAmount = 120.00
+@month = 9
+@year = 2025
+
+### Root
+GET {{baseUrl}}/
+
+### Health (enabled in Development)
+GET {{baseUrl}}/health
+
+### Liveness (enabled in Development)
+GET {{baseUrl}}/alive
+
+### Categories - list all
+GET {{baseUrl}}/categories
+
+### Categories - create (POST)
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "{{categoryName}}",
+  "userId": {{userId}}
+}
+
+### Category allocations - list for a category
+GET {{baseUrl}}/categories/allocation?categoryId={{categoryId}}
+
+### Category allocations - create (POST)
+POST {{baseUrl}}/categories/allocation
+Content-Type: application/json
+
+{
+  "categoryId": {{categoryId}},
+  "budgetedAmount": {{budgetedAmount}},
+  "month": {{month}},
+  "year": {{year}}
+}
+
+### Users - list all (includes accounts summary)
+GET {{baseUrl}}/users
+
+### Users - create (POST)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "{{userName}}",
+  "email": "{{userEmail}}"
+}
+
+### Accounts - list for a user
+GET {{baseUrl}}/users/accounts?userId={{userId}}
+
+### Accounts - create for a user (POST)
+POST {{baseUrl}}/users/{{userId}}/accounts
+Content-Type: application/json
+
+{
+  "name": "{{accountName}}"
+}
+
+### Legacy GET-based create endpoints (for compatibility)
+# GET {{baseUrl}}/categories/create?name={{categoryName}}&userId={{userId}}
+# GET {{baseUrl}}/categories/allocation/create?categoryId={{categoryId}}&budgetedAmount={{budgetedAmount}}&month={{month}}&year={{year}}
+# GET {{baseUrl}}/users/create?name={{userName}}&email={{userEmail}}
+# GET {{baseUrl}}/users/accounts/create?name={{accountName}}&userId={{userId}}

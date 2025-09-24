@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "MauiAndAspire",
+    "Projects": [
+      {
+        "Path": "src\\WNAB.Maui\\WNAB.Maui.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\WNAB.AppHost\\WNAB.AppHost.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
