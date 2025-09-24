@@ -1,0 +1,46 @@
+@page "/accounts/create"
+@inject IHttpClientFactory ClientFactory
+
+<h1>Create Account</h1>
+
+<div class="mb-3">
+    <label>Name</label>
+    <input class="form-control" @bind-value="_name" />
+</div>
+<div class="mb-3">
+    <label>User Id</label>
+    <input class="form-control" type="number" @bind-value="_userId" />
+</div>
+<button class="btn btn-primary" @onclick="Create">Create</button>
+
+@if (!string.IsNullOrWhiteSpace(_result))
+{
+    <pre class="mt-3">@_result</pre>
+}
+@if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger mt-3">@_error</div>
+}
+
+@code {
+    private string? _name;
+    private int _userId;
+    private string? _result;
+    private string? _error;
+
+    private async Task Create()
+    {
+        _result = _error = null;
+        try
+        {
+            var client = ClientFactory.CreateClient("wnab-api");
+            var url = $"/users/accounts/create?name={Uri.EscapeDataString(_name ?? string.Empty)}&userId={_userId}";
+            using var resp = await client.GetAsync(url);
+            _result = await resp.Content.ReadAsStringAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+    }
+}

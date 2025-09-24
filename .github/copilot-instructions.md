@@ -1,4 +1,4 @@
 Instructions:
-Do one thing at a time. Do not do more than what was asked. Ask Questions. Try not to modify code.
+Do one thing at a time. Do not do more than what was asked. Ask Questions. Try not to modify code. Use durable, readable, and maintainable code.
 Leave documentation and key decision making comments "LLM-Dev:<comment>". Do not delete them. Modify only when their code is modified.
 Do not build. Do not run. Do not test.
