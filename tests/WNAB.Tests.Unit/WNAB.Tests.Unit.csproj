@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- LLM-Dev: Mark explicitly as a test project to aid some tooling -->
+    <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +16,8 @@
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <!-- LLM-Dev: Added Reqnroll core package for BDD step definitions -->
+    <PackageReference Include="Reqnroll" Version="3.0.3" />
     <PackageReference Include="Reqnroll.xUnit" Version="3.0.3" />
     <PackageReference Include="Shouldly" Version="4.3.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
@@ -25,12 +29,14 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+  <Using Include="Reqnroll"/>
+  <!-- LLM-Dev: Fixed typo Inlude->Include and Shoudly->Shouldly -->
+  <Using Include="Shouldly"/>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WNAB.API\WNAB.API.csproj" />
     <ProjectReference Include="..\..\src\WNAB.Logic\WNAB.Logic.csproj" />
-    <ProjectReference Include="..\..\src\WNAB.Web\WNAB.Web.csproj" />
   </ItemGroup>
 
 </Project>
