@@ -1,4 +1,5 @@
-
+using WNAB.Logic.Interfaces;
+using WNAB.Logic;
 using WNAB.Logic.Data;
 using WNAB.Logic.ViewModels;
 
@@ -6,6 +7,7 @@ namespace WNAB.Tests.Unit
 {
     public partial class StepDefinitions
     {
+        private readonly ITransactionEntryService transactionEntryService = new TransactionEntryService();
 
         [Given("the following transaction")]
         public void GivenTheFollowingTransaction(DataTable dataTable)

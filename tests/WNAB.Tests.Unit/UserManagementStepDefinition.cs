@@ -30,6 +30,7 @@ public partial class StepDefinitions
 			CreatedAt = DateTime.UtcNow,
 			UpdatedAt = DateTime.UtcNow
 		};
+		
 		context["User"] = user; // store the single pending user
 	}
 
