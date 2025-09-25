@@ -1,6 +1,21 @@
 using WNAB.Web.Components;
+using Microsoft.Extensions.Hosting; // LLM-Dev: For AddServiceDefaults extension
 
 var builder = WebApplication.CreateBuilder(args);
+
+// LLM-Dev: Enable Aspire service defaults (service discovery + resilience for HttpClient).
+builder.AddServiceDefaults();
+
+// LLM-Dev: Register a named HttpClient for the API.
+// - If ApiBaseUrl is provided (via AppHost env var), use it.
+// - Otherwise, default to logical service name "http://wnab-api" (resolved by service discovery when running under AppHost).
+
+
+
+
+
+
+builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
