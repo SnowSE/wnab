@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WNAB.Logic.Data;
 
@@ -22,4 +23,8 @@ public class TransactionSplit
     // Navigation properties
     public Transaction Transaction { get; set; } = null!;
     public Category Category { get; set; } = null!;
+    
+    // LLM-Dev: Non-mapped property for test scenarios to handle category by name
+    [NotMapped]
+    public string CategoryName { get; set; } = string.Empty;
 }

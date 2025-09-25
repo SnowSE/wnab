@@ -177,7 +177,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
                 global::Reqnroll.Table table2 = new global::Reqnroll.Table(new string[] {
                             "TransactionDate",
                             "Amount",
-                            "Description"});
+                            "Memo"});
                 table2.AddRow(new string[] {
                             "9/10/2025",
                             "150.00",
@@ -240,7 +240,7 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
                 global::Reqnroll.Table table5 = new global::Reqnroll.Table(new string[] {
                             "TransactionDate",
                             "Amount",
-                            "Description"});
+                            "Memo"});
                 table5.AddRow(new string[] {
                             "9/10/2025",
                             "150.00",
@@ -258,7 +258,19 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
                             "Personal Care",
                             "50.00"});
 #line 26
- await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table6, "And ");
+ await testRunner.WhenAsync("I enter the transaction splits", ((string)(null)), table6, "When ");
+#line hidden
+                global::Reqnroll.Table table7 = new global::Reqnroll.Table(new string[] {
+                            "Category",
+                            "Amount"});
+                table7.AddRow(new string[] {
+                            "Groceries",
+                            "100.00"});
+                table7.AddRow(new string[] {
+                            "Personal Care",
+                            "50.00"});
+#line 30
+ await testRunner.ThenAsync("I should have the following transaction splits", ((string)(null)), table7, "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
