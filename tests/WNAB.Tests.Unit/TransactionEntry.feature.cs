@@ -156,43 +156,43 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
-                global::Reqnroll.Table table19 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table16 = new global::Reqnroll.Table(new string[] {
                             "Date",
                             "Payee",
                             "Category",
                             "Memo",
                             "Amount"});
-                table19.AddRow(new string[] {
+                table16.AddRow(new string[] {
                             "9/10/2025",
                             "Walmart",
                             "Groceries",
                             "Buy food",
                             "150.00"});
 #line 7
- await testRunner.GivenAsync("the following transaction", ((string)(null)), table19, "Given ");
+ await testRunner.GivenAsync("the following transaction", ((string)(null)), table16, "Given ");
 #line hidden
 #line 10
  await testRunner.WhenAsync("I enter the transaction", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-                global::Reqnroll.Table table20 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table17 = new global::Reqnroll.Table(new string[] {
                             "TransactionDate",
                             "Amount",
                             "Memo"});
-                table20.AddRow(new string[] {
+                table17.AddRow(new string[] {
                             "9/10/2025",
                             "150.00",
                             "Buy food"});
 #line 11
- await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table20, "Then ");
+ await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table17, "Then ");
 #line hidden
-                global::Reqnroll.Table table21 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table18 = new global::Reqnroll.Table(new string[] {
                             "Category",
                             "Amount"});
-                table21.AddRow(new string[] {
+                table18.AddRow(new string[] {
                             "Groceries",
                             "150.00"});
 #line 14
- await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table21, "And ");
+ await testRunner.AndAsync("I should have the following transaction splits", ((string)(null)), table18, "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -219,58 +219,58 @@ this.ScenarioInitialize(scenarioInfo, ruleInfo);
             else
             {
                 await this.ScenarioStartAsync();
-                global::Reqnroll.Table table22 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table19 = new global::Reqnroll.Table(new string[] {
                             "Date",
                             "Payee",
                             "Category",
                             "Memo",
                             "Amount"});
-                table22.AddRow(new string[] {
+                table19.AddRow(new string[] {
                             "9/10/2025",
                             "Walmart",
                             "Split",
                             "Walmart run",
                             "150.00"});
 #line 19
- await testRunner.GivenAsync("the following transaction", ((string)(null)), table22, "Given ");
+ await testRunner.GivenAsync("the following transaction", ((string)(null)), table19, "Given ");
 #line hidden
 #line 22
  await testRunner.WhenAsync("I enter the transaction", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-                global::Reqnroll.Table table23 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table20 = new global::Reqnroll.Table(new string[] {
                             "TransactionDate",
                             "Amount",
                             "Memo"});
-                table23.AddRow(new string[] {
+                table20.AddRow(new string[] {
                             "9/10/2025",
                             "150.00",
                             "Walmart run"});
 #line 23
- await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table23, "Then ");
+ await testRunner.ThenAsync("I should have the following transaction entry", ((string)(null)), table20, "Then ");
 #line hidden
-                global::Reqnroll.Table table24 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table21 = new global::Reqnroll.Table(new string[] {
                             "Category",
                             "Amount"});
-                table24.AddRow(new string[] {
+                table21.AddRow(new string[] {
                             "Groceries",
                             "100.00"});
-                table24.AddRow(new string[] {
+                table21.AddRow(new string[] {
                             "Personal Care",
                             "50.00"});
 #line 26
- await testRunner.WhenAsync("I enter the transaction splits", ((string)(null)), table24, "When ");
+ await testRunner.WhenAsync("I enter the transaction splits", ((string)(null)), table21, "When ");
 #line hidden
-                global::Reqnroll.Table table25 = new global::Reqnroll.Table(new string[] {
+                global::Reqnroll.Table table22 = new global::Reqnroll.Table(new string[] {
                             "Category",
                             "Amount"});
-                table25.AddRow(new string[] {
+                table22.AddRow(new string[] {
                             "Groceries",
                             "100.00"});
-                table25.AddRow(new string[] {
+                table22.AddRow(new string[] {
                             "Personal Care",
                             "50.00"});
 #line 30
- await testRunner.ThenAsync("I should have the following transaction splits", ((string)(null)), table25, "Then ");
+ await testRunner.ThenAsync("I should have the following transaction splits", ((string)(null)), table22, "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

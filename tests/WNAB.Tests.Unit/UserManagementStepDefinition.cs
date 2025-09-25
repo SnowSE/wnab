@@ -3,32 +3,32 @@ using Reqnroll;
 
 namespace WNAB.Tests.Unit;
 
-[Binding]
-public class StepDefinitions
-{
-	private readonly ScenarioContext _scenarioContext;
 
-	public StepDefinitions(ScenarioContext scenarioContext)
-	{
-		_scenarioContext = scenarioContext;
-	}
+public partial class StepDefinitions
+{
 
 	[Given(@"the system has no existing users")]
-	public void Giventhesystemhasnoexistingusers()
+	public void Giventhesystemhasnoexistingusers(DataTable dataTable)
 	{
-		_scenarioContext.Pending();
+		context.Pending();
+	}
+
+	[Given(@"the following user")]
+	public void Giventhefollowinguser(DataTable dataTable)
+	{
+		context.Pending();
 	}
 
 	[When(@"I create the following user")]
 	public void WhenIcreatethefollowinguser()
 	{
-		_scenarioContext.Pending();
+		context.Pending();
 	}
 
 	[Then(@"I should have the following user in the system")]
-	public void ThenIshouldhavethefollowinguserinthesystem()
+	public void ThenIshouldhavethefollowinguserinthesystem(DataTable dataTable)
 	{
-		_scenarioContext.Pending();
+		context.Pending();
 	}
 
 }

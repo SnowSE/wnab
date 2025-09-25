@@ -3,46 +3,25 @@ using Reqnroll;
 
 namespace WNAB.Tests.Unit;
 
-[Binding]
-public class AccountStepDefinitions
+public partial class StepDefinitions
 {
-	private readonly ScenarioContext _scenarioContext;
 
-	public AccountStepDefinitions(ScenarioContext scenarioContext)
+	[Given(@"the following account for user ""(.*)""")]
+	public void Giventhefollowingaccountforuser(DataTable dataTable)
 	{
-		_scenarioContext = scenarioContext;
+		context.Pending();
 	}
 
-	[Given(@"the system has no existing users")]
-	public void Giventhesystemhasnoexistingusers()
+	[When(@"I create the user and related accounts")]
+	public void WhenIcreatetheuserandrelatedaccounts()
 	{
-		_scenarioContext.Pending();
-	}
-
-	[When(@"I create the following user")]
-	public void WhenIcreatethefollowinguser()
-	{
-		_scenarioContext.Pending();
-	}
-
-	[Given(@"I create the following account for user ""(.*)""")]
-	public void GivenIcreatethefollowingaccountforuser(string args1)
-	{
-		_scenarioContext.Pending();
+		context.Pending();
 	}
 
 	[Then(@"the user ""(.*)"" should have the following accounts")]
-	public void Thentheusershouldhavethefollowingaccounts(string args1)
+	public void Thentheusershouldhavethefollowingaccounts(DataTable dataTable)
 	{
-		_scenarioContext.Pending();
+		context.Pending();
 	}
-
-	[Given(@"I create the following accounts for user ""(.*)""")]
-	public void GivenIcreatethefollowingaccountsforuser(string args1)
-	{
-		_scenarioContext.Pending();
-	}
-
-
 
 }

@@ -6,13 +6,14 @@ Feature: User Management
 
   # LLM-Dev: Step definitions pending. Mirrors TransactionEntry style.
 
-  Background:
-    Given the system has no existing users
+  # LLM-Dev: Removed Background that cleared all users to match TransactionEntry.feature style.
+  # LLM-Dev: New step phrases: "Given the following user" and action "When I create the user".
 
   Scenario: Create a new user
-    When I create the following user
+    Given the following user
       | FirstName | LastName | Email                  |
       | Alice     | Smith    | alice.smith@example.io |
+    When I create the user
     Then I should have the following user in the system
       | FirstName | LastName | Email                  | IsActive |
       | Alice     | Smith    | alice.smith@example.io | true     |

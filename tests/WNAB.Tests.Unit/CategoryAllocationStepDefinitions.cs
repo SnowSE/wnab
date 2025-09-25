@@ -3,45 +3,31 @@ using Reqnroll;
 
 namespace WNAB.Tests.Unit;
 
-
-[Binding]
-public class CategoryStepDefinitions
+public partial class StepDefinitions
 {
-	private readonly ScenarioContext _scenarioContext;
-
-	public CategoryStepDefinitions(ScenarioContext scenarioContext)
+	[Given(@"the following category for user ""(.*)""")]
+	public void Giventhefollowingcategoryforuser(DataTable dataTable)
 	{
-		_scenarioContext = scenarioContext;
+		context.Pending();
 	}
 
-	[Given(@"the system has no existing users")]
-	public void Giventhesystemhasnoexistingusers()
+	[When(@"I allocate the following amounts")]
+	public void WhenIallocatethefollowingamounts(DataTable dataTable)
 	{
-		_scenarioContext.Pending();
-	}
-
-	[When(@"I create the following user")]
-	public void WhenIcreatethefollowinguser()
-	{
-		_scenarioContext.Pending();
-	}
-
-	[Given(@"I create the following category for user ""(.*)""")]
-	public void GivenIcreatethefollowingcategoryforuser(string args1)
-	{
-		_scenarioContext.Pending();
-	}
-
-	[Given(@"I allocate the following amounts")]
-	public void GivenIallocatethefollowingamounts()
-	{
-		_scenarioContext.Pending();
+		context.Pending();
 	}
 
 	[Then(@"I should have the following category allocations for user ""(.*)""")]
-	public void ThenIshouldhavethefollowingcategoryallocationsforuser(string args1)
+	public void ThenIshouldhavethefollowingcategoryallocationsforuser(DataTable dataTable)
 	{
-		_scenarioContext.Pending();
+		context.Pending();
+	}
+
+
+	[Given(@"the following categories for user ""(.*)""")]
+	public void Giventhefollowingcategoriesforuser(DataTable dataTable)
+	{
+		context.Pending();
 	}
 
 }
