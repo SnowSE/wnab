@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   build:
@@ -16,6 +17,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
 
       - name: Restore dependencies
         run: dotnet restore
