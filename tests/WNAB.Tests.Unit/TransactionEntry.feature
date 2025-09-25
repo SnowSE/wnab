@@ -32,7 +32,7 @@ Scenario: Buy groceries and personal care
 		| Groceries     | 100.00 |
 		| Personal Care | 50.00  |
 
-Scenario: Buy groceries and personal care
+Scenario: Buy groceries and personal care TDD
 	Given the following transaction
 		| Date      | Payee   | Category | Memo        | Amount |
 		| 9/10/2025 | Walmart | Split    | Walmart run | 150.00 |
