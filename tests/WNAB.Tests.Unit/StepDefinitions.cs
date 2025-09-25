@@ -1,6 +1,8 @@
 
 using WNAB.Logic;
 using WNAB.Logic.Interfaces;
+using WNAB.Logic.Data;
+using Shouldly;
 
 namespace WNAB.Tests.Unit;
 
@@ -15,5 +17,6 @@ public partial class StepDefinitions {
             this.context = context;
             this.transactionEntryService = new TransactionEntryService();
         }
+
 
 }
