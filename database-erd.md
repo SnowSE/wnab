@@ -5,7 +5,7 @@ Here's a diagram
 ```mermaid
 erDiagram
     User {
-        int UserId PK
+        int Id PK
         string Email UK
         string FirstName
         string LastName
@@ -15,7 +15,7 @@ erDiagram
     }
     
     Category {
-        int CategoryId PK
+        int Id PK
         int UserId FK
         string Name
         string Description
@@ -27,7 +27,7 @@ erDiagram
     }
     
     Account {
-        int AccountId PK
+        int Id PK
         int UserId FK
         string AccountName
         string AccountType
@@ -40,7 +40,7 @@ erDiagram
     }
     
     Transaction {
-        int TransactionId PK
+        int Id PK
         int AccountId FK
         string Description
         decimal Amount
@@ -53,8 +53,8 @@ erDiagram
     }
     
     %% Unique constraint: (CategoryId, Year, Month)
-    CatgeoryAllocation {
-        int BudgetId PK
+    CategoryAllocation {
+        int Id PK
         int CategoryId FK
         decimal BudgetedAmount
         int Month
@@ -64,7 +64,7 @@ erDiagram
     }
 
     TransactionSplit {
-        int SplitId PK
+        int Id PK
         int TransactionId FK
         int CategoryId FK
         decimal Amount
@@ -80,7 +80,7 @@ erDiagram
     Account ||--o{ Transaction : "contains"
     Transaction ||--o{ TransactionSplit : "is split into"
     Category ||--o{ TransactionSplit : "categorizes"
-    Category ||--o{ CatgeoryAllocation : "budgets"
+    Category ||--o{ CategoryAllocation : "budgets"
 ```
 
 ## Entity Descriptions
