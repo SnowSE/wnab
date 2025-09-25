@@ -18,14 +18,11 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install MAUI workload
-        run: dotnet workload install maui
+      - name: Restore test project dependencies
+        run: dotnet restore tests/WNAB.Tests.Unit/WNAB.Tests.Unit.csproj
 
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+      - name: Build test project
+        run: dotnet build tests/WNAB.Tests.Unit/WNAB.Tests.Unit.csproj --no-restore --configuration Release
 
       - name: Run unit tests
         run: dotnet test tests/WNAB.Tests.Unit/WNAB.Tests.Unit.csproj --no-build --configuration Release --logger "trx;LogFileName=test_results.trx"
