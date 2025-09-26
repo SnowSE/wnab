@@ -67,86 +67,88 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 });
 
 // Legacy create endpoints (GET) - kept for compatibility
-app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
-{
-    var user = new User { Email = email, FirstName = name, LastName = name };
-    db.Users.Add(user);
-    await db.SaveChangesAsync();
-    return Results.Ok(user);
-});
+// app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
+// {
+//     var user = new User { Email = email, FirstName = name, LastName = name };
+//     db.Users.Add(user);
+//     await db.SaveChangesAsync();
+//     return Results.Ok(user);
+// });
 
-app.MapGet("/categories/create", async (string name, int userId, WnabContext db) =>
-{
-    var category = new Category { Name = name, UserId = userId };
-    db.Categories.Add(category);
-    await db.SaveChangesAsync();
-    return Results.Ok(category);
-});
+// app.MapGet("/categories/create", async (string name, int userId, WnabContext db) =>
+// {
+//     var category = new Category { Name = name, UserId = userId };
+//     db.Categories.Add(category);
+//     await db.SaveChangesAsync();
+//     return Results.Ok(category);
+// });
 
-app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
-{
-    var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId) };
-    db.Accounts.Add(account);
-    await db.SaveChangesAsync();
-    return Results.Ok(account.Id);
-});
 
-app.MapGet("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
-{
-    var allocation = new CategoryAllocation
-    {
-        CategoryId = categoryId,
-        BudgetedAmount = budgetedAmount,
-        Month = month,
-        Year = year
-    };
+// Depreciated.
+// app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
+// {
+//     var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId) };
+//     db.Accounts.Add(account);
+//     await db.SaveChangesAsync();
+//     return Results.Ok(account.Id);
+// });
+
+// app.MapGet("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
+// {
+//     var allocation = new CategoryAllocation
+//     {
+//         CategoryId = categoryId,
+//         BudgetedAmount = budgetedAmount,
+//         Month = month,
+//         Year = year
+//     };
     
-    db.Allocations.Add(allocation);
-    await db.SaveChangesAsync();
-    return Results.Ok(allocation.Id);
-});
+//     db.Allocations.Add(allocation);
+//     await db.SaveChangesAsync();
+//     return Results.Ok(allocation.Id);
+// });
 
 // New RESTful create endpoints (POST)
-app.MapPost("/users", async (CreateUserRequest req, WnabContext db) =>
+app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
 {
-    var user = new User { Email = req.Email, FirstName = req.Name, LastName = req.Name };
+    var user = new User { Email = rec.Email, FirstName = rec.Name, LastName = rec.Name };
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });
 });
 
-app.MapPost("/categories", async (CreateCategoryRequest req, WnabContext db) =>
+app.MapPost("/categories", async (CategoryRecord rec, WnabContext db) =>
 {
-    var category = new Category { Name = req.Name, UserId = req.UserId };
+    var category = new Category { Name = rec.Name, UserId = rec.UserId };
     db.Categories.Add(category);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{category.Id}", category);
 });
 
-app.MapPost("/users/{userId}/accounts", async (int userId, CreateAccountRequest req, WnabContext db) =>
+app.MapPost("/users/{userId}/accounts", async (int userId, AccountRecord rec, WnabContext db) =>
 {
     var user = await db.Users.FindAsync(userId);
     if (user is null) return Results.NotFound();
 
-    var account = new Account { UserId = userId, AccountName = req.Name, AccountType = "bank", User = user };
+    var account = new Account { UserId = userId, AccountName = rec.Name, AccountType = "bank", User = user };
     db.Accounts.Add(account);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{userId}/accounts/{account.Id}", new { account.Id });
 });
 
-app.MapPost("/categories/allocation", async (CreateCategoryAllocationRequest req, WnabContext db) =>
+app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabContext db) =>
 {
     var allocation = new CategoryAllocation
     {
-        CategoryId = req.CategoryId,
-        BudgetedAmount = req.BudgetedAmount,
-        Month = req.Month,
-        Year = req.Year
+        CategoryId = rec.CategoryId,
+        BudgetedAmount = rec.BudgetedAmount,
+        Month = rec.Month,
+        Year = rec.Year
     };
 
     db.Allocations.Add(allocation);
     await db.SaveChangesAsync();
-    return Results.Created($"/categories/{req.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
+    return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
 });
 
 // Apply EF Core migrations at startup so the database schema is up to date.
@@ -158,8 +160,3 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
-// Request DTOs for POST endpoints
-public sealed record CreateUserRequest(string Name, string Email);
-public sealed record CreateCategoryRequest(string Name, int UserId);
-public sealed record CreateAccountRequest(string Name);
-public sealed record CreateCategoryAllocationRequest(int CategoryId, decimal BudgetedAmount, int Month, int Year);

@@ -34,6 +34,20 @@ public static class MauiProgram
 			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
 			return new CategoriesService(http);
 		});
+
+		// LLM-Dev: Account management service registration (funnel writes via API)
+		builder.Services.AddSingleton(sp =>
+		{
+			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
+			return new WNAB.Logic.AccountManagementService(http);
+		});
+
+		// LLM-Dev: User management service registration (POST to /users)
+		builder.Services.AddSingleton(sp =>
+		{
+			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
+			return new WNAB.Logic.UserManagementService(http);
+		});
 		builder.Services.AddTransient<CategoriesViewModel>();
 		builder.Services.AddTransient<CategoriesPage>();
 
