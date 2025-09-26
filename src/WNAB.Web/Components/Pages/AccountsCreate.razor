@@ -1,17 +1,23 @@
 @page "/accounts/create"
-@inject IHttpClientFactory ClientFactory
+@inject AccountManagementService AccountsService
 
 <h1>Create Account</h1>
 
-<div class="mb-3">
-    <label>Name</label>
-    <input class="form-control" @bind-value="_name" />
-</div>
-<div class="mb-3">
-    <label>User Id</label>
-    <input class="form-control" type="number" @bind-value="_userId" />
-</div>
-<button class="btn btn-primary" @onclick="Create">Create</button>
+<EditForm Model="this" OnValidSubmit="Create">
+    <div class="row g-3 responsive-panel">
+        <div class="col-12 col-md-6">
+            <label class="form-label">Name</label>
+            <input class="form-control" @bind-value="_name" required />
+        </div>
+        <div class="col-12 col-md-6">
+            <label class="form-label">User Id</label>
+            <input class="form-control" type="number" @bind-value="_userId" required />
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Create</button>
+        </div>
+    </div>
+</EditForm>
 
 @if (!string.IsNullOrWhiteSpace(_result))
 {
@@ -33,10 +39,10 @@
         _result = _error = null;
         try
         {
-            var client = ClientFactory.CreateClient("wnab-api");
-            var url = $"/users/accounts/create?name={Uri.EscapeDataString(_name ?? string.Empty)}&userId={_userId}";
-            using var resp = await client.GetAsync(url);
-            _result = await resp.Content.ReadAsStringAsync();
+            // LLM-Dev (touched): Use service to build DTO and POST for the user.
+            var record = AccountManagementService.CreateAccountRecord(_name ?? string.Empty);
+            var id = await AccountsService.CreateAccountAsync(_userId, record);
+            _result = $"Created account with Id {id}";
         }
         catch (Exception ex)
         {
