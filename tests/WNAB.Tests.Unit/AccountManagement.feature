@@ -1,0 +1,23 @@
+Feature: Account Management
+
+  In order to track where my money is stored
+  As a user of the WNAB system
+  I want to create financial accounts for a user
+
+  # LLM-Dev: Step definitions pending. Will rely on user creation + account creation steps.
+
+  # LLM-Dev: Removed Background that cleared all users. Each scenario should rely on test isolation just like TransactionEntry.feature.
+  # LLM-Dev: New step phrases introduced: "Given the following user", "the following account(s) for user", and "When I create the user and related accounts".
+
+  Scenario: Create a user and a checking account
+    Given the following user
+      | FirstName | LastName | Email                  |
+      | Bob       | Johnson  | bob.j@example.io       |
+    And the following account for user "bob.j@example.io"
+      | AccountName      | AccountType | OpeningBalance |
+      | EverydayChecking | bank        | 1500.00        |
+    When I create the user and related accounts
+    Then the user "bob.j@example.io" should have the following accounts
+      | AccountName      | AccountType | CachedBalance |
+      | EverydayChecking | bank        | 1500.00       |
+

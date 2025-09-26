@@ -1,25 +1,13 @@
-using System;
-using System.Linq;
-using Reqnroll;
-using Shouldly;
+using WNAB.Logic.Interfaces;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using WNAB.Logic.Interfaces;
 using WNAB.Logic.ViewModels;
 
 namespace WNAB.Tests.Unit
 {
-    [Binding]
-    public class TransactionEntryStepDefinitions
+    public partial class StepDefinitions
     {
-        private readonly ScenarioContext context;
-        private readonly ITransactionEntryService transactionEntryService;
-
-        public TransactionEntryStepDefinitions(ScenarioContext context)
-        {
-            this.context = context;
-            this.transactionEntryService = new TransactionEntryService();
-        }
+        private readonly ITransactionEntryService transactionEntryService = new TransactionEntryService();
 
         [Given("the following transaction")]
         public void GivenTheFollowingTransaction(DataTable dataTable)

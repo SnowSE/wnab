@@ -1,0 +1,40 @@
+using System.Net.Http.Json;
+using WNAB.Logic.Data;
+
+namespace WNAB.Logic;
+
+public class AccountManagementService
+{
+	private readonly HttpClient _http;
+
+	/// <summary>
+	/// Create the service with an HttpClient already configured with BaseAddress of the API (e.g. https://localhost:7077/).
+	public AccountManagementService(HttpClient http)
+	{
+		_http = http ?? throw new ArgumentNullException(nameof(http));
+	}
+
+	public static AccountRecord CreateAccountRecord(string name)
+	{
+		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name required", nameof(name));
+		return new AccountRecord(name);
+	}
+
+	/// <summary>
+	/// Create an account for a specific user by POSTing to the API.
+	/// Returns the newly created account Id on success.
+	/// </summary>
+	public async Task<int> CreateAccountAsync(int userId, AccountRecord record, CancellationToken ct = default)
+	{
+
+		// LLM-Dev: Use POST to the REST endpoint that accepts AccountRecord for a user.
+		var response = await _http.PostAsJsonAsync($"users/{userId}/accounts", record, ct);
+		response.EnsureSuccessStatusCode();
+
+		var created = await response.Content.ReadFromJsonAsync<IdResponse>(cancellationToken: ct);
+		if (created is null) throw new InvalidOperationException("API returned no content when creating account.");
+		return created.Id;
+	}
+
+	private sealed record IdResponse(int Id);
+}
