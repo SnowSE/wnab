@@ -1,5 +1,6 @@
 using System;
 using Reqnroll;
+using WNAB.Logic; // LLM-Dev: Use services to create DTO records
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -11,8 +12,16 @@ public partial class StepDefinitions
 	[Given(@"the following account for user ""(.*)""")]
 	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
 	{
-		// LLM-Dev: Parse single account row for specified user email (user must already be staged in context)
+		// LLM-Dev: Build AccountRecord with service; keep in-memory entity for assertions.
 		var row = dataTable.Rows.Single();
+		// LLM-Dev: Use static method; no HttpClient or service instance needed
+		var accountRecord = AccountManagementService.CreateAccountRecord(row["AccountName"]);
+		var recordKey = $"AccountRecords:{email.ToLower()}";
+		var stagedRecords = context.ContainsKey(recordKey) ? context.Get<List<AccountRecord>>(recordKey) : new List<AccountRecord>();
+		stagedRecords.Add(accountRecord);
+		context[recordKey] = stagedRecords;
+
+		// Mirror previous in-memory entity behavior for the scenario
 		var account = new Account
 		{
 			AccountName = row["AccountName"],
@@ -23,7 +32,6 @@ public partial class StepDefinitions
 			CreatedAt = DateTime.UtcNow,
 			UpdatedAt = DateTime.UtcNow
 		};
-		// Store a pending accounts list keyed by email
 		var key = $"Accounts:{email.ToLower()}";
 		var accounts = context.ContainsKey(key) ? context.Get<List<Account>>(key) : new List<Account>();
 		accounts.Add(account);
@@ -33,7 +41,7 @@ public partial class StepDefinitions
 	[When(@"I create the user and related accounts")]
 	public void WhenIcreatetheuserandrelatedaccounts()
 	{
-		// LLM-Dev: Assign user Id and link accounts (simple in-memory association)
+		// LLM-Dev: Assign user Id and link accounts (simple in-memory association). AccountRecord is informative only here.
 		var user = context.Get<User>("User");
 		var accountsKey = $"Accounts:{user.Email.ToLower()}";
 		var accounts = context.ContainsKey(accountsKey) ? context.Get<List<Account>>(accountsKey) : new List<Account>();

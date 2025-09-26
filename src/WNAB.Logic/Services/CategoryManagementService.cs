@@ -22,7 +22,7 @@ public class CategoryManagementService
     /// <summary>
     /// Creates a <see cref="CategoryRecord"/> DTO from inputs.
     /// </summary>
-    public CategoryRecord CreateCategoryRecord(string name, int userId)
+    public static CategoryRecord CreateCategoryRecord(string name, int userId)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required", nameof(name));
         if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId), "UserId must be positive.");
@@ -43,4 +43,5 @@ public class CategoryManagementService
         if (created is null) throw new InvalidOperationException("API returned no content when creating category.");
         return created.Id;
     }
+
 }

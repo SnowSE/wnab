@@ -1,5 +1,6 @@
 using System;
 using Reqnroll;
+using WNAB.Logic; // LLM-Dev: Use services to create DTO records
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -19,8 +20,14 @@ public partial class StepDefinitions
 	[Given(@"the following user")]
 	public void Giventhefollowinguser(DataTable dataTable)
 	{
-		// LLM-Dev: Parse single-row data table into a transient User object (no persistence layer yet)
+		// LLM-Dev: Build a DTO using the service, but keep an in-memory entity for assertions.
 		var row = dataTable.Rows.Single();
+		var fullName = $"{row["FirstName"]} {row["LastName"]}";
+		// LLM-Dev: Build record via static method; no HttpClient or service instance needed
+		var userRecord = UserManagementService.CreateUserRecord(fullName, row["Email"]);
+		context["UserRecord"] = userRecord; // LLM-Dev: Store DTO for potential future use
+
+		// Maintain prior behavior: stage an in-memory User entity for the scenario
 		var user = new User
 		{
 			FirstName = row["FirstName"],
@@ -30,14 +37,13 @@ public partial class StepDefinitions
 			CreatedAt = DateTime.UtcNow,
 			UpdatedAt = DateTime.UtcNow
 		};
-		
-		context["User"] = user; // store the single pending user
+		context["User"] = user;
 	}
 
 	[When(@"I create the user")]
 	public void WhenICreateTheUser()
 	{
-		// LLM-Dev: Simulate persistence by moving the prepared user into Users list
+		// LLM-Dev: Simulate persistence; avoid HTTP. If a UserRecord exists, it informed this creation.
 		var user = context.Get<User>("User");
 		var users = context.ContainsKey("Users")
 			? context.Get<List<User>>("Users")

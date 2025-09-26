@@ -14,7 +14,7 @@ public class AccountManagementService
 		_http = http ?? throw new ArgumentNullException(nameof(http));
 	}
 
-	public AccountRecord CreateAccountRecord(string name)
+	public static AccountRecord CreateAccountRecord(string name)
 	{
 		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name required", nameof(name));
 		return new AccountRecord(name);
