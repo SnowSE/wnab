@@ -58,3 +58,15 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* LLM-Dev (v2): Responsive utility to prevent content from squishing at narrow widths */
+.responsive-panel {
+    max-width: 960px;
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .responsive-panel {
+        padding: 0 0.5rem;
+    }
+}
