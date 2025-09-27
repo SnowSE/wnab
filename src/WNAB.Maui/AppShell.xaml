@@ -19,4 +19,14 @@
         Route="Categories" />
 
 
+    <ShellContent
+        Title="Users"
+        ContentTemplate="{DataTemplate local:UsersPage}"
+        Route="Users" />
+
+    <ShellContent
+        Title="Accounts"
+        ContentTemplate="{DataTemplate local:AccountsPage}"
+        Route="Accounts" />
+
 </Shell>

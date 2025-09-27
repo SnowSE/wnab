@@ -1,5 +1,5 @@
 @page "/users"
-@inject IHttpClientFactory ClientFactory
+@inject UserManagementService UsersService
 
 <h1>Users</h1>
 
@@ -10,17 +10,31 @@
     <div class="alert alert-danger mt-3">@_error</div>
 }
 
-@if (_json is null)
-{
-    <p class="mt-3"><em>Loading...</em></p>
-}
-else
-{
-    <pre class="mt-3">@_json</pre>
-}
+<div class="mt-3 responsive-panel">
+    @if (_users is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else if (_users.Count == 0)
+    {
+        <p>No users found.</p>
+    }
+    else
+    {
+        <ul class="list-group">
+            @foreach (var u in _users)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>@u.FirstName @u.LastName</span>
+                    <small class="text-muted">@u.Email</small>
+                </li>
+            }
+        </ul>
+    }
+}</div>
 
 @code {
-    private string? _json;
+    private List<User>? _users;
     private string? _error;
 
     protected override async Task OnInitializedAsync() => await Load();
@@ -30,13 +44,14 @@ else
         _error = null;
         try
         {
-            var client = ClientFactory.CreateClient("wnab-api");
-            using var resp = await client.GetAsync("/users");
-            _json = await resp.Content.ReadAsStringAsync();
+            // LLM-Dev:v2 Use service list method to avoid HttpClient in UI.
+            _users = await UsersService.GetUsersAsync();
         }
         catch (Exception ex)
         {
             _error = ex.Message;
         }
     }
+
+    // LLM-Dev: List retrieval is done via UsersService.GetUsersAsync.
 }

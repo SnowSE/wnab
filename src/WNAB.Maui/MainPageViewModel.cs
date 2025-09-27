@@ -24,4 +24,16 @@ public partial class MainPageViewModel : ObservableObject
     {
         await _popupService.ShowAddCategoryAsync();
     }
+
+    [RelayCommand]
+    private async Task OpenAddUser()
+    {
+        await _popupService.ShowAddUserAsync();
+    }
+
+    [RelayCommand]
+    private async Task OpenAddAccount()
+    {
+        await _popupService.ShowAddAccountAsync();
+    }
 }

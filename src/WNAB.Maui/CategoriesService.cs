@@ -1,30 +1,6 @@
-using System.Net.Http.Json;
-
+// LLM-Dev:v2 This file is deprecated; use WNAB.Logic.CategoryManagementService instead.
+// Kept temporarily to avoid breaking other branches; no shipping code should depend on this.
 namespace WNAB.Maui;
 
-public interface ICategoriesService
-{
-    Task<IReadOnlyList<CategoryItem>> GetCategoriesAsync(CancellationToken ct = default);
-}
-
-public sealed class CategoriesService : ICategoriesService
-{
-    private readonly HttpClient _http;
-
-    public CategoriesService(HttpClient http)
-    {
-        _http = http;
-    }
-
-    public async Task<IReadOnlyList<CategoryItem>> GetCategoriesAsync(CancellationToken ct = default)
-    {
-        var resp = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct) ?? new();
-        return resp.Select(c => new CategoryItem(c.Id, c.Name ?? string.Empty)).ToList();
-    }
-
-    private sealed class CategoryDto
-    {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-    }
-}
+[Obsolete("Use WNAB.Logic.CategoryManagementService instead.")]
+public interface ICategoriesService { }

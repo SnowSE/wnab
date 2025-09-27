@@ -31,6 +31,16 @@
                 Text="Add Category"
                 Command="{Binding OpenAddCategoryCommand}"
                 HorizontalOptions="Fill" />
+
+            <Button
+                Text="Add User"
+                Command="{Binding OpenAddUserCommand}"
+                HorizontalOptions="Fill" />
+
+            <Button
+                Text="Add Account"
+                Command="{Binding OpenAddAccountCommand}"
+                HorizontalOptions="Fill" />
         </VerticalStackLayout>
     </ScrollView>
 

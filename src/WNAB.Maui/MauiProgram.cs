@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using CommunityToolkit.Maui;
+using WNAB.Logic; // LLM-Dev: Use shared Logic services in MAUI too
 
 namespace WNAB.Maui;
 
@@ -26,30 +27,33 @@ public static class MauiProgram
 		builder.Services.AddTransient<NewTransactionPopup>();
 		builder.Services.AddTransient<AddCategoryViewModel>();
 		builder.Services.AddTransient<AddCategoryPopup>();
+		builder.Services.AddTransient<AddUserViewModel>();
+		builder.Services.AddTransient<AddUserPopup>();
+		builder.Services.AddTransient<AddAccountViewModel>();
+		builder.Services.AddTransient<AddAccountPopup>();
 		builder.Services.AddTransient<MainPage>();
 
-		// LLM-Dev: Categories feature DI wiring (hardcoded base URL)
-		builder.Services.AddSingleton<ICategoriesService>(sp =>
+		// LLM-Dev:v2 Centralize base root for MAUI API calls. Using a single named HttpClient helps keep base consistent.
+		builder.Services.AddHttpClient("wnab-api", client =>
 		{
-			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
-			return new CategoriesService(http);
+			// You can switch this to Aspire discovery in AppHost or read from config.
+			client.BaseAddress = new Uri("https://localhost:7077/");
 		});
 
-		// LLM-Dev: Account management service registration (funnel writes via API)
-		builder.Services.AddSingleton(sp =>
-		{
-			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
-			return new WNAB.Logic.AccountManagementService(http);
-		});
+		// Use the shared Logic services with the same named client
+		builder.Services.AddSingleton(sp => new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton(sp => new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton(sp => new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton(sp => new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
-		// LLM-Dev: User management service registration (POST to /users)
-		builder.Services.AddSingleton(sp =>
-		{
-			var http = new HttpClient { BaseAddress = new Uri("https://localhost:7077/") };
-			return new WNAB.Logic.UserManagementService(http);
-		});
+		// ViewModels/Pages
 		builder.Services.AddTransient<CategoriesViewModel>();
 		builder.Services.AddTransient<CategoriesPage>();
+		builder.Services.AddTransient<UsersViewModel>();
+		builder.Services.AddTransient<UsersPage>();
+        // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
+        builder.Services.AddTransient<AccountsViewModel>();
+        builder.Services.AddTransient<AccountsPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();

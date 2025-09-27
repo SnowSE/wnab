@@ -2,22 +2,24 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:behaviors="clr-namespace:WNAB.Maui.Behaviors"
-             x:Class="WNAB.Maui.CategoriesPage"
-             Title="Categories">
+             x:Class="WNAB.Maui.UsersPage"
+             Title="Users">
     <ContentPage.Behaviors>
-        <!-- LLM-Dev:v3 Use the shared OnAppearingOnceBehavior and correct LoadCommand name -->
+        <!-- LLM-Dev:v3 MVVM Toolkit generates LoadCommand for [RelayCommand] async methods -->
         <behaviors:OnAppearingOnceBehavior Command="{Binding LoadCommand}" />
     </ContentPage.Behaviors>
     <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Categories}">
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Users}">
             <CollectionView.EmptyView>
-                <Label Text="No categories yet." HorizontalOptions="Center" VerticalOptions="Center" />
+                <Label Text="No users yet." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <HorizontalStackLayout Padding="8,6">
-                        <Label Text="{Binding Name}" FontSize="16" />
+                    <HorizontalStackLayout Padding="8,6" Spacing="12">
+                        <Label Text="{Binding First}" FontAttributes="Bold" />
+                        <Label Text="{Binding Last}" />
+                        <Label Text="{Binding Email}" TextColor="Gray" />
                     </HorizontalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
