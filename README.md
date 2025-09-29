@@ -40,6 +40,7 @@ The application is composed of several key modules:
   /WNAB.API             # ASP.NET Core Web API
   /WNAB.Logic           # Shared business logic, models, contexts
   /WNAB.Plaid           # Plaid integration services
+  /WNAB.Apphost        # hosts web and api
 /tests
   /WNAB.Tests.Unit      # Unit tests
   /WNAB.Tests.Integration # Integration tests
