@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Reqnroll;
 using WNAB.Logic; // LLM-Dev: Use services to create DTO records
 using WNAB.Logic.Data;
@@ -8,60 +9,73 @@ namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
-
 	[Given(@"the following account for user ""(.*)""")]
 	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
 	{
-		// LLM-Dev: Build AccountRecord with service; keep in-memory entity for assertions.
+		// LLM-Dev:v2 Build AccountRecord and stage only the record and raw row data for later creation.
 		var row = dataTable.Rows.Single();
-		// LLM-Dev: Use static method; no HttpClient or service instance needed
+		// LLM-Dev:v2 Use static method; no HttpClient or service instance needed
 		var accountRecord = AccountManagementService.CreateAccountRecord(row["AccountName"]);
 		var recordKey = $"AccountRecords:{email.ToLower()}";
 		var stagedRecords = context.ContainsKey(recordKey) ? context.Get<List<AccountRecord>>(recordKey) : new List<AccountRecord>();
 		stagedRecords.Add(accountRecord);
 		context[recordKey] = stagedRecords;
 
-		// Mirror previous in-memory entity behavior for the scenario
-		var account = new Account
+		// LLM-Dev:v2 Stage full row data for later entity creation in a When-step (no extra class)
+		var rowsKey = $"StagedAccountRows:{email.ToLower()}";
+		var stagedRows = context.ContainsKey(rowsKey)
+			? context.Get<List<Dictionary<string, string>>>(rowsKey)
+			: new List<Dictionary<string, string>>();
+		stagedRows.Add(new Dictionary<string, string>
 		{
-			AccountName = row["AccountName"],
-			AccountType = row["AccountType"],
-			CachedBalance = decimal.Parse(row["OpeningBalance"]),
-			CachedBalanceDate = DateTime.UtcNow,
-			IsActive = true,
-			CreatedAt = DateTime.UtcNow,
-			UpdatedAt = DateTime.UtcNow
-		};
-		var key = $"Accounts:{email.ToLower()}";
-		var accounts = context.ContainsKey(key) ? context.Get<List<Account>>(key) : new List<Account>();
-		accounts.Add(account);
-		context[key] = accounts;
+			["AccountName"] = row["AccountName"],
+			["AccountType"] = row["AccountType"],
+			["OpeningBalance"] = row["OpeningBalance"],
+		});
+		context[rowsKey] = stagedRows;
 	}
 
-	[When(@"I create the user and related accounts")]
-	public void WhenIcreatetheuserandrelatedaccounts()
+	// LLM-Dev:v3 Add Given alias so this binds when "And" inherits Given in the feature
+	[Given(@"I create the accounts")]
+	[When(@"I create the accounts")]
+	public void WhenICreateTheAccounts()
 	{
-		// LLM-Dev: Assign user Id and link accounts (simple in-memory association). AccountRecord is informative only here.
+		// LLM-Dev:v2 Create Account entities from staged rows for the current user; reuse user creation step if needed.
+		if (!context.ContainsKey("User"))
+		{
+			// Reuse the usermanagement step within this partial class
+			WhenICreateTheUser();
+		}
 		var user = context.Get<User>("User");
-		var accountsKey = $"Accounts:{user.Email.ToLower()}";
+		var emailKey = user.Email.ToLower();
+		var rowsKey = $"StagedAccountRows:{emailKey}";
+		var stagedRows = context.ContainsKey(rowsKey)
+			? context.Get<List<Dictionary<string, string>>>(rowsKey)
+			: new List<Dictionary<string, string>>();
+		var accountsKey = $"Accounts:{emailKey}";
 		var accounts = context.ContainsKey(accountsKey) ? context.Get<List<Account>>(accountsKey) : new List<Account>();
-		int nextAccountId = 1;
-		foreach (var acct in accounts)
+		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
+		foreach (var r in stagedRows)
 		{
-			acct.Id = nextAccountId++;
-			acct.UserId = user.Id == 0 ? 1 : user.Id; // ensure user has Id
-			acct.User = user;
+			var acct = new Account
+			{
+				Id = nextAccountId++,
+				AccountName = r["AccountName"],
+				AccountType = r["AccountType"],
+				CachedBalance = decimal.Parse(r["OpeningBalance"]),
+				CachedBalanceDate = DateTime.UtcNow,
+				IsActive = true,
+				CreatedAt = DateTime.UtcNow,
+				UpdatedAt = DateTime.UtcNow,
+				UserId = user.Id,
+				User = user
+			};
+			accounts.Add(acct);
 		}
+		context[accountsKey] = accounts;
 		user.Accounts = accounts;
-		if (user.Id == 0) user.Id = 1; // ensure user persists with Id
-		// Ensure user list contains this user
-		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
-		if (!users.Any(u => u.Email.Equals(user.Email, StringComparison.OrdinalIgnoreCase)))
-		{
-			users.Add(user);
-			context["Users"] = users;
-		}
 	}
+
 
 	[Then(@"the user ""(.*)"" should have the following accounts")]
 	public void Thentheusershouldhavethefollowingaccounts(string email, DataTable dataTable)
@@ -83,5 +97,7 @@ public partial class StepDefinitions
 			}
 		}
 	}
+
+
 
 }

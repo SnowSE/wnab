@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Reqnroll;
 using WNAB.Logic; // LLM-Dev: Use services to create DTO records
 using WNAB.Logic.Data;
@@ -9,49 +10,65 @@ namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
+	[Given(@"the created user")]
+	public void Giventhecreateduser(DataTable dataTable)
+	{
+		// LLM-Dev:v3 Gherkin-callable hybrid step to create a user directly from the table.
+		if (dataTable == null) throw new ArgumentNullException(nameof(dataTable));
+		var row = dataTable.Rows.Single();
+		// Support either a single "Name" column or separate FirstName/LastName columns.
+		var name = dataTable.Header.Contains("Name")
+			? row["Name"]
+			: $"{row["FirstName"]} {row["LastName"]}";
+		var email = row["Email"];
+		// Stage a DTO and delegate to existing creation logic for consistency.
+		var userRecord = UserManagementService.CreateUserRecord(name, email);
+		context["UserRecord"] = userRecord;
+		WhenICreateTheUser();
+	}
 
 	[Given(@"the system has no existing users")]
 	public void Giventhesystemhasnoexistingusers(DataTable _)
 	{
-		// LLM-Dev: Initialize empty user list for scenario isolation
+		// LLM-Dev:v2 Initialize empty user list for scenario isolation
 		context["Users"] = new List<User>();
 	}
 
 	[Given(@"the following user")]
 	public void Giventhefollowinguser(DataTable dataTable)
 	{
-		// LLM-Dev: Build a DTO using the service, but keep an in-memory entity for assertions.
+		// LLM-Dev:v2 Build a DTO using the service and stage only the record in context.
 		var row = dataTable.Rows.Single();
 		var fullName = $"{row["FirstName"]} {row["LastName"]}";
-		// LLM-Dev: Build record via static method; no HttpClient or service instance needed
+		// LLM-Dev:v2 Build record via static method; no HttpClient or service instance needed
 		var userRecord = UserManagementService.CreateUserRecord(fullName, row["Email"]);
-		context["UserRecord"] = userRecord; // LLM-Dev: Store DTO for potential future use
-
-		// Maintain prior behavior: stage an in-memory User entity for the scenario
-		var user = new User
-		{
-			FirstName = row["FirstName"],
-			LastName = row["LastName"],
-			Email = row["Email"],
-			IsActive = true,
-			CreatedAt = DateTime.UtcNow,
-			UpdatedAt = DateTime.UtcNow
-		};
-		context["User"] = user;
+		context["UserRecord"] = userRecord; // LLM-Dev:v2 Store DTO; entity will be created during When
 	}
 
 	[When(@"I create the user")]
 	public void WhenICreateTheUser()
 	{
-		// LLM-Dev: Simulate persistence; avoid HTTP. If a UserRecord exists, it informed this creation.
-		var user = context.Get<User>("User");
-		var users = context.ContainsKey("Users")
-			? context.Get<List<User>>("Users")
-			: new List<User>();
+		// LLM-Dev:v2 Create a User entity from the staged UserRecord and persist it in scenario context.
+		var record = context.Get<UserRecord>("UserRecord");
+		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
+		// Derive first/last name from record.Name (first token = FirstName; remainder = LastName)
+		var parts = record.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		var firstName = parts.Length > 0 ? parts[0] : record.Name;
+		var lastName = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
+		var user = new User
+		{
+			FirstName = firstName,
+			LastName = lastName,
+			Email = record.Email,
+			IsActive = true,
+			CreatedAt = DateTime.UtcNow,
+			UpdatedAt = DateTime.UtcNow
+		};
 		// Assign a simple incremental Id
 		user.Id = users.Count + 1;
 		users.Add(user);
 		context["Users"] = users;
+		context["User"] = user; // LLM-Dev:v2 Expose created entity for subsequent steps
 	}
 
 	[Then(@"I should have the following user in the system")]

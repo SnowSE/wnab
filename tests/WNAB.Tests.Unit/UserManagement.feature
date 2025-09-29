@@ -17,3 +17,11 @@ Feature: User Management
     Then I should have the following user in the system
       | FirstName | LastName | Email                  | IsActive |
       | Alice     | Smith    | alice.smith@example.io | true     |
+
+  Scenario: Create a user directly via Given
+    Given the created user
+      | FirstName | LastName | Email                 |
+      | Henry     | Jones    | henry.jones@example.io |
+    Then I should have the following user in the system
+      | FirstName | LastName | Email                  | IsActive |
+      | Henry     | Jones    | henry.jones@example.io | true     |

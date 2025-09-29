@@ -7,10 +7,10 @@ Feature: Category Allocation
   # LLM-Dev: Step definitions pending. Requires steps for creating categories and allocations.
 
   # LLM-Dev: Removed Background that cleared all users. Aligning with TransactionEntry.feature approach (scenarios declare only the data they need).
-  # LLM-Dev: New step phrases: "Given the following user", "the following category/categories for user", and "When I allocate the following amounts".
+  # LLM-Dev:v2 New step phrases: "Given the created user", "the following category/categories for user", and "When I allocate the following amounts".
 
   Scenario: Create user, category, and allocate budget for current month
-    Given the following user
+    Given the created user
       | FirstName | LastName | Email                |
       | Carol     | Wang     | carol.w@example.io   |
     And the following category for user "carol.w@example.io"
@@ -24,7 +24,7 @@ Feature: Category Allocation
       | Groceries | 9     | 2025 | 400.00         |
 
   Scenario: Multiple allocations across months
-    Given the following user
+    Given the created user
       | FirstName | LastName | Email                |
       | Dana      | Lee      | dana.lee@example.io  |
     And the following category for user "dana.lee@example.io"
@@ -42,7 +42,7 @@ Feature: Category Allocation
       | Utilities | 10    | 2025 | 130.00         |
 
   Scenario: Allocate budget to multiple categories
-    Given the following user
+    Given the created user
       | FirstName | LastName | Email                 |
       | Fiona     | Patel    | fiona.p@example.io    |
     And the following categories for user "fiona.p@example.io"
