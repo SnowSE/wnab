@@ -1,3 +1,5 @@
+[Project Board](https://github.com/orgs/SnowSE/projects/38)
+
 # WNAB - We Need a Budget
 
 A modern budget tracking application that connects to bank services to help users better track their expenditures and manage their finances. Inspired by YNAB (You Need A Budget).
