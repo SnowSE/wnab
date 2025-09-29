@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WNAB.Maui.AccountsPage"
+             Title="Accounts">
+    <!-- LLM-Dev:v4 Accounts page requires a UserId before loading; removed auto-load behavior so loading is manual via the Load button. -->
+    <VerticalStackLayout Padding="16" Spacing="12">
+        <Grid ColumnDefinitions="Auto,* ,Auto" ColumnSpacing="8" VerticalOptions="Center">
+            <Label Text="User Id:" VerticalOptions="Center" />
+            <Entry Grid.Column="1" Text="{Binding UserId}" Keyboard="Numeric" />
+            <!-- LLM-Dev:v3 See note above about LoadCommand naming -->
+            <Button Grid.Column="2" Text="Load" Command="{Binding LoadCommand}" />
+        </Grid>
+
+        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        <CollectionView ItemsSource="{Binding Items}">
+            <CollectionView.EmptyView>
+                <Label Text="No accounts." HorizontalOptions="Center" VerticalOptions="Center" />
+            </CollectionView.EmptyView>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid ColumnDefinitions="*,Auto,Auto" Padding="8,6">
+                        <Label Text="{Binding Name}" />
+                        <Label Grid.Column="1" Text="{Binding Type}" TextColor="Gray" />
+                        <Label Grid.Column="2" Text="{Binding Balance}" />
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

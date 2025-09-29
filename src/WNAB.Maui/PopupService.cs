@@ -32,4 +32,24 @@ internal class PopupService : IPopupService
             await page.ShowPopupAsync(popup);
         }
     }
+
+    public async Task ShowAddUserAsync()
+    {
+        var popup = _services.GetRequiredService<AddUserPopup>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
+    }
+
+    public async Task ShowAddAccountAsync()
+    {
+        var popup = _services.GetRequiredService<AddAccountPopup>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
+    }
 }

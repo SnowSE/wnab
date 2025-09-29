@@ -16,7 +16,7 @@
         </Grid>
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" Command="{Binding CancelCommand}" />
-            <!-- <Button Text="Save" Command="{Binding SaveCommand}" /> -->
+            <Button Text="Save" Command="{Binding SaveCommand}" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>
