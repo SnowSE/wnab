@@ -35,6 +35,8 @@ public partial class StepDefinitions
 		context[rowsKey] = stagedRows;
 	}
 
+	// LLM-Dev:v3 Add Given alias so this binds when "And" inherits Given in the feature
+	[Given(@"I create the accounts")]
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
