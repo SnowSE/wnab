@@ -7,6 +7,9 @@ namespace WNAB.Tests.Unit
 {
     public partial class StepDefinitions
     {
+        // LLM-Dev: Updated to use refactored service that bridges to production TransactionManagementService
+        // For pure unit tests, uses parameterless constructor (no API calls)
+        // For integration tests, could be injected with real TransactionManagementService
         private readonly ITransactionEntryService transactionEntryService = new TransactionEntryService();
 
         [Given("the following transaction")]
@@ -21,6 +24,7 @@ namespace WNAB.Tests.Unit
         {
             var transactionEntryVM = context.Get<TransactionEntryViewModel>("Transaction");
 
+            // LLM-Dev: Now uses production logic via refactored TransactionEntryService
             var processedTransaction = transactionEntryService.AddTransaction(transactionEntryVM);
             
             context["Transaction"] = processedTransaction;
@@ -48,8 +52,10 @@ namespace WNAB.Tests.Unit
             {
                 Amount = decimal.Parse(row["Amount"].ToString()),
                 CategoryName = row["Category"].ToString()
+                // LLM-Dev: CategoryId now gets set automatically by the refactored service
             }).ToList();
             
+            // LLM-Dev: Now uses production logic that properly maps CategoryName to CategoryId
             var updatedTransaction = transactionEntryService.AddTransactionSplits(transactionEntryVM, splits);
             
             context["Transaction"] = updatedTransaction;
@@ -78,6 +84,8 @@ namespace WNAB.Tests.Unit
                 
                 actualSplit.Amount.ShouldBe(expectedSplit.Amount);
                 actualSplit.CategoryName.ShouldBe(expectedSplit.Category);
+                // LLM-Dev: Can now also validate CategoryId is properly set
+                actualSplit.CategoryId.ShouldBeGreaterThan(0);
             }
         }
     }
