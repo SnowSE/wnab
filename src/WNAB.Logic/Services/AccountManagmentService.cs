@@ -37,4 +37,12 @@ public class AccountManagementService
 	}
 
 	private sealed record IdResponse(int Id);
+
+	// LLM-Dev:v2 Fetch accounts for a given user (UI should call this rather than creating HttpClient).
+	public async Task<List<Account>> GetAccountsForUserAsync(int userId, CancellationToken ct = default)
+	{
+		if (userId <= 0) return new();
+		var list = await _http.GetFromJsonAsync<List<Account>>($"users/accounts?userId={userId}", ct);
+		return list ?? new();
+	}
 }

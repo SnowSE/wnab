@@ -44,4 +44,11 @@ public class UserManagementService
 	}
 
 	private sealed record UserCreatedResponse(int Id, string FirstName, string LastName, string Email);
+
+	// LLM-Dev:v2 Add list method so UI does not create HttpClients directly.
+	public async Task<List<User>> GetUsersAsync(CancellationToken ct = default)
+	{
+		var users = await _http.GetFromJsonAsync<List<User>>("users", ct);
+		return users ?? new();
+	}
 }
