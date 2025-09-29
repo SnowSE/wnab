@@ -17,7 +17,7 @@
 
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" Command="{Binding CloseCommand}" />
-            <Button Text="Create" Command="{Binding CreateAsyncCommand}" />
+            <Button Text="Create" Command="{Binding CreateCommand}" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>
