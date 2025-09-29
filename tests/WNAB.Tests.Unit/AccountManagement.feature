@@ -7,16 +7,16 @@ Feature: Account Management
   # LLM-Dev: Step definitions pending. Will rely on user creation + account creation steps.
 
   # LLM-Dev: Removed Background that cleared all users. Each scenario should rely on test isolation just like TransactionEntry.feature.
-  # LLM-Dev: New step phrases introduced: "Given the following user", "the following account(s) for user", and "When I create the user and related accounts".
+  # LLM-Dev:v2 New step phrases introduced: "Given the created user", "the following account(s) for user", and "When I create the user and related accounts".
 
   Scenario: Create a user and a checking account
-    Given the following user
+    Given the created user
       | FirstName | LastName | Email                  |
       | Bob       | Johnson  | bob.j@example.io       |
     And the following account for user "bob.j@example.io"
       | AccountName      | AccountType | OpeningBalance |
       | EverydayChecking | bank        | 1500.00        |
-    When I create the user and related accounts
+    And I create the accounts
     Then the user "bob.j@example.io" should have the following accounts
       | AccountName      | AccountType | CachedBalance |
       | EverydayChecking | bank        | 1500.00       |
