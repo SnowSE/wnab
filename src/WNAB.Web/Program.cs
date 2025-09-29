@@ -21,6 +21,8 @@ builder.Services.AddTransient<AccountManagementService>(sp =>
     new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddTransient<CategoryAllocationManagementService>(sp =>
     new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+builder.Services.AddTransient<TransactionManagementService>(sp =>
+    new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

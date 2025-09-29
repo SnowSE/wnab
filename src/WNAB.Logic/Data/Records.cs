@@ -5,3 +5,5 @@ public record UserRecord(string Name, string Email);
 public record CategoryRecord(string Name, int UserId);
 public record AccountRecord(string Name);
 public record CategoryAllocationRecord(int CategoryId, decimal BudgetedAmount, int Month, int Year);
+public record TransactionRecord(int AccountId, string Payee, string Description, decimal Amount, DateTime TransactionDate, List<TransactionSplitRecord> Splits);
+public record TransactionSplitRecord(int CategoryId, decimal Amount, string? Notes);
