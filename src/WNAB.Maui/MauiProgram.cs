@@ -62,6 +62,9 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+	var app = builder.Build();
+	// LLM-Dev:v6 expose ServiceProvider for ServiceHelper, to support parameterless page constructors
+	ServiceHelper.Services = app.Services;
+	return app;
 	}
 }

@@ -16,7 +16,6 @@
             Spacing="25">
             <Label
                 Text="{Binding UserDisplay}"
-                Style="{StaticResource Caption}"
                 TextColor="Gray"
                 HorizontalOptions="End"
                 AutomationId="SignedInIndicator" />

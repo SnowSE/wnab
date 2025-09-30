@@ -4,6 +4,7 @@ namespace WNAB.Maui;
 
 public partial class MainPage : ContentPage
 {
+    public MainPage() : this(ServiceHelper.GetService<MainPageViewModel>()) { }
     public MainPage(MainPageViewModel vm)
     {
         InitializeComponent();

@@ -30,10 +30,16 @@
 </div>
 
 @code {
-    // LLM-Dev:v1 Mimic MAUI: show a simple signed-in indicator and allow sign-out by clearing stored id.
+    // LLM-Dev:v2 Mimic MAUI: show a simple signed-in indicator and allow sign-out by clearing stored id.
+    // Also refresh on route changes via OnParametersSetAsync so UI updates after login/navigation.
     private string _userDisplay = "Not signed in";
 
     protected override async Task OnInitializedAsync()
+    {
+        await RefreshUser();
+    }
+
+    protected override async Task OnParametersSetAsync()
     {
         await RefreshUser();
     }
@@ -63,6 +69,7 @@
         catch
         {
             _userDisplay = "Not signed in";
+            StateHasChanged();
         }
     }
 }

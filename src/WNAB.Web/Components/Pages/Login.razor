@@ -41,5 +41,8 @@
 
         await ProtectedLocalStorage.SetAsync("userId", id);
         Message = "User ID saved.";
+        StateHasChanged();
+        // LLM-Dev:v2 After saving, navigate back to home to cause layout to re-render and pick up the new value
+        Nav.NavigateTo("/");
     }
 }
