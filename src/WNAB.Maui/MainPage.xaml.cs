@@ -4,9 +4,19 @@ namespace WNAB.Maui;
 
 public partial class MainPage : ContentPage
 {
+    public MainPage() : this(ServiceHelper.GetService<MainPageViewModel>()) { }
     public MainPage(MainPageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
+    }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is MainPageViewModel vm && vm.RefreshUserIdCommand.CanExecute(null))
+        {
+            await vm.RefreshUserIdCommand.ExecuteAsync(null);
+        }
     }
 }

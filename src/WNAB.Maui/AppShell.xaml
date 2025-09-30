@@ -29,4 +29,9 @@
         ContentTemplate="{DataTemplate local:AccountsPage}"
         Route="Accounts" />
 
+    <ShellContent
+        Title="Login"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="Login" />
+
 </Shell>
