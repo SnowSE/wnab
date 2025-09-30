@@ -3,10 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="WNAB.Maui.MainPage">
 
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Sign Out"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding SignOutCommand}" />
+    </ContentPage.ToolbarItems>
+
     <ScrollView>
         <VerticalStackLayout
             Padding="30,0"
             Spacing="25">
+            <Label
+                Text="{Binding UserDisplay}"
+                Style="{StaticResource Caption}"
+                TextColor="Gray"
+                HorizontalOptions="End"
+                AutomationId="SignedInIndicator" />
             <Image
                 Source="dotnet_bot.png"
                 HeightRequest="185"

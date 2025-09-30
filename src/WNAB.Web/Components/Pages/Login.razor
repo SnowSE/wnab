@@ -1,0 +1,45 @@
+@page "/login"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject NavigationManager Nav
+
+<h1>Login</h1>
+
+<EditForm Model="this" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+
+    <div class="mb-3">
+        <label class="form-label">User ID</label>
+        <InputText class="form-control" @bind-Value="UserId" />
+        <ValidationMessage For="() => UserId" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">Save</button>
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <span class="ms-3 text-success">@Message</span>
+    }
+</EditForm>
+
+@code {
+    // LLM-Dev:v1 Keep login simple: store a plain userId in ProtectedLocalStorage (client-side) to mimic MAUI SecureStorage.
+    [System.ComponentModel.DataAnnotations.Required]
+    public string? UserId { get; set; }
+
+    public string? Message { get; set; }
+
+    private async Task Save()
+    {
+        var id = (UserId ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Message = "Please enter a user ID.";
+            return;
+        }
+
+        await ProtectedLocalStorage.SetAsync("userId", id);
+        Message = "User ID saved.";
+    }
+}
