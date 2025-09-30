@@ -88,4 +88,14 @@ public class TransactionManagementService
         var transactions = await _http.GetFromJsonAsync<List<Transaction>>(url, ct);
         return transactions ?? new();
     }
+
+    // LLM-Dev v1: Helper to convert ViewModel to DTO for simplified service usage
+    /// <summary>
+    /// Converts a ViewModel with splits to a TransactionRecord DTO.
+    /// </summary>
+    public static TransactionRecord FromViewModel(int accountId, string payee, string memo, 
+        decimal amount, DateTime transactionDate, IEnumerable<TransactionSplitRecord> splits)
+    {
+        return CreateTransactionRecord(accountId, payee, memo, amount, transactionDate, splits.ToList());
+    }
 }
