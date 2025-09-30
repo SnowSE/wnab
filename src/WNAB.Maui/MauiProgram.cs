@@ -54,6 +54,9 @@ public static class MauiProgram
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
         builder.Services.AddTransient<AccountsViewModel>();
         builder.Services.AddTransient<AccountsPage>();
+	// LLM-Dev:v5 Re-add Login page & VM registrations (ensures Shell can resolve via DI)
+	builder.Services.AddTransient<LoginViewModel>();
+	builder.Services.AddTransient<LoginPage>();
 
 #if DEBUG
 		builder.Logging.AddDebug();
