@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WNAB.Maui.LoginPage"
+             Title="Login">
+    <VerticalStackLayout Padding="24" Spacing="16">
+        <Label Text="Enter your User ID" />
+        <Entry Placeholder="User ID" Text="{Binding UserId}" />
+
+        <Button Text="Save"
+                Command="{Binding SaveUserIdCommand}" />
+    </VerticalStackLayout>
+</ContentPage>
