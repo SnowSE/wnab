@@ -3,6 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using CommunityToolkit.Maui;
 using WNAB.Logic; // LLM-Dev: Use shared Logic services in MAUI too
+#if WINDOWS
+using Microsoft.Extensions.Hosting; // for telemetry
+#endif
 
 namespace WNAB.Maui;
 
@@ -20,8 +23,11 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// DI registrations for MVVM
-		builder.Services.AddSingleton<IPopupService, PopupService>();
+		// Aspire Telemetry
+		builder.AddServiceDefaults();
+
+        // DI registrations for MVVM
+        builder.Services.AddSingleton<IPopupService, PopupService>();
 		builder.Services.AddTransient<MainPageViewModel>();
 		builder.Services.AddTransient<NewTransactionViewModel>();
 		builder.Services.AddTransient<NewTransactionPopup>();
@@ -37,7 +43,8 @@ public static class MauiProgram
 		builder.Services.AddHttpClient("wnab-api", client =>
 		{
 			// You can switch this to Aspire discovery in AppHost or read from config.
-			client.BaseAddress = new Uri("https://localhost:7077/");
+			//client.BaseAddress = new Uri("https://localhost:7077/");
+			client.BaseAddress = new("https+http://webapi");
 		});
 
 		// Use the shared Logic services with the same named client

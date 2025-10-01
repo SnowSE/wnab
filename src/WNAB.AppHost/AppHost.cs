@@ -17,5 +17,7 @@ var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
 builder.AddProject<Projects.WNAB_Web>("wnab-web")
     .WithReference(api);
     // .WithEnvironment("ApiBaseUrl", api.GetEndpoint("http"));
+builder.AddProject<Projects.WNAB_Maui>("maui")
+    .WithReference(db);
 
 builder.Build().Run();
