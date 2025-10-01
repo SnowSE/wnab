@@ -15,9 +15,11 @@ Scenario: Buy groceries
 		| CategoryName |
 		| Groceries    |
 	And the following transaction
-		| Date      | Payee   | Category  | Memo     | Amount |
-		| 9/10/2025 | Walmart | Groceries | Buy food | 150.00 |
-	When I enter the transaction
+		| Date      | Payee   | Memo     | Amount |
+		| 9/10/2025 | Walmart | Buy food | 150.00 |
+	When I enter the transaction with split
+		| Category  | Amount |
+		| Groceries | 150.00 |
 	Then I should have the following transaction entry
 		| TransactionDate | Amount | Memo     |
 		| 9/10/2025       | 150.00 | Buy food |
@@ -40,7 +42,7 @@ Scenario: Buy groceries and personal care
 	And the following transaction
 		| Date      | Payee   | Memo        | Amount |
 		| 9/10/2025 | Walmart | Walmart run | 150.00 |
-	When I enter the transaction splits
+	When I enter the transaction with split
 		| Category      | Amount |
 		| Groceries     | 100.00 |
 		| Personal Care | 50.00  |
