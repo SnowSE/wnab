@@ -151,6 +151,71 @@ app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabC
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
 });
 
+app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
+{
+    // Validate account exists
+    var account = await db.Accounts.FindAsync(rec.AccountId);
+    if (account is null) return Results.NotFound($"Account {rec.AccountId} not found");
+
+    // Create the transaction
+    var transaction = new Transaction
+    {
+        AccountId = rec.AccountId,
+        Payee = rec.Payee,
+        Description = rec.Description,
+        Amount = rec.Amount,
+        TransactionDate = rec.TransactionDate,
+        Account = account
+    };
+
+    db.Transactions.Add(transaction);
+    await db.SaveChangesAsync(); // Save to get transaction ID
+
+    // Create transaction splits
+    foreach (var splitRecord in rec.Splits)
+    {
+        var split = new TransactionSplit
+        {
+            TransactionId = transaction.Id,
+            CategoryId = splitRecord.CategoryId,
+            Amount = splitRecord.Amount,
+            Notes = splitRecord.Notes,
+            Transaction = transaction
+        };
+        db.TransactionSplits.Add(split);
+    }
+
+    await db.SaveChangesAsync();
+    return Results.Created($"/transactions/{transaction.Id}", transaction);
+});
+
+app.MapGet("/transactions", async (int? accountId, WnabContext db) =>
+{
+    var query = db.Transactions
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .Include(t => t.Account)
+        .AsNoTracking();
+
+    if (accountId.HasValue)
+        query = query.Where(t => t.AccountId == accountId.Value);
+
+    var transactions = await query.ToListAsync();
+    return Results.Ok(transactions);
+});
+
+app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabContext db) =>
+{
+    var transactions = await db.Transactions
+        .Where(t => t.AccountId == accountId)
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .AsNoTracking()
+        .ToListAsync();
+    
+    return Results.Ok(transactions);
+});
+
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
 {

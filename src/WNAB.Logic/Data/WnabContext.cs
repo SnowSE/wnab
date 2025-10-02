@@ -12,6 +12,7 @@ public class WnabContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<TransactionSplit> TransactionSplits => Set<TransactionSplit>();
     public DbSet<CategoryAllocation> Allocations => Set<CategoryAllocation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,6 +66,26 @@ public class WnabContext : DbContext
             entity.HasOne(e => e.Account)
                 .WithMany(a => a.Transactions)
                 .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // TransactionSplit entity configuration
+        modelBuilder.Entity<TransactionSplit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            entity.HasOne(e => e.Transaction)
+                .WithMany(t => t.TransactionSplits)
+                .HasForeignKey(e => e.TransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            // LLM-Dev:v2 Fix inverse navigation to avoid shadow FK (CategoryId1)
+            entity.HasOne(e => e.Category)
+                .WithMany(c => c.TransactionSplits)
+                .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
         });        
 

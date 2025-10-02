@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WNAB.Logic.Data;
@@ -11,9 +12,11 @@ using WNAB.Logic.Data;
 namespace WNAB.Logic.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
-    partial class WnabContextModelSnapshot : ModelSnapshot
+    [Migration("20250929194440_new-transaction")]
+    partial class newtransaction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -227,6 +230,9 @@ namespace WNAB.Logic.Data.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("CategoryId1")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -247,6 +253,8 @@ namespace WNAB.Logic.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("CategoryId1");
 
                     b.HasIndex("TransactionId");
 
@@ -348,10 +356,14 @@ namespace WNAB.Logic.Data.Migrations
             modelBuilder.Entity("WNAB.Logic.Data.TransactionSplit", b =>
                 {
                     b.HasOne("WNAB.Logic.Data.Category", "Category")
-                        .WithMany("TransactionSplits")
+                        .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("WNAB.Logic.Data.Category", null)
+                        .WithMany("TransactionSplits")
+                        .HasForeignKey("CategoryId1");
 
                     b.HasOne("WNAB.Logic.Data.Transaction", "Transaction")
                         .WithMany("TransactionSplits")
