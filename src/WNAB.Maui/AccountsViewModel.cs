@@ -7,9 +7,11 @@ using Microsoft.Maui.Storage;
 
 namespace WNAB.Maui;
 
+// LLM-Dev:v2 Added AddAccount command and IPopupService injection
 public partial class AccountsViewModel : ObservableObject
 {
     private readonly AccountManagementService _accounts;
+    private readonly IPopupService _popupService;
 
     public ObservableCollection<AccountItem> Items { get; } = new();
 
@@ -25,9 +27,10 @@ public partial class AccountsViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public AccountsViewModel(AccountManagementService accounts)
+    public AccountsViewModel(AccountManagementService accounts, IPopupService popupService)
     {
         _accounts = accounts;
+        _popupService = popupService;
     }
 
     // LLM-Dev: v1 Added initialization method to automatically load user session and accounts
@@ -105,6 +108,15 @@ public partial class AccountsViewModel : ObservableObject
         {
             await LoadAccountsAsync();
         }
+    }
+
+    // LLM-Dev:v2 Add command to open Add Account popup
+    [RelayCommand]
+    private async Task AddAccount()
+    {
+        await _popupService.ShowAddAccountAsync();
+        // Refresh the list after popup closes
+        await RefreshAsync();
     }
 }
 

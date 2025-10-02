@@ -3,6 +3,15 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="WNAB.Maui.AccountsPage"
              Title="Accounts">
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add Account"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding AddAccountCommand}"
+                     IsEnabled="{Binding IsLoggedIn}" />
+    </ContentPage.ToolbarItems>
+    
     <!-- LLM-Dev:v5 Updated to use automatic user session loading instead of manual user ID input -->
     <VerticalStackLayout Padding="16" Spacing="12">
         

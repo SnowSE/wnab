@@ -55,27 +55,16 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
+    // LLM-Dev:v4 Navigation commands to replace action buttons
     [RelayCommand]
-    private async Task OpenNewTransaction()
+    private async Task NavigateToCategories()
     {
-        await _popupService.ShowNewTransactionAsync();
+        await Shell.Current.GoToAsync("//Categories");
     }
 
     [RelayCommand]
-    private async Task OpenAddCategory()
+    private async Task NavigateToAccounts()
     {
-        await _popupService.ShowAddCategoryAsync();
-    }
-
-    [RelayCommand]
-    private async Task OpenAddUser()
-    {
-        await _popupService.ShowAddUserAsync();
-    }
-
-    [RelayCommand]
-    private async Task OpenAddAccount()
-    {
-        await _popupService.ShowAddAccountAsync();
+        await Shell.Current.GoToAsync("//Accounts");
     }
 }

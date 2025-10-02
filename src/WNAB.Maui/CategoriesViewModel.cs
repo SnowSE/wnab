@@ -8,9 +8,11 @@ namespace WNAB.Maui;
 
 // LLM-Dev: ViewModel for Categories page. Keeps UI logic out of the view (MVVM).
 // LLM-Dev:v4 Updated to follow AccountsViewModel pattern: get userId from SecureStorage and load user-specific categories
+// LLM-Dev:v5 Added AddCategory command to open popup from this page
 public sealed partial class CategoriesViewModel : ObservableObject
 {
     private readonly CategoryManagementService _service;
+    private readonly IPopupService _popupService;
 
     public ObservableCollection<CategoryItem> Categories { get; } = new();
 
@@ -26,9 +28,10 @@ public sealed partial class CategoriesViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public CategoriesViewModel(CategoryManagementService service)
+    public CategoriesViewModel(CategoryManagementService service, IPopupService popupService)
     {
         _service = service;
+        _popupService = popupService;
     }
 
     // LLM-Dev:v4 Added initialization method following AccountsViewModel pattern
@@ -113,6 +116,15 @@ public sealed partial class CategoriesViewModel : ObservableObject
     public async Task LoadAsync()
     {
         await LoadCategoriesAsync();
+    }
+
+    // LLM-Dev:v5 Add command to open Add Category popup
+    [RelayCommand]
+    private async Task AddCategory()
+    {
+        await _popupService.ShowAddCategoryAsync();
+        // Refresh the list after popup closes
+        await RefreshAsync();
     }
 }
 

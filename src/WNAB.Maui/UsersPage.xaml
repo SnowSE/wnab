@@ -8,6 +8,14 @@
         <!-- LLM-Dev:v3 MVVM Toolkit generates LoadCommand for [RelayCommand] async methods -->
         <behaviors:OnAppearingOnceBehavior Command="{Binding LoadCommand}" />
     </ContentPage.Behaviors>
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add User"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding AddUserCommand}" />
+    </ContentPage.ToolbarItems>
+    
     <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
         <CollectionView Grid.Row="1" ItemsSource="{Binding Users}">
