@@ -5,11 +5,15 @@
 
 <EditForm Model="this" OnValidSubmit="Create">
     <div class="row g-3 responsive-panel">
-        <div class="col-12 col-md-6">
-            <label class="form-label">Name</label>
-            <input class="form-control" @bind-value="_name" required />
+        <div class="col-12 col-md-4">
+            <label class="form-label">First Name</label>
+            <input class="form-control" @bind-value="_firstName" required />
         </div>
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-4">
+            <label class="form-label">Last Name</label>
+            <input class="form-control" @bind-value="_lastName" required />
+        </div>
+        <div class="col-12 col-md-4">
             <label class="form-label">Email</label>
             <input class="form-control" type="email" @bind-value="_email" required />
         </div>
@@ -30,7 +34,8 @@
 }
 
 @code {
-    private string? _name;
+    private string? _firstName;
+    private string? _lastName;
     private string? _email;
     private string? _result;
     private string? _error;
@@ -41,7 +46,7 @@
         try
         {
             // LLM-Dev (touched): Use service to create DTO and POST to API.
-            var record = UserManagementService.CreateUserRecord(_name ?? string.Empty, _email ?? string.Empty);
+            var record = UserManagementService.CreateUserRecord(_firstName ?? string.Empty, _lastName ?? string.Empty, _email ?? string.Empty);
             var id = await UsersService.CreateUserAsync(record);
             _result = $"Created user with Id {id}";
         }

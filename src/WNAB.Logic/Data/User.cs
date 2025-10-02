@@ -35,10 +35,8 @@ public class User
     {
         ArgumentNullException.ThrowIfNull(record);
         Email = record.Email;
-        var parts = (record.Name ?? string.Empty)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        FirstName = parts.Length > 0 ? parts[0] : record.Name;
-        LastName = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
+        FirstName = record.FirstName;
+        LastName = record.LastName;
         IsActive = true;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;

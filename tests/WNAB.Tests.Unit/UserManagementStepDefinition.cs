@@ -16,15 +16,13 @@ public partial class StepDefinitions
 		// Inputs (expected)
 		if (dataTable == null) throw new ArgumentNullException(nameof(dataTable));
 		var row = dataTable.Rows.Single();
-		var name = dataTable.Header.Contains("Name")
-			? row["Name"]
-			: $"{row["FirstName"]} {row["LastName"]}";
+		var firstname = row["FirstName"];
+		var lastname = row["LastName"];
 		var email = row["Email"];
 		// Act
-		var userRecord = UserManagementService.CreateUserRecord(name, email);
+		User user = new() { FirstName = firstname, LastName = lastname, Email = email};
 		// Store
-		context["UserRecord"] = userRecord;
-		WhenICreateTheUser();
+		context["User"] = user;
 	}
 
 	[Given(@"the system has no existing users")]
@@ -39,9 +37,10 @@ public partial class StepDefinitions
 	{
 		// Inputs (expected)
 		var row = dataTable.Rows.Single();
-		var fullName = $"{row["FirstName"]} {row["LastName"]}";
+		var firstName = row["FirstName"];
+		var lastName = row["LastName"];
 		// Act
-		var userRecord = UserManagementService.CreateUserRecord(fullName, row["Email"]);
+		var userRecord = UserManagementService.CreateUserRecord(firstName, lastName, row["Email"]);
 		// Store
 		context["UserRecord"] = userRecord;
 	}
