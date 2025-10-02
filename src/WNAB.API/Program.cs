@@ -45,6 +45,13 @@ app.MapGet("/categories", async (WnabContext db) =>
     return Results.Ok(categories);
 });
 
+// LLM-Dev:v4 Add endpoint to get categories for a specific user (following same pattern as accounts)
+app.MapGet("/users/categories", (int userId, WnabContext db) =>
+{
+    var categories = db.Categories.Where(c => c.UserId == userId && c.IsActive);
+    return Results.Ok(categories);
+});
+
 app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
