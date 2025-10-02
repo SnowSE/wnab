@@ -3,7 +3,7 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                x:Class="WNAB.Maui.AddUserPopup"
-               Color="MidnightBlue">
+               BackgroundColor="MidnightBlue">
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
         <Label Text="Add User" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
         <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">

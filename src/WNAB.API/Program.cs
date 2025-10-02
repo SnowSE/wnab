@@ -3,10 +3,43 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 using WNAB.API;
 using WNAB.Logic.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+// Configure JWT Bearer authentication with Keycloak
+var keycloakConfig = builder.Configuration.GetSection("Keycloak");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = keycloakConfig["Authority"];
+        options.Audience = keycloakConfig["Audience"];
+        options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = keycloakConfig.GetValue<bool>("ValidateAudience"),
+            ValidateIssuer = keycloakConfig.GetValue<bool>("ValidateIssuer"),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                context.Response.Headers.Append("Authentication-Failed", "true");
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Register user provisioning service
+builder.Services.AddScoped<WNAB.API.Services.UserProvisioningService>();
 
 // Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
 var connectionString = builder.Configuration.GetConnectionString("wnabdb")
@@ -34,37 +67,67 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
+// Enable authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/", () => "Hello World!");
 
-// Query endpoints
+// User info and provisioning endpoint
+app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, WnabContext db) =>
+{
+    var subjectId = context.User.FindFirst("sub")?.Value;
+    if (string.IsNullOrEmpty(subjectId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var email = context.User.FindFirst("email")?.Value ?? context.User.FindFirst("preferred_username")?.Value ?? "unknown@example.com";
+    var firstName = context.User.FindFirst("given_name")?.Value;
+    var lastName = context.User.FindFirst("family_name")?.Value;
+
+    var user = await provisioningService.GetOrCreateUserAsync(subjectId, email, firstName, lastName);
+
+    return Results.Ok(new
+    {
+        user.Id,
+        user.Email,
+        user.FirstName,
+        user.LastName,
+        user.KeycloakSubjectId,
+        user.IsActive
+    });
+}).RequireAuthorization();
+
+// Query endpoints - secured with authorization
 app.MapGet("/categories", async (WnabContext db) =>
 {
     var categories = await db.Categories
         .AsNoTracking()
         .ToListAsync();
     return Results.Ok(categories);
-});
+}).RequireAuthorization();
 
 app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
 		u.Id, u.FirstName, u.LastName, Accounts = u.Accounts.Select(a => new {a.AccountName,a.AccountType,a.CachedBalance})
 	}));
-});
+}).RequireAuthorization();
 
 app.MapGet("/users/accounts", (int userId, WnabContext db) =>
 {
     var Accounts = db.Accounts.Where((p) => p.UserId == userId);
     return Results.Ok(Accounts);
-});
+}).RequireAuthorization();
 
 app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 {
     var allocations = await db.Allocations
         .Where(a => a.CategoryId == categoryId)
-        .ToListAsync(); 
+        .ToListAsync();
         return Results.Ok(allocations);
-});
+}).RequireAuthorization();
 
 // Legacy create endpoints (GET) - kept for compatibility
 // app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
@@ -108,14 +171,14 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 //     return Results.Ok(allocation.Id);
 // });
 
-// New RESTful create endpoints (POST)
+// New RESTful create endpoints (POST) - secured with authorization
 app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
 {
     var user = new User { Email = rec.Email, FirstName = rec.Name, LastName = rec.Name };
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });
-});
+}).RequireAuthorization();
 
 app.MapPost("/categories", async (CategoryRecord rec, WnabContext db) =>
 {
@@ -123,7 +186,7 @@ app.MapPost("/categories", async (CategoryRecord rec, WnabContext db) =>
     db.Categories.Add(category);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{category.Id}", category);
-});
+}).RequireAuthorization();
 
 app.MapPost("/users/{userId}/accounts", async (int userId, AccountRecord rec, WnabContext db) =>
 {
@@ -134,7 +197,7 @@ app.MapPost("/users/{userId}/accounts", async (int userId, AccountRecord rec, Wn
     db.Accounts.Add(account);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{userId}/accounts/{account.Id}", new { account.Id });
-});
+}).RequireAuthorization();
 
 app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabContext db) =>
 {
@@ -149,7 +212,7 @@ app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabC
     db.Allocations.Add(allocation);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
-});
+}).RequireAuthorization();
 
 app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
 {
@@ -187,7 +250,7 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
 
     await db.SaveChangesAsync();
     return Results.Created($"/transactions/{transaction.Id}", transaction);
-});
+}).RequireAuthorization();
 
 app.MapGet("/transactions", async (int? accountId, WnabContext db) =>
 {
@@ -202,7 +265,7 @@ app.MapGet("/transactions", async (int? accountId, WnabContext db) =>
 
     var transactions = await query.ToListAsync();
     return Results.Ok(transactions);
-});
+}).RequireAuthorization();
 
 app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabContext db) =>
 {
@@ -212,9 +275,9 @@ app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabConte
         .ThenInclude(ts => ts.Category)
         .AsNoTracking()
         .ToListAsync();
-    
+
     return Results.Ok(transactions);
-});
+}).RequireAuthorization();
 
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())

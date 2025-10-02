@@ -1,17 +1,84 @@
+using WNAB.Web;
 using WNAB.Web.Components;
-using Microsoft.Extensions.Hosting; // LLM-Dev: For AddServiceDefaults extension
 using WNAB.Logic; // LLM-Dev: Register services that call the API
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // LLM-Dev: Enable Aspire service defaults (service discovery + resilience for HttpClient).
 builder.AddServiceDefaults();
 
+// Configure authentication with Keycloak
+var keycloakConfig = builder.Configuration.GetSection("Keycloak");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Cookie.Name = "wnab.auth";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+})
+.AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
+{
+    options.Authority = keycloakConfig["Authority"];
+    options.ClientId = keycloakConfig["ClientId"];
+    options.ClientSecret = keycloakConfig["ClientSecret"];
+    options.ResponseType = keycloakConfig["ResponseType"] ?? OpenIdConnectResponseType.Code;
+    options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
+    options.SaveTokens = keycloakConfig.GetValue<bool>("SaveTokens");
+    options.GetClaimsFromUserInfoEndpoint = keycloakConfig.GetValue<bool>("GetClaimsFromUserInfoEndpoint");
 
+    // Add scopes
+    options.Scope.Clear();
+    foreach (var scope in keycloakConfig.GetSection("Scopes").Get<string[]>() ?? new[] { "openid", "profile", "email" })
+    {
+        options.Scope.Add(scope);
+    }
+
+    // Map claims
+    options.TokenValidationParameters.NameClaimType = "preferred_username";
+    options.TokenValidationParameters.RoleClaimType = "realm_access.roles";
+
+    options.Events = new OpenIdConnectEvents
+    {
+        OnTokenValidated = context =>
+        {
+            // Additional claim processing if needed
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context =>
+        {
+            context.HandleResponse();
+            context.Response.Redirect($"/error?message={Uri.EscapeDataString(context.Exception.Message)}");
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+
+// Add HttpContextAccessor for accessing tokens
+builder.Services.AddHttpContextAccessor();
+
+// Register the authentication delegating handler
+builder.Services.AddTransient<AuthenticationDelegatingHandler>();
 
 // LLM-Dev:v2 Centralize base root: define ONE named HttpClient with the service-discovery base URI
 // and construct all Logic services with that named client via IHttpClientFactory.
-builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"));
+// Add the authentication handler to attach tokens to API requests
+builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"))
+    .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
 builder.Services.AddTransient<UserManagementService>(sp =>
     new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
@@ -40,11 +107,30 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Add authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Add login/logout endpoints
+app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+{
+    RedirectUri = "/"
+}, new[] { OpenIdConnectDefaults.AuthenticationScheme }));
+
+app.MapGet("/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+    {
+        RedirectUri = "/"
+    });
+    return Results.Redirect("/");
+});
 
 app.Run();

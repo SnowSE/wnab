@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add:*)",
+      "Bash(dotnet build)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(Select-String -Pattern \"App\\.razor|CS0246|Razor\" -Context 2)",
+      "Bash(dotnet msbuild:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
