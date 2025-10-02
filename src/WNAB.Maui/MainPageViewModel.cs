@@ -14,7 +14,7 @@ public partial class MainPageViewModel : ObservableObject
         _popupService = popupService;
     }
 
-    // LLM-Dev:v1 Add simple signed-in indicator sourced from SecureStorage
+    // LLM-Dev:v3 Updated to use SecureStorage directly like LoginViewModel
     [ObservableProperty]
     private string userDisplay = "Not signed in";
 
@@ -28,12 +28,12 @@ public partial class MainPageViewModel : ObservableObject
         }
         catch
         {
-            // If SecureStorage is unavailable or throws (e.g., device lock not set), degrade gracefully
+            // If SecureStorage is unavailable or throws, degrade gracefully
             UserDisplay = "Not signed in";
         }
     }
 
-    // LLM-Dev:v1 Sign-out just clears the stored userId; no server call since we only persist locally.
+    // LLM-Dev:v3 Updated to use SecureStorage directly for sign-out
     [RelayCommand]
     private async Task SignOut()
     {

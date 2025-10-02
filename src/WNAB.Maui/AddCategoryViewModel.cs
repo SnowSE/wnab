@@ -14,7 +14,15 @@ public partial class AddCategoryViewModel : ObservableObject
     private string name = string.Empty;
 
     [ObservableProperty]
-    private int userId;
+    private string userIdInput;
+
+    private int ConvertUserId()
+    {
+        int userId; 
+        if (!int.TryParse(userIdInput, out userId)) 
+            throw new Exception("User ID input was not a number");
+        return userId;
+    }
 
     public AddCategoryViewModel(CategoryManagementService categories)
     {
@@ -30,12 +38,13 @@ public partial class AddCategoryViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
+        var parseduserID = ConvertUserId();
         // Basic validation
-        if (string.IsNullOrWhiteSpace(Name) || UserId <= 0)
+        if (string.IsNullOrWhiteSpace(Name) || parseduserID <= 0)
             return;
 
         // Build DTO and send via service
-        var record = CategoryManagementService.CreateCategoryRecord(Name, UserId);
+        var record = CategoryManagementService.CreateCategoryRecord(Name, parseduserID);
         await _categories.CreateCategoryAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

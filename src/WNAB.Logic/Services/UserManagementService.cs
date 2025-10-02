@@ -52,4 +52,15 @@ public class UserManagementService
 		var users = await _http.GetFromJsonAsync<List<User>>("users", ct);
 		return users ?? new();
 	}
+
+	// LLM-Dev:v3 Add user validation method to check if user exists by ID for login validation.
+	/// <summary>
+	/// Validates if a user exists by checking the users list from the API.
+	/// Returns the user if found, null if not found.
+	/// </summary>
+	public async Task<User?> GetUserByIdAsync(int userId, CancellationToken ct = default)
+	{
+		var users = await GetUsersAsync(ct);
+		return users.FirstOrDefault(u => u.Id == userId && u.IsActive);
+	}
 }
