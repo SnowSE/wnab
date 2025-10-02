@@ -251,8 +251,6 @@ namespace WNAB.Logic.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CategoryId1");
-
                     b.HasIndex("TransactionId");
 
                     b.ToTable("TransactionSplits");

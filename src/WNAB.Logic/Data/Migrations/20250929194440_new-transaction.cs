@@ -64,7 +64,7 @@ namespace WNAB.Logic.Data.Migrations
                 oldType: "numeric");
 
             migrationBuilder.AddColumn<int>(
-                name: "CategoryId1",
+                name: "CategoryId",
                 table: "TransactionSplits",
                 type: "integer",
                 nullable: true);
@@ -75,7 +75,7 @@ namespace WNAB.Logic.Data.Migrations
                 column: "Id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionSplits_CategoryId1",
+                name: "IX_TransactionSplits_CategoryId",
                 table: "TransactionSplits",
                 column: "CategoryId1");
 
@@ -86,13 +86,6 @@ namespace WNAB.Logic.Data.Migrations
                 principalTable: "Categories",
                 principalColumn: "Id",
                 onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_TransactionSplits_Categories_CategoryId1",
-                table: "TransactionSplits",
-                column: "CategoryId1",
-                principalTable: "Categories",
-                principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_TransactionSplits_Transactions_TransactionId",
@@ -106,12 +99,9 @@ namespace WNAB.Logic.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_TransactionSplits_Categories_CategoryId",
-                table: "TransactionSplits");
 
             migrationBuilder.DropForeignKey(
-                name: "FK_TransactionSplits_Categories_CategoryId1",
+                name: "FK_TransactionSplits_Categories_CategoryId",
                 table: "TransactionSplits");
 
             migrationBuilder.DropForeignKey(
