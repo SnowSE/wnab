@@ -7,19 +7,33 @@
                x:DataType="local:AddCategoryViewModel"
                Color="MidnightBlue">
     
-    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
-        <Label Text="Add Category" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-            <Label Text="Name" Grid.Row="0" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding Name}" Grid.Row="1" Grid.ColumnSpan="2" Placeholder="Category name" />
-
-            <Label Text="User Id" Grid.Row="2" Grid.Column="0" TextColor="White" />
-            <Entry Text="{Binding UserId}" Grid.Row="2" Grid.Column="1" Keyboard="Numeric" />
-        </Grid>
+    <!-- LLM-Dev:v4 Updated styling to match improved popup design with better contrast and removed User ID field -->
+    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
+        <Label Text="Add Category" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="Black" 
+               FontSize="18" />
+               
+        <!-- LLM-Dev:v4 Simplified to just category name - removed User ID field -->
+        <StackLayout Spacing="8">
+            <Label Text="Name" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding Name}" 
+                   Placeholder="Category name"
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
+        </StackLayout>
 
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
-            <Button Text="Cancel" Command="{Binding CloseCommand}" />
-            <Button Text="Create" Command="{Binding CreateCommand}" />
+            <Button Text="Cancel" 
+                    Command="{Binding CloseCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="Create" 
+                    Command="{Binding CreateCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>

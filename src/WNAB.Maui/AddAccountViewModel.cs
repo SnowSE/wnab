@@ -12,23 +12,21 @@ public partial class AddAccountViewModel : ObservableObject
     public event EventHandler? RequestClose;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private string name = string.Empty;
 
     [ObservableProperty]
-    private bool isLoggedIn;
+    private string statusMessage = "Ready to create account";
 
-    [ObservableProperty]
-    private string statusMessage = "Loading...";
+    // LLM-Dev:v3 Removed userId, isLoggedIn properties - internal only, user doesn't need to see
+    private int _userId;
+    private bool _isLoggedIn;
 
     public AddAccountViewModel(AccountManagementService accounts)
     {
         _accounts = accounts;
     }
 
-    // LLM-Dev: v2 Added initialization to automatically load user ID from secure storage (opposite of login save)
+    // LLM-Dev:v3 Simplified initialization - only load user ID internally, no UI updates about user ID
     public async Task InitializeAsync()
     {
         try
@@ -36,19 +34,19 @@ public partial class AddAccountViewModel : ObservableObject
             var userIdString = await SecureStorage.Default.GetAsync("userId");
             if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
             {
-                UserId = parsedUserId;
-                IsLoggedIn = true;
-                StatusMessage = $"Creating account for user {UserId}";
+                _userId = parsedUserId;
+                _isLoggedIn = true;
+                StatusMessage = "Ready to create account";
             }
             else
             {
-                IsLoggedIn = false;
+                _isLoggedIn = false;
                 StatusMessage = "Please log in first";
             }
         }
         catch
         {
-            IsLoggedIn = false;
+            _isLoggedIn = false;
             StatusMessage = "Error checking login status";
         }
     }
@@ -62,7 +60,7 @@ public partial class AddAccountViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (!IsLoggedIn || UserId <= 0)
+        if (!_isLoggedIn || _userId <= 0)
         {
             StatusMessage = "Please log in first to create an account";
             return;
@@ -78,10 +76,10 @@ public partial class AddAccountViewModel : ObservableObject
         {
             StatusMessage = "Creating account...";
             var record = AccountManagementService.CreateAccountRecord(Name);
-            await _accounts.CreateAccountAsync(UserId, record);
+            await _accounts.CreateAccountAsync(_userId, record);
             StatusMessage = "Account created successfully!";
 
-            // LLM-Dev:v2 Clear the name field for next use
+            // LLM-Dev:v3 Clear the name field for next use
             Name = string.Empty;
 
             RequestClose?.Invoke(this, EventArgs.Empty);

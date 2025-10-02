@@ -10,7 +10,7 @@ public partial class AddAccountPopup : Popup
         BindingContext = vm;
         vm.RequestClose += (_, _) => Close();
         
-        // LLM-Dev:v2 Initialize user session when popup opens to load saved user ID
+        // LLM-Dev:v3 Initialize user session when popup opens to load saved user ID (internal only)
         _ = Task.Run(async () => await vm.InitializeAsync());
     }
 }

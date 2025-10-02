@@ -6,21 +6,49 @@
                x:Class="WNAB.Maui.AddUserPopup"
                x:DataType="local:AddUserViewModel"
                Color="MidnightBlue">
-    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
-        <Label Text="Add User" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
+    <!-- LLM-Dev:v3 Updated styling to match improved AddAccountPopup with better contrast -->
+    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
+        <Label Text="Add User" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="Black" 
+               FontSize="18" />
+               
         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-            <Label Text="First Name" Grid.Row="0" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding FirstName}" Grid.Row="1" Grid.ColumnSpan="2" Placeholder="First name" />
+            <Label Text="First Name" Grid.Row="0" Grid.ColumnSpan="2" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding FirstName}" 
+                   Grid.Row="1" Grid.ColumnSpan="2" 
+                   Placeholder="First name"
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
 
-            <Label Text="Last Name" Grid.Row="2" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding LastName}" Grid.Row="3" Grid.ColumnSpan="2" Placeholder="Last name" />
+            <Label Text="Last Name" Grid.Row="2" Grid.ColumnSpan="2" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding LastName}" 
+                   Grid.Row="3" Grid.ColumnSpan="2" 
+                   Placeholder="Last name"
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
 
-            <Label Text="Email" Grid.Row="4" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding Email}" Grid.Row="5" Grid.ColumnSpan="2" Keyboard="Email" Placeholder="name@example.com" />
+            <Label Text="Email" Grid.Row="4" Grid.ColumnSpan="2" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding Email}" 
+                   Grid.Row="5" Grid.ColumnSpan="2" 
+                   Keyboard="Email" 
+                   Placeholder="name@example.com"
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
         </Grid>
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
-            <Button Text="Cancel" Command="{Binding CloseCommand}" />
-            <Button Text="Create" Command="{Binding CreateCommand}" />
+            <Button Text="Cancel" 
+                    Command="{Binding CloseCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="Create" 
+                    Command="{Binding CreateCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>

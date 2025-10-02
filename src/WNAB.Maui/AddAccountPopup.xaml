@@ -6,24 +6,39 @@
                x:Class="WNAB.Maui.AddAccountPopup"
                x:DataType="local:AddAccountViewModel"
                Color="MidnightBlue">
-    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
-        <Label Text="Add Account" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
+    <!-- LLM-Dev:v3 Improved styling with better contrast and removed User ID field -->
+    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
+        <Label Text="Add Account" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="Black" 
+               FontSize="18" />
         
-        <!-- LLM-Dev:v2 Added status message display to show login status -->
-        <Label Text="{Binding StatusMessage}" HorizontalOptions="Center" TextColor="LightBlue" FontSize="Small" />
+        <!-- LLM-Dev:v3 Added status message with better styling -->
+        <Label Text="{Binding StatusMessage}" 
+               HorizontalOptions="Center" 
+               TextColor="DarkSlateGray" 
+               FontSize="14" />
         
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-            <Label Text="User Id" Grid.Row="0" Grid.Column="0" TextColor="White" />
-            <!-- LLM-Dev:v2 Made User ID field read-only since it's automatically loaded from login -->
-            <Entry Text="{Binding UserId}" Grid.Row="0" Grid.Column="1" Keyboard="Numeric" IsReadOnly="True" />
-
-            <Label Text="Name" Grid.Row="1" Grid.Column="0" TextColor="White" />
-            <Entry Text="{Binding Name}" Grid.Row="1" Grid.Column="1" Placeholder="Account name" />
-        </Grid>
+        <!-- LLM-Dev:v3 Simplified to just account name - removed User ID field -->
+        <StackLayout Spacing="8">
+            <Label Text="Account Name" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding Name}" 
+                   Placeholder="Enter account name" 
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
+        </StackLayout>
+        
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
-            <Button Text="Cancel" Command="{Binding CloseCommand}" />
-            <!-- LLM-Dev:v2 Only enable Create button when logged in -->
-            <Button Text="Create" Command="{Binding CreateCommand}" IsEnabled="{Binding IsLoggedIn}" />
+            <Button Text="Cancel" 
+                    Command="{Binding CloseCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="Create" 
+                    Command="{Binding CreateCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>
