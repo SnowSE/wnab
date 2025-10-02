@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject ProtectedLocalStorage ProtectedLocalStorage
+@inject NavigationManager Navigation
 @inherits LayoutComponentBase
 
 <div class="page">
@@ -55,7 +56,7 @@
 </div>
 
 @code {
-    // LLM-Dev:v6 Enhanced MainLayoutNoSidebar to show user status and sign-out functionality, matching MAUI pattern. Fixed character encoding issue in error UI.
+    // LLM-Dev:v7 Enhanced MainLayoutNoSidebar to show user status and sign-out functionality with proper navigation, matching MAUI pattern. Fixed character encoding issue in error UI.
     private string _userDisplay = "";
     private bool _isLoggedIn = false;
 
@@ -98,14 +99,23 @@
     {
         try
         {
+            // Clear the user session
             await ProtectedLocalStorage.DeleteAsync("userId");
             _userDisplay = "";
             _isLoggedIn = false;
             StateHasChanged();
+            
+            // LLM-Dev:v7 Navigate to home page after logout to clear any cached page state and force re-authentication checks
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         catch
         {
-            // Ignore errors during sign out
+            _userDisplay = "";
+            _isLoggedIn = false;
+            StateHasChanged();
+            
+            // Navigate to home even if there was an error clearing storage
+            Navigation.NavigateTo("/", forceLoad: true);
         }
     }
 }
