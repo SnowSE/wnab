@@ -1,44 +1,96 @@
 @page "/categories"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject CategoryManagementService CategoriesService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@layout MainLayoutNoSidebar
 
-<h1>Categories</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Categories</h1>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
+            <i class="bi bi-plus-circle me-1"></i>
+            Create Category
+        </button>
+        <button class="btn btn-outline-secondary ms-2" @onclick="RefreshAsync" disabled="@_isLoading">
+            @if (_isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            }
+            else
+            {
+                <i class="bi bi-arrow-clockwise me-1"></i>
+            }
+            Refresh
+        </button>
+    </div>
+</div>
 
-<button class="btn btn-secondary" @onclick="Load">Refresh</button>
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <div class="alert alert-info">@_statusMessage</div>
+}
 
 @if (_error is not null)
 {
-    <div class="alert alert-danger mt-3">@_error</div>
+    <div class="alert alert-danger">@_error</div>
 }
 
-<div class="mt-3 responsive-panel">
+<div class="responsive-panel">
     @if (_items is null)
     {
-        <p><em>Loading...</em></p>
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading categories...</p>
+        </div>
     }
     else if (_items.Count == 0)
     {
-        <p>No categories found.</p>
+        <div class="text-center p-4">
+            <i class="bi bi-tags fs-1 text-muted"></i>
+            <p class="mt-2">No categories found. Click "Create Category" to add your first category.</p>
+        </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-sm align-middle">
-                <thead>
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>User</th>
-                        <th>Income</th>
-                        <th>Active</th>
+                        <th>Category Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th width="120">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var c in _items)
                     {
                         <tr>
-                            <td>@c.Name</td>
-                            <td>@c.UserId</td>
-                            <td>@(c.IsIncome ? "Yes" : "No")</td>
-                            <td>@(c.IsActive ? "Yes" : "No")</td>
+                            <td class="fw-semibold">@c.Name</td>
+                            <td>
+                                <span class="badge @(c.IsIncome ? "bg-success" : "bg-primary")">
+                                    @(c.IsIncome ? "Income" : "Expense")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(c.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="text-muted">@c.CreatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => EditCategory(c.Id)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteCategory(c.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -47,23 +99,78 @@
     }
 </div>
 
+<!-- Include the Create Category Modal -->
+<CreateCategoryModal OnCategoryCreated="RefreshCategoriesAfterCreate" />
+
 @code {
+    // LLM-Dev:v4 Updated to use popup modals instead of navigation pages, matching MAUI pattern
+    private bool _isLoading;
     private List<Category>? _items;
     private string? _error;
+    private string? _statusMessage;
 
-    protected override async Task OnInitializedAsync() => await Load();
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
 
-    private async Task Load()
+    private async Task RefreshAsync()
     {
-        _error = null;
+        if (_isLoading) return;
+        
         try
         {
-            // LLM-Dev:v2 Use service list method to avoid HttpClient in UI.
+            _isLoading = true;
+            _error = null;
+            _statusMessage = "Loading categories...";
+            StateHasChanged();
+            
+            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI
             _items = await CategoriesService.GetCategoriesAsync();
+            _statusMessage = _items.Count == 0 ? "No categories found" : $"Loaded {_items.Count} categories";
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = $"Error loading categories: {ex.Message}";
+            _statusMessage = null;
         }
+        finally 
+        { 
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev:v4 Handler for when category is created in modal to refresh list
+    private async Task RefreshCategoriesAfterCreate()
+    {
+        await RefreshAsync();
+    }
+
+    // LLM-Dev:v4 Add action handlers for table actions
+    private void EditCategory(int categoryId)
+    {
+        // This could open an edit modal popup - for now just show an alert
+        // In a future version, this could open an edit category modal popup
+    }
+
+    private async Task DeleteCategory(int categoryId)
+    {
+        if (await ConfirmDelete())
+        {
+            try
+            {
+                // Implementation would call delete service method
+                await RefreshAsync(); // Refresh after delete
+            }
+            catch (Exception ex)
+            {
+                _error = $"Error deleting category: {ex.Message}";
+            }
+        }
+    }
+
+    private Task<bool> ConfirmDelete()
+    {
+        // In a real implementation, this would use a confirmation modal
+        // For now, return false to prevent accidental deletion
+        return Task.FromResult(false);
     }
 }

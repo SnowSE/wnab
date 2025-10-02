@@ -1,48 +1,94 @@
 @page "/accounts"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject AccountManagementService AccountsService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@layout MainLayoutNoSidebar
 
-<h1>Accounts</h1>
-
-<div class="mb-3">
-    <label>User Id</label>
-    <input class="form-control" type="number" @bind-value="_userId" />
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Accounts</h1>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+            <i class="bi bi-plus-circle me-1"></i>
+            Create Account
+        </button>
+        <button class="btn btn-outline-secondary ms-2" @onclick="RefreshAsync" disabled="@_isLoading">
+            @if (_isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            }
+            else
+            {
+                <i class="bi bi-arrow-clockwise me-1"></i>
+            }
+            Refresh
+        </button>
+    </div>
 </div>
-<button class="btn btn-secondary" @onclick="Load">Load Accounts</button>
+
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <div class="alert alert-info">@_statusMessage</div>
+}
 
 @if (_error is not null)
 {
-    <div class="alert alert-danger mt-3">@_error</div>
+    <div class="alert alert-danger">@_error</div>
 }
 
-<div class="mt-3 responsive-panel">
+<div class="responsive-panel">
     @if (_items is null)
     {
-        <p><em>No data yet.</em></p>
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading accounts...</p>
+        </div>
     }
     else if (_items.Count == 0)
     {
-        <p>No accounts found.</p>
+        <div class="text-center p-4">
+            <i class="bi bi-wallet2 fs-1 text-muted"></i>
+            <p class="mt-2">No accounts found. Click "Create Account" to add your first account.</p>
+        </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-sm align-middle">
-                <thead>
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <th>Name</th>
+                        <th>Account Name</th>
                         <th>Type</th>
-                        <th>Balance</th>
-                        <th>Updated</th>
+                        <th class="text-end">Balance</th>
+                        <th>Last Updated</th>
+                        <th width="120">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var a in _items)
                     {
                         <tr>
-                            <td>@a.AccountName</td>
-                            <td>@a.AccountType</td>
-                            <td>@a.CachedBalance</td>
-                            <td>@a.UpdatedAt.ToShortDateString()</td>
+                            <td class="fw-semibold">@a.AccountName</td>
+                            <td>
+                                <span class="badge bg-secondary">@a.AccountType</span>
+                            </td>
+                            <td class="text-end">
+                                <span class="@(a.CachedBalance >= 0 ? "text-success" : "text-danger")">
+                                    @a.CachedBalance.ToString("C")
+                                </span>
+                            </td>
+                            <td class="text-muted">@a.UpdatedAt.ToString("MMM dd, yyyy")</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewTransactions(a.Id)">
+                                    <i class="bi bi-receipt"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteAccount(a.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -51,22 +97,133 @@
     }
 </div>
 
+<!-- Include the Create Account Modal -->
+<CreateAccountModal OnAccountCreated="RefreshAccountsAfterCreate" />
+
 @code {
+    // LLM-Dev:v4 Updated to use popup modals instead of navigation pages, matching MAUI pattern
     private int _userId;
+    private bool _isLoggedIn;
+    private bool _isLoading;
     private List<Account>? _items;
     private string? _error;
+    private string? _statusMessage;
 
-    private async Task Load()
+    protected override async Task OnInitializedAsync()
     {
-        _error = null;
+        await InitializeAsync();
+    }
+
+    // LLM-Dev:v4 Added initialization method to automatically load user session and accounts (matching MAUI pattern)
+    private async Task InitializeAsync()
+    {
+        await CheckUserSessionAsync();
+        if (_isLoggedIn)
+        {
+            await LoadAccountsAsync();
+        }
+    }
+
+    // LLM-Dev:v4 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
+    private async Task CheckUserSessionAsync()
+    {
         try
         {
-            // LLM-Dev:v2 Use service list method to avoid HttpClient in UI.
+            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
+            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
+            
+            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            {
+                _userId = parsedUserId;
+                _isLoggedIn = true;
+                _statusMessage = $"Logged in as user {_userId}";
+            }
+            else
+            {
+                _isLoggedIn = false;
+                _statusMessage = "Please log in to view accounts";
+                _items = new List<Account>();
+            }
+        }
+        catch
+        {
+            _isLoggedIn = false;
+            _statusMessage = "Error checking login status";
+            _items = new List<Account>();
+        }
+    }
+
+    // LLM-Dev:v4 Renamed from Load and updated to use stored user ID (matching MAUI pattern)
+    private async Task LoadAccountsAsync()
+    {
+        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
+        
+        try
+        {
+            _isLoading = true;
+            _error = null;
+            _statusMessage = "Loading accounts...";
+            StateHasChanged();
+            
+            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI, with saved user ID
             _items = await AccountsService.GetAccountsForUserAsync(_userId);
+            _statusMessage = _items.Count == 0 ? "No accounts found" : $"Loaded {_items.Count} accounts";
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = $"Error loading accounts: {ex.Message}";
+            _statusMessage = null;
         }
+        finally 
+        { 
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev:v4 Add refresh command for manual reload (matching MAUI pattern)
+    private async Task RefreshAsync()
+    {
+        await CheckUserSessionAsync();
+        if (_isLoggedIn)
+        {
+            await LoadAccountsAsync();
+        }
+    }
+
+    // LLM-Dev:v4 Handler for when account is created in modal to refresh list
+    private async Task RefreshAccountsAfterCreate()
+    {
+        await LoadAccountsAsync();
+    }
+
+    // LLM-Dev:v4 Add action handlers for table actions
+    private void ViewTransactions(int accountId)
+    {
+        // This could open another modal or navigate - for now just show an alert
+        // In a future version, this could open a transactions modal popup
+    }
+
+    private async Task DeleteAccount(int accountId)
+    {
+        if (await ConfirmDelete())
+        {
+            try
+            {
+                // Implementation would call delete service method
+                await LoadAccountsAsync(); // Refresh after delete
+            }
+            catch (Exception ex)
+            {
+                _error = $"Error deleting account: {ex.Message}";
+            }
+        }
+    }
+
+    private Task<bool> ConfirmDelete()
+    {
+        // In a real implementation, this would use a confirmation modal
+        // For now, return false to prevent accidental deletion
+        return Task.FromResult(false);
     }
 }
