@@ -27,7 +27,21 @@
 
 @if (_error is not null)
 {
-    <div class="alert alert-danger">@_error</div>
+    <div class="alert alert-danger">
+        <h6 class="alert-heading">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Error Loading Users
+        </h6>
+        <p class="mb-2">@_error</p>
+        @if (_error.Contains("HttpRequestException") || _error.Contains("TaskCanceledException") || _error.Contains("SocketException"))
+        {
+            <hr>
+            <p class="mb-0 small">
+                <i class="bi bi-info-circle me-1"></i>
+                This appears to be a connectivity issue. Please ensure the API server is running and accessible.
+            </p>
+        }
+    </div>
 }
 
 <div class="responsive-panel">
@@ -92,7 +106,7 @@
 <CreateUserModal OnUserCreated="RefreshUsersAfterCreate" />
 
 @code {
-    // LLM-Dev:v4 Updated to use popup modals instead of navigation pages, matching MAUI pattern
+    // LLM-Dev:v5 Updated to use popup modals instead of navigation pages, matching MAUI pattern. Enhanced error handling for better debugging.
     private List<User>? _users;
     private string? _error;
     private bool _isLoading;
@@ -109,12 +123,24 @@
         
         try
         {
-            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI.
+            // LLM-Dev:v5 Use service list method to avoid HttpClient in UI. Added timeout handling.
             _users = await UsersService.GetUsersAsync();
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _error = $"Network error: {httpEx.Message}";
+        }
+        catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
+        {
+            _error = "Request timed out. The API server may be unavailable.";
+        }
+        catch (TaskCanceledException tcEx)
+        {
+            _error = $"Request was cancelled: {tcEx.Message}";
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = $"Unexpected error: {ex.Message}";
         }
         finally 
         { 

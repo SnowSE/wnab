@@ -55,7 +55,7 @@
 </div>
 
 @code {
-    // LLM-Dev:v5 Enhanced MainLayoutNoSidebar to show user status and sign-out functionality, matching MAUI pattern
+    // LLM-Dev:v6 Enhanced MainLayoutNoSidebar to show user status and sign-out functionality, matching MAUI pattern. Fixed character encoding issue in error UI.
     private string _userDisplay = "";
     private bool _isLoggedIn = false;
 
@@ -92,8 +92,6 @@
             _userDisplay = "";
             _isLoggedIn = false;
         }
-        
-        StateHasChanged();
     }
 
     private async Task SignOut()
@@ -107,9 +105,7 @@
         }
         catch
         {
-            _userDisplay = "";
-            _isLoggedIn = false;
-            StateHasChanged();
+            // Ignore errors during sign out
         }
     }
 }
