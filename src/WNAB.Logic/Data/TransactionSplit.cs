@@ -27,4 +27,18 @@ public class TransactionSplit
     // LLM-Dev: Non-mapped property for test scenarios to handle category by name
     [NotMapped]
     public string CategoryName { get; set; } = string.Empty;
+
+    // LLM-Dev:v1 Convenience ctor from record
+    public TransactionSplit(TransactionSplitRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        CategoryId = record.CategoryId;
+        Amount = record.Amount;
+        Notes = record.Notes;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Parameterless ctor for EF Core
+    public TransactionSplit() { }
 }

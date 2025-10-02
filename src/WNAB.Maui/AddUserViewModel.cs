@@ -11,7 +11,10 @@ public partial class AddUserViewModel : ObservableObject
     public event EventHandler? RequestClose;
 
     [ObservableProperty]
-    private string name = string.Empty;
+    private string firstName = string.Empty;
+
+    [ObservableProperty]
+    private string lastName = string.Empty;
 
     [ObservableProperty]
     private string email = string.Empty;
@@ -30,10 +33,10 @@ public partial class AddUserViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(Email))
+        if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) || string.IsNullOrWhiteSpace(Email))
             return;
 
-        var record = UserManagementService.CreateUserRecord(Name, Email);
+        var record = UserManagementService.CreateUserRecord(FirstName, LastName, Email);
         await _users.CreateUserAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

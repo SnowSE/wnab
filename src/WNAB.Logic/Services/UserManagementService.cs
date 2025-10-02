@@ -22,11 +22,12 @@ public class UserManagementService
 	/// <summary>
 	/// Creates a <see cref="UserRecord"/> DTO from inputs.
 	/// </summary>
-	public static UserRecord CreateUserRecord(string name, string email)
+	public static UserRecord CreateUserRecord(string firstName, string lastName, string email)
 	{
-		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required", nameof(name));
+		if (string.IsNullOrWhiteSpace(firstName)) throw new ArgumentException("First name required", nameof(firstName));
+		if (string.IsNullOrWhiteSpace(lastName)) throw new ArgumentException("Last name required", nameof(lastName));
 		if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required", nameof(email));
-		return new UserRecord(name, email);
+		return new UserRecord(firstName, lastName, email);
 	}
 
 	/// <summary>

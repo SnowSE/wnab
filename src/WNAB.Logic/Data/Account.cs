@@ -35,4 +35,20 @@ public class Account
     // Navigation properties
     public User User { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+    // LLM-Dev:v1 Convenience ctor from record (AccountType not provided by DTO; default to "bank")
+    public Account(AccountRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        AccountName = record.Name;
+        AccountType = "bank";
+        CachedBalance = 0m;
+        CachedBalanceDate = DateTime.UtcNow;
+        IsActive = true;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Parameterless ctor for EF Core
+    public Account() { }
 }

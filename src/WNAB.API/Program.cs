@@ -111,7 +111,7 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 // New RESTful create endpoints (POST)
 app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
 {
-    var user = new User { Email = rec.Email, FirstName = rec.Name, LastName = rec.Name };
+    var user = new User { Email = rec.Email, FirstName = rec.FirstName, LastName = rec.LastName };
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });

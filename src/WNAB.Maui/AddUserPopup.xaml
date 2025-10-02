@@ -6,12 +6,15 @@
                Color="MidnightBlue">
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
         <Label Text="Add User" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-            <Label Text="Name" Grid.Row="0" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding Name}" Grid.Row="1" Grid.ColumnSpan="2" Placeholder="Full name" />
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
+            <Label Text="First Name" Grid.Row="0" Grid.ColumnSpan="2" TextColor="White" />
+            <Entry Text="{Binding FirstName}" Grid.Row="1" Grid.ColumnSpan="2" Placeholder="First name" />
 
-            <Label Text="Email" Grid.Row="2" Grid.ColumnSpan="2" TextColor="White" />
-            <Entry Text="{Binding Email}" Grid.Row="3" Grid.ColumnSpan="2" Keyboard="Email" Placeholder="name@example.com" />
+            <Label Text="Last Name" Grid.Row="2" Grid.ColumnSpan="2" TextColor="White" />
+            <Entry Text="{Binding LastName}" Grid.Row="3" Grid.ColumnSpan="2" Placeholder="Last name" />
+
+            <Label Text="Email" Grid.Row="4" Grid.ColumnSpan="2" TextColor="White" />
+            <Entry Text="{Binding Email}" Grid.Row="5" Grid.ColumnSpan="2" Keyboard="Email" Placeholder="name@example.com" />
         </Grid>
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" Command="{Binding CloseCommand}" />
