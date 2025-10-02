@@ -8,16 +8,22 @@
                Color="MidnightBlue">
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="#2D2D30">
         <Label Text="Add Account" FontAttributes="Bold" HorizontalOptions="Center" TextColor="White" />
+        
+        <!-- LLM-Dev:v2 Added status message display to show login status -->
+        <Label Text="{Binding StatusMessage}" HorizontalOptions="Center" TextColor="LightBlue" FontSize="Small" />
+        
         <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
             <Label Text="User Id" Grid.Row="0" Grid.Column="0" TextColor="White" />
-            <Entry Text="{Binding UserId}" Grid.Row="0" Grid.Column="1" Keyboard="Numeric" />
+            <!-- LLM-Dev:v2 Made User ID field read-only since it's automatically loaded from login -->
+            <Entry Text="{Binding UserId}" Grid.Row="0" Grid.Column="1" Keyboard="Numeric" IsReadOnly="True" />
 
             <Label Text="Name" Grid.Row="1" Grid.Column="0" TextColor="White" />
             <Entry Text="{Binding Name}" Grid.Row="1" Grid.Column="1" Placeholder="Account name" />
         </Grid>
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" Command="{Binding CloseCommand}" />
-            <Button Text="Create" Command="{Binding CreateCommand}" />
+            <!-- LLM-Dev:v2 Only enable Create button when logged in -->
+            <Button Text="Create" Command="{Binding CreateCommand}" IsEnabled="{Binding IsLoggedIn}" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>

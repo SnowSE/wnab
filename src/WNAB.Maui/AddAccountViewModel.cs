@@ -62,13 +62,28 @@ public partial class AddAccountViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (!IsLoggedIn || UserId <= 0 || string.IsNullOrWhiteSpace(Name))
+        if (!IsLoggedIn || UserId <= 0)
+        {
+            StatusMessage = "Please log in first to create an account";
             return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            StatusMessage = "Please enter an account name";
+            return;
+        }
 
         try
         {
+            StatusMessage = "Creating account...";
             var record = AccountManagementService.CreateAccountRecord(Name);
             await _accounts.CreateAccountAsync(UserId, record);
+            StatusMessage = "Account created successfully!";
+
+            // LLM-Dev:v2 Clear the name field for next use
+            Name = string.Empty;
+
             RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
