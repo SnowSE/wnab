@@ -1,14 +1,65 @@
 ﻿@page "/"
+@layout MainLayoutNoSidebar
 
-<h1>WNAB Web</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <img src="_content/WNAB.Web/images/dotnet_bot.png" alt="WNAB Bot" class="img-fluid mb-3" style="max-height: 150px;" />
+                <h1 class="display-4 fw-bold">Welcome to WNAB</h1>
+                <p class="lead">We Need A Budget - Manage your finances with ease</p>
+                <p class="text-muted">Click the buttons below to access different sections. All forms now open in popup modals for a better user experience!</p>
+            </div>
 
-<p>Quick links (call API and render JSON):</p>
-<ul>
-	<li><a href="users">Users</a> | <a href="users/create">Create User</a></li>
-	<li><a href="categories">Categories</a> | <a href="categories/create">Create Category</a></li>
-	<li><a href="accounts">Accounts</a> | <a href="accounts/create">Create Account</a></li>
-	<li><a href="/">Home</a></li>
-	<li><a href="/Error">Error</a> (for diagnostics)</li>
-	<li><a href="/">Refresh</a></li>
-	<li><a href="/">&nbsp;</a></li>
-</ul>
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <a href="/login" class="btn btn-primary btn-lg w-100 mb-2">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                        Login
+                    </a>
+                </div>
+                <div class="col-12 col-md-6">
+                    <a href="/users" class="btn btn-info btn-lg w-100 mb-2">
+                        <i class="bi bi-people-fill me-2"></i>
+                        Manage Users
+                    </a>
+                </div>
+                <div class="col-12 col-md-6">
+                    <a href="/categories" class="btn btn-success btn-lg w-100 mb-2">
+                        <i class="bi bi-tags-fill me-2"></i>
+                        View Categories
+                    </a>
+                </div>
+                <div class="col-12 col-md-6">
+                    <a href="/accounts" class="btn btn-warning btn-lg w-100 mb-2">
+                        <i class="bi bi-wallet-fill me-2"></i>
+                        View Accounts
+                    </a>
+                </div>
+                <div class="col-12">
+                    <a href="/transactions" class="btn btn-secondary btn-lg w-100 mb-2">
+                        <i class="bi bi-receipt me-2"></i>
+                        Manage Transactions
+                    </a>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Features Available
+                        </h5>
+                        <ul class="mb-0">
+                            <li><strong>Popup Modals:</strong> All create/edit forms now open in convenient popup modals</li>
+                            <li><strong>User Status:</strong> See your login status in the top navigation bar</li>
+                            <li><strong>Transaction Management:</strong> Create and view transactions across all your accounts</li>
+                            <li><strong>Clean Interface:</strong> Streamlined navigation without permanent sidebars</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

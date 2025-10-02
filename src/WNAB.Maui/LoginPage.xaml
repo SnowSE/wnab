@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WNAB.Maui"
              x:Class="WNAB.Maui.LoginPage"
+             x:DataType="local:LoginViewModel"
              Title="Login">
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding NavigateToHomeCommand}" />
+    </ContentPage.ToolbarItems>
+    
     <VerticalStackLayout Padding="24" Spacing="16">
         <Label Text="Enter your User ID" />
         <Entry Placeholder="User ID" Text="{Binding UserId}" />

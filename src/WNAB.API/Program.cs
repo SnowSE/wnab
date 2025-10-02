@@ -45,6 +45,13 @@ app.MapGet("/categories", async (WnabContext db) =>
     return Results.Ok(categories);
 });
 
+// LLM-Dev:v4 Add endpoint to get categories for a specific user (following same pattern as accounts)
+app.MapGet("/users/categories", (int userId, WnabContext db) =>
+{
+    var categories = db.Categories.Where(c => c.UserId == userId && c.IsActive);
+    return Results.Ok(categories);
+});
+
 app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
@@ -211,6 +218,21 @@ app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabConte
         .Include(t => t.TransactionSplits)
         .ThenInclude(ts => ts.Category)
         .AsNoTracking()
+        .ToListAsync();
+    
+    return Results.Ok(transactions);
+});
+
+// LLM-Dev: Add endpoint to get all transactions for a specific user across all their accounts
+app.MapGet("/users/{userId}/transactions", async (int userId, WnabContext db) =>
+{
+    var transactions = await db.Transactions
+        .Where(t => t.Account.UserId == userId)
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .Include(t => t.Account)
+        .AsNoTracking()
+        .OrderByDescending(t => t.TransactionDate)
         .ToListAsync();
     
     return Results.Ok(transactions);

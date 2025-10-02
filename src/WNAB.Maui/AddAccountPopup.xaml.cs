@@ -9,5 +9,8 @@ public partial class AddAccountPopup : Popup
         InitializeComponent();
         BindingContext = vm;
         vm.RequestClose += (_, _) => Close();
+        
+        // LLM-Dev:v3 Initialize user session when popup opens to load saved user ID (internal only)
+        _ = Task.Run(async () => await vm.InitializeAsync());
     }
 }

@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:behaviors="clr-namespace:WNAB.Maui.Behaviors"
+             xmlns:local="clr-namespace:WNAB.Maui"
              x:Class="WNAB.Maui.UsersPage"
+             x:DataType="local:UsersViewModel"
              Title="Users">
-    <ContentPage.Behaviors>
-        <!-- LLM-Dev:v3 MVVM Toolkit generates LoadCommand for [RelayCommand] async methods -->
-        <behaviors:OnAppearingOnceBehavior Command="{Binding LoadCommand}" />
-    </ContentPage.Behaviors>
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Priority="1"
+                     Order="Primary"
+                     Command="{Binding NavigateToHomeCommand}" />
+        <ToolbarItem Text="Add User"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding AddUserCommand}" />
+    </ContentPage.ToolbarItems>
+    
     <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
         <CollectionView Grid.Row="1" ItemsSource="{Binding Users}">
@@ -15,7 +24,7 @@
                 <Label Text="No users yet." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:UserItem">
                     <HorizontalStackLayout Padding="8,6" Spacing="12">
                         <Label Text="{Binding First}" FontAttributes="Bold" />
                         <Label Text="{Binding Last}" />

@@ -1,28 +1,53 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WNAB.Maui"
              x:Class="WNAB.Maui.AccountsPage"
+             x:DataType="local:AccountsViewModel"
              Title="Accounts">
-    <!-- LLM-Dev:v4 Accounts page requires a UserId before loading; removed auto-load behavior so loading is manual via the Load button. -->
+    
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Priority="1"
+                     Order="Primary"
+                     Command="{Binding NavigateToHomeCommand}" />
+        <ToolbarItem Text="Add Account"
+                     Priority="0"
+                     Order="Primary"
+                     Command="{Binding AddAccountCommand}"
+                     IsEnabled="{Binding IsLoggedIn}" />
+    </ContentPage.ToolbarItems>
+    
+    <!-- LLM-Dev:v5 Updated to use automatic user session loading instead of manual user ID input -->
     <VerticalStackLayout Padding="16" Spacing="12">
-        <Grid ColumnDefinitions="Auto,* ,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="User Id:" VerticalOptions="Center" />
-            <Entry Grid.Column="1" Text="{Binding UserId}" Keyboard="Numeric" />
-            <!-- LLM-Dev:v3 See note above about LoadCommand naming -->
-            <Button Grid.Column="2" Text="Load" Command="{Binding LoadCommand}" />
+        
+        <!-- Status and refresh section -->
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
+            <Label Text="{Binding StatusMessage}" VerticalOptions="Center" />
+            <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
         </Grid>
 
+        <!-- Login prompt when not logged in -->
+        <Label Text="Please use the Login page to sign in first." 
+               IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+               HorizontalOptions="Center" 
+               TextColor="Orange"
+               Margin="0,20" />
+
+        <!-- Loading indicator -->
         <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-        <CollectionView ItemsSource="{Binding Items}">
+        
+        <!-- Accounts list -->
+        <CollectionView ItemsSource="{Binding Items}" IsVisible="{Binding IsLoggedIn}">
             <CollectionView.EmptyView>
-                <Label Text="No accounts." HorizontalOptions="Center" VerticalOptions="Center" />
+                <Label Text="No accounts found." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:AccountItem">
                     <Grid ColumnDefinitions="*,Auto,Auto" Padding="8,6">
                         <Label Text="{Binding Name}" />
                         <Label Grid.Column="1" Text="{Binding Type}" TextColor="Gray" />
-                        <Label Grid.Column="2" Text="{Binding Balance}" />
+                        <Label Grid.Column="2" Text="{Binding Balance, StringFormat='{0:C}'}" />
                     </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

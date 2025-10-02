@@ -1,0 +1,134 @@
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject AccountManagementService AccountsService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+
+<!-- Create Account Modal -->
+<div class="modal fade" id="createAccountModal" tabindex="-1" aria-labelledby="createAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createAccountModalLabel">Create Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <EditForm Model="this" OnValidSubmit="Create">
+                <div class="modal-body">
+                    @if (!string.IsNullOrWhiteSpace(_statusMessage))
+                    {
+                        <div class="alert alert-info">@_statusMessage</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger">@_error</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_result))
+                    {
+                        <div class="alert alert-success">@_result</div>
+                    }
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Account Name</label>
+                        <input class="form-control" @bind-value="_name" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit" disabled="@_isCreating">
+                        @if (_isCreating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Create Account
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    // LLM-Dev:v4 Updated to be a modal popup component instead of full page, matching MAUI popup pattern
+    private string? _name;
+    private int _userId;
+    private bool _isLoggedIn;
+    private bool _isCreating;
+    private string? _result;
+    private string? _error;
+    private string? _statusMessage;
+
+    [Parameter] public EventCallback OnAccountCreated { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckUserSessionAsync();
+    }
+
+    // LLM-Dev:v4 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
+    private async Task CheckUserSessionAsync()
+    {
+        try
+        {
+            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
+            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
+            
+            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            {
+                _userId = parsedUserId;
+                _isLoggedIn = true;
+                _statusMessage = $"Creating account for user {_userId}";
+            }
+            else
+            {
+                _isLoggedIn = false;
+                _statusMessage = "Please log in first to create an account";
+            }
+        }
+        catch
+        {
+            _isLoggedIn = false;
+            _statusMessage = "Error checking login status";
+        }
+    }
+
+    private async Task Create()
+    {
+        _result = _error = null;
+        
+        if (!_isLoggedIn || _userId <= 0)
+        {
+            _error = "Please log in first to create an account";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            _error = "Please enter an account name";
+            return;
+        }
+
+        try
+        {
+            _isCreating = true;
+            StateHasChanged();
+
+            // LLM-Dev:v4 Use saved user ID instead of manual input, matching MAUI pattern
+            var record = AccountManagementService.CreateAccountRecord(_name);
+            var id = await AccountsService.CreateAccountAsync(_userId, record);
+            _result = $"Account '{_name}' created successfully with ID {id}";
+            
+            // Clear the name field for next use (matching MAUI pattern)
+            _name = string.Empty;
+            
+            // Notify parent component to refresh the accounts list
+            await OnAccountCreated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error creating account: {ex.Message}";
+        }
+        finally
+        {
+            _isCreating = false;
+            StateHasChanged();
+        }
+    }
+}

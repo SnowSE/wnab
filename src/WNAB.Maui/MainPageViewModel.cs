@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Storage;
 
 namespace WNAB.Maui;
@@ -14,7 +13,7 @@ public partial class MainPageViewModel : ObservableObject
         _popupService = popupService;
     }
 
-    // LLM-Dev:v1 Add simple signed-in indicator sourced from SecureStorage
+    // LLM-Dev:v3 Updated to use SecureStorage directly like LoginViewModel
     [ObservableProperty]
     private string userDisplay = "Not signed in";
 
@@ -28,12 +27,12 @@ public partial class MainPageViewModel : ObservableObject
         }
         catch
         {
-            // If SecureStorage is unavailable or throws (e.g., device lock not set), degrade gracefully
+            // If SecureStorage is unavailable or throws, degrade gracefully
             UserDisplay = "Not signed in";
         }
     }
 
-    // LLM-Dev:v1 Sign-out just clears the stored userId; no server call since we only persist locally.
+    // LLM-Dev:v3 Updated to use SecureStorage directly for sign-out
     [RelayCommand]
     private async Task SignOut()
     {
@@ -55,27 +54,35 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
+    // LLM-Dev:v5 Updated navigation commands to use new route-based navigation
     [RelayCommand]
-    private async Task OpenNewTransaction()
+    private async Task NavigateToCategories()
     {
-        await _popupService.ShowNewTransactionAsync();
+        await Shell.Current.GoToAsync("Categories");
     }
 
     [RelayCommand]
-    private async Task OpenAddCategory()
+    private async Task NavigateToAccounts()
     {
-        await _popupService.ShowAddCategoryAsync();
+        await Shell.Current.GoToAsync("Accounts");
     }
 
     [RelayCommand]
-    private async Task OpenAddUser()
+    private async Task NavigateToTransactions()
     {
-        await _popupService.ShowAddUserAsync();
+        await Shell.Current.GoToAsync("Transactions");
     }
 
     [RelayCommand]
-    private async Task OpenAddAccount()
+    private async Task NavigateToUsers()
     {
-        await _popupService.ShowAddAccountAsync();
+        await Shell.Current.GoToAsync("Users");
     }
+
+    [RelayCommand]
+    private async Task NavigateToLogin()
+    {
+        await Shell.Current.GoToAsync("Login");
+    }
+
 }

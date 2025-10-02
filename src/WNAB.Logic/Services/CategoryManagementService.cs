@@ -50,4 +50,12 @@ public class CategoryManagementService
         var items = await _http.GetFromJsonAsync<List<Category>>("categories", ct);
         return items ?? new();
     }
+
+    // LLM-Dev:v4 Add method to get categories for a specific user (following AccountManagementService pattern)
+    public async Task<List<Category>> GetCategoriesForUserAsync(int userId, CancellationToken ct = default)
+    {
+        if (userId <= 0) return new();
+        var list = await _http.GetFromJsonAsync<List<Category>>($"users/categories?userId={userId}", ct);
+        return list ?? new();
+    }
 }
