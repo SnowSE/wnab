@@ -40,7 +40,7 @@ public partial class StepDefinitions
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
-		// LLM-Dev:v2 Create Account entities from staged rows for the current user; reuse user creation step if needed.
+		// LLM-Dev:v4 Create Account entities from staged AccountRecord using entity constructor; override fields from staged rows.
 		if (!context.ContainsKey("User"))
 		{
 			// Reuse the usermanagement step within this partial class
@@ -52,21 +52,26 @@ public partial class StepDefinitions
 		var stagedRows = context.ContainsKey(rowsKey)
 			? context.Get<List<Dictionary<string, string>>>(rowsKey)
 			: new List<Dictionary<string, string>>();
+		var recordsKey = $"AccountRecords:{emailKey}";
+		var stagedRecords = context.ContainsKey(recordsKey)
+			? context.Get<List<AccountRecord>>(recordsKey)
+			: new List<AccountRecord>();
+
 		var accountsKey = $"Accounts:{emailKey}";
 		var accounts = context.ContainsKey(accountsKey) ? context.Get<List<Account>>(accountsKey) : new List<Account>();
 		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
-		foreach (var r in stagedRows)
+
+		for (int i = 0; i < stagedRows.Count; i++)
 		{
-			var acct = new Account
+			var r = stagedRows[i];
+			var rec = i < stagedRecords.Count ? stagedRecords[i] : AccountManagementService.CreateAccountRecord(r["AccountName"]);
+			var acct = new Account(rec)
 			{
 				Id = nextAccountId++,
-				AccountName = r["AccountName"],
+				// Apply overrides from staged row (type/opening balance) and bind to user
 				AccountType = r["AccountType"],
 				CachedBalance = decimal.Parse(r["OpeningBalance"]),
 				CachedBalanceDate = DateTime.UtcNow,
-				IsActive = true,
-				CreatedAt = DateTime.UtcNow,
-				UpdatedAt = DateTime.UtcNow,
 				UserId = user.Id,
 				User = user
 			};

@@ -48,22 +48,10 @@ public partial class StepDefinitions
 	[When(@"I create the user")]
 	public void WhenICreateTheUser()
 	{
-		// LLM-Dev:v2 Create a User entity from the staged UserRecord and persist it in scenario context.
+		// LLM-Dev:v3 Use entity convenience ctor from staged UserRecord
 		var record = context.Get<UserRecord>("UserRecord");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
-		// Derive first/last name from record.Name (first token = FirstName; remainder = LastName)
-		var parts = record.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		var firstName = parts.Length > 0 ? parts[0] : record.Name;
-		var lastName = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
-		var user = new User
-		{
-			FirstName = firstName,
-			LastName = lastName,
-			Email = record.Email,
-			IsActive = true,
-			CreatedAt = DateTime.UtcNow,
-			UpdatedAt = DateTime.UtcNow
-		};
+		var user = new User(record);
 		// Assign a simple incremental Id
 		user.Id = users.Count + 1;
 		users.Add(user);

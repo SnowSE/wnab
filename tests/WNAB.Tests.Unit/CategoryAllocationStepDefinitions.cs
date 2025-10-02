@@ -40,17 +40,12 @@ public partial class StepDefinitions
 				int.Parse(row["Year"].ToString()!)
 			);
 			stagedRecords.Add(record);
-			allocations.Add(new CategoryAllocation
+			var allocation = new CategoryAllocation(record)
 			{
 				Id = nextId++,
-				CategoryId = record.CategoryId,
-				Category = category,
-				Month = record.Month,
-				Year = record.Year,
-				BudgetedAmount = record.BudgetedAmount,
-				CreatedAt = DateTime.UtcNow,
-				UpdatedAt = DateTime.UtcNow
-			});
+				Category = category
+			};
+			allocations.Add(allocation);
 		}
 		context[$"CategoryAllocationRecords:{user.Email.ToLower()}"] = stagedRecords;
 		context[allocKey] = allocations;
@@ -92,15 +87,9 @@ public partial class StepDefinitions
 			stagedRecords.Add(record);
 			context[recordKey] = stagedRecords;
 
-			// Mirror in-memory entity for assertions
-			categories.Add(new Category
-			{
-				Name = name!,
-				UserId = stagedUser.Id == 0 ? 1 : stagedUser.Id,
-				CreatedAt = DateTime.UtcNow,
-				UpdatedAt = DateTime.UtcNow,
-				IsActive = true
-			});
+			// Mirror in-memory entity for assertions via new ctor
+			var category = new Category(record);
+			categories.Add(category);
 		}
 		context[catKey] = categories;
     }

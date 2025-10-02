@@ -20,4 +20,19 @@ public class CategoryAllocation
     public DateTime UpdatedAt { get; set; }
     
     public Category Category { get; set; } = null!;
+
+    // LLM-Dev:v1 Convenience ctor from record
+    public CategoryAllocation(CategoryAllocationRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        CategoryId = record.CategoryId;
+        BudgetedAmount = record.BudgetedAmount;
+        Month = record.Month;
+        Year = record.Year;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Parameterless ctor for EF Core
+    public CategoryAllocation() { }
 }
