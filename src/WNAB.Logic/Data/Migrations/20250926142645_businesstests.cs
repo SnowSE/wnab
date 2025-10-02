@@ -5,7 +5,7 @@
 namespace WNAB.Logic.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class businesstests : Migration
+    public partial class BusinessTests : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

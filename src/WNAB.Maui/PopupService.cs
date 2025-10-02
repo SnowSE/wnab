@@ -14,7 +14,7 @@ internal class PopupService : IPopupService
     public async Task ShowNewTransactionAsync()
     {
         // Resolve popup (allows DI into popup later)
-        var popup = _services.GetRequiredService<NewTransactionPopup>();
+        var popup = _services.GetRequiredService<TransactionPopup>();
         // Need a current page to display from; use Application.Current.MainPage
         var page = Application.Current?.Windows.FirstOrDefault()?.Page;
         if (page is not null)

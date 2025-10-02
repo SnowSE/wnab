@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WNAB.Logic.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class newtransaction : Migration
+    public partial class NewTransaction : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
