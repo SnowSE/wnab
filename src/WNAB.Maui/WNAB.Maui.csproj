@@ -76,4 +76,10 @@
 	  <Folder Include="Services\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <MauiXaml Update="TransactionsPage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	</ItemGroup>
+
 </Project>

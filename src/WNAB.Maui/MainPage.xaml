@@ -35,12 +35,22 @@
                 SemanticProperties.Description="Welcome to WNAB - We Need A Budget" />
 
             <Label
-                Text="Manage your finances with ease. Use the navigation menu to access different sections."
+                Text="Manage your finances with ease. Use the buttons below to access different sections."
                 Style="{StaticResource BodyLarge}"
                 HorizontalOptions="Center"
                 HorizontalTextAlignment="Center" />
 
-            <!-- Navigation buttons to main sections -->
+            <!-- LLM-Dev:v2 Updated navigation buttons to replace shell navigation -->
+            <Button
+                Text="Login"
+                Command="{Binding NavigateToLoginCommand}"
+                HorizontalOptions="Fill" />
+
+            <Button
+                Text="Manage Users"
+                Command="{Binding NavigateToUsersCommand}"
+                HorizontalOptions="Fill" />
+
             <Button
                 Text="View Categories"
                 Command="{Binding NavigateToCategoriesCommand}"
@@ -51,9 +61,10 @@
                 Command="{Binding NavigateToAccountsCommand}"
                 HorizontalOptions="Fill" />
 
+            <!-- LLM-Dev:v3 Combined View and Manage transactions into single button -->
             <Button
-                Text="Add New Transaction"
-                Command="{Binding OpenNewTransactionCommand}"
+                Text="Manage Transactions"
+                Command="{Binding NavigateToTransactionsCommand}"
                 HorizontalOptions="Fill" />
         </VerticalStackLayout>
     </ScrollView>

@@ -12,6 +12,10 @@
     </ContentPage.Behaviors>
     
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Priority="1"
+                     Order="Primary"
+                     Command="{Binding NavigateToHomeCommand}" />
         <ToolbarItem Text="Add Category"
                      Priority="0"
                      Order="Primary"

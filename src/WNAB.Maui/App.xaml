@@ -13,6 +13,7 @@
             
             <!-- LLM-Dev: v1 Added converters for data binding -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

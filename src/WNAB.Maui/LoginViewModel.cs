@@ -63,4 +63,11 @@ public partial class LoginViewModel : ObservableObject
                 await Shell.Current.DisplayAlert("Login Error", $"Failed to validate user: {ex.Message}", "OK");
         }
     }
+
+    // LLM-Dev:v4 Navigation command to return to home page
+    [RelayCommand]
+    private async Task NavigateToHome()
+    {
+        await Shell.Current.GoToAsync("//MainPage");
+    }
 }

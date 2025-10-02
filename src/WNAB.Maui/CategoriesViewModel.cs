@@ -126,6 +126,13 @@ public sealed partial class CategoriesViewModel : ObservableObject
         // Refresh the list after popup closes
         await RefreshAsync();
     }
+
+    // LLM-Dev:v6 Navigation command to return to home page
+    [RelayCommand]
+    private async Task NavigateToHome()
+    {
+        await Shell.Current.GoToAsync("//MainPage");
+    }
 }
 
 public sealed record CategoryItem(int Id, string Name);

@@ -7,6 +7,10 @@
              Title="Accounts">
     
     <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Home"
+                     Priority="1"
+                     Order="Primary"
+                     Command="{Binding NavigateToHomeCommand}" />
         <ToolbarItem Text="Add Account"
                      Priority="0"
                      Order="Primary"

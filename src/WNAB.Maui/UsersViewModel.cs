@@ -47,6 +47,13 @@ public sealed partial class UsersViewModel : ObservableObject
         // Refresh the list after popup closes
         await LoadAsync();
     }
+
+    // LLM-Dev:v4 Navigation command to return to home page
+    [RelayCommand]
+    private async Task NavigateToHome()
+    {
+        await Shell.Current.GoToAsync("//MainPage");
+    }
 }
 
 public sealed record UserItem(int Id, string First, string Last, string Email);

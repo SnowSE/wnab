@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Storage;
 
 namespace WNAB.Maui;
@@ -55,16 +54,35 @@ public partial class MainPageViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v4 Navigation commands to replace action buttons
+    // LLM-Dev:v5 Updated navigation commands to use new route-based navigation
     [RelayCommand]
     private async Task NavigateToCategories()
     {
-        await Shell.Current.GoToAsync("//Categories");
+        await Shell.Current.GoToAsync("Categories");
     }
 
     [RelayCommand]
     private async Task NavigateToAccounts()
     {
-        await Shell.Current.GoToAsync("//Accounts");
+        await Shell.Current.GoToAsync("Accounts");
     }
+
+    [RelayCommand]
+    private async Task NavigateToTransactions()
+    {
+        await Shell.Current.GoToAsync("Transactions");
+    }
+
+    [RelayCommand]
+    private async Task NavigateToUsers()
+    {
+        await Shell.Current.GoToAsync("Users");
+    }
+
+    [RelayCommand]
+    private async Task NavigateToLogin()
+    {
+        await Shell.Current.GoToAsync("Login");
+    }
+
 }

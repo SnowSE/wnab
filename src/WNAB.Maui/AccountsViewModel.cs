@@ -118,6 +118,13 @@ public partial class AccountsViewModel : ObservableObject
         // Refresh the list after popup closes
         await RefreshAsync();
     }
+
+    // LLM-Dev:v3 Navigation command to return to home page
+    [RelayCommand]
+    private async Task NavigateToHome()
+    {
+        await Shell.Current.GoToAsync("//MainPage");
+    }
 }
 
 public sealed record AccountItem(int Id, string Name, string Type, decimal Balance);

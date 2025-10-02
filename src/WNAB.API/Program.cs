@@ -223,6 +223,21 @@ app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabConte
     return Results.Ok(transactions);
 });
 
+// LLM-Dev: Add endpoint to get all transactions for a specific user across all their accounts
+app.MapGet("/users/{userId}/transactions", async (int userId, WnabContext db) =>
+{
+    var transactions = await db.Transactions
+        .Where(t => t.Account.UserId == userId)
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .Include(t => t.Account)
+        .AsNoTracking()
+        .OrderByDescending(t => t.TransactionDate)
+        .ToListAsync();
+    
+    return Results.Ok(transactions);
+});
+
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
 {
