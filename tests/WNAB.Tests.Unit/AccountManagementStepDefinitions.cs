@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic; // LLM-Dev: Use services to create DTO records
+using WNAB.Logic; // LLM-Dev:v4.1 Readability pass: Inputs -> Actual -> Assert/Store
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -12,16 +12,8 @@ public partial class StepDefinitions
 	[Given(@"the following account for user ""(.*)""")]
 	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
 	{
-		// LLM-Dev:v2 Build AccountRecord and stage only the record and raw row data for later creation.
+		// Inputs: stage minimal row data
 		var row = dataTable.Rows.Single();
-		// LLM-Dev:v2 Use static method; no HttpClient or service instance needed
-		var accountRecord = AccountManagementService.CreateAccountRecord(row["AccountName"]);
-		var recordKey = $"AccountRecords:{email.ToLower()}";
-		var stagedRecords = context.ContainsKey(recordKey) ? context.Get<List<AccountRecord>>(recordKey) : new List<AccountRecord>();
-		stagedRecords.Add(accountRecord);
-		context[recordKey] = stagedRecords;
-
-		// LLM-Dev:v2 Stage full row data for later entity creation in a When-step (no extra class)
 		var rowsKey = $"StagedAccountRows:{email.ToLower()}";
 		var stagedRows = context.ContainsKey(rowsKey)
 			? context.Get<List<Dictionary<string, string>>>(rowsKey)
@@ -32,18 +24,18 @@ public partial class StepDefinitions
 			["AccountType"] = row["AccountType"],
 			["OpeningBalance"] = row["OpeningBalance"],
 		});
+		// Store
 		context[rowsKey] = stagedRows;
 	}
 
-	// LLM-Dev:v3 Add Given alias so this binds when "And" inherits Given in the feature
+	// Alias for readability in features
 	[Given(@"I create the accounts")]
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
-		// LLM-Dev:v4 Create Account entities from staged AccountRecord using entity constructor; override fields from staged rows.
+		// Actual: get staged rows and current user
 		if (!context.ContainsKey("User"))
 		{
-			// Reuse the usermanagement step within this partial class
 			WhenICreateTheUser();
 		}
 		var user = context.Get<User>("User");
@@ -52,23 +44,18 @@ public partial class StepDefinitions
 		var stagedRows = context.ContainsKey(rowsKey)
 			? context.Get<List<Dictionary<string, string>>>(rowsKey)
 			: new List<Dictionary<string, string>>();
-		var recordsKey = $"AccountRecords:{emailKey}";
-		var stagedRecords = context.ContainsKey(recordsKey)
-			? context.Get<List<AccountRecord>>(recordsKey)
-			: new List<AccountRecord>();
 
-		var accountsKey = $"Accounts:{emailKey}";
-		var accounts = context.ContainsKey(accountsKey) ? context.Get<List<Account>>(accountsKey) : new List<Account>();
+		// Act: create accounts
+		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
 		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
 
 		for (int i = 0; i < stagedRows.Count; i++)
 		{
 			var r = stagedRows[i];
-			var rec = i < stagedRecords.Count ? stagedRecords[i] : AccountManagementService.CreateAccountRecord(r["AccountName"]);
+			var rec = AccountManagementService.CreateAccountRecord(r["AccountName"]);
 			var acct = new Account(rec)
 			{
 				Id = nextAccountId++,
-				// Apply overrides from staged row (type/opening balance) and bind to user
 				AccountType = r["AccountType"],
 				CachedBalance = decimal.Parse(r["OpeningBalance"]),
 				CachedBalanceDate = DateTime.UtcNow,
@@ -77,23 +64,25 @@ public partial class StepDefinitions
 			};
 			accounts.Add(acct);
 		}
-		context[accountsKey] = accounts;
+		// Store
+		context["Accounts"] = accounts;
 		user.Accounts = accounts;
 	}
-
 
 	[Then(@"the user ""(.*)"" should have the following accounts")]
 	public void Thentheusershouldhavethefollowingaccounts(string email, DataTable dataTable)
 	{
-		var users = context.Get<List<User>>("Users");
-		var user = users.SingleOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-		user.ShouldNotBeNull();
+		// Inputs (expected)
 		var expectedRows = dataTable.Rows.ToList();
-		user!.Accounts.Count.ShouldBe(expectedRows.Count);
+		// Actual
+		var user = context.Get<User>("User");
+		var accounts = user.Accounts;
+		// Assert
+		accounts.Count.ShouldBe(expectedRows.Count);
 		for (int i = 0; i < expectedRows.Count; i++)
 		{
 			var row = expectedRows[i];
-			var match = user.Accounts.FirstOrDefault(a => a.AccountName == row["AccountName"]);
+			var match = accounts.FirstOrDefault(a => a.AccountName == row["AccountName"]);
 			match.ShouldNotBeNull();
 			match!.AccountType.ShouldBe(row["AccountType"]);
 			if (dataTable.Header.Contains("CachedBalance"))
@@ -102,7 +91,4 @@ public partial class StepDefinitions
 			}
 		}
 	}
-
-
-
 }
