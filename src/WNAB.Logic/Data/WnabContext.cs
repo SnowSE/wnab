@@ -82,8 +82,9 @@ public class WnabContext : DbContext
                 .HasForeignKey(e => e.TransactionId)
                 .OnDelete(DeleteBehavior.Cascade);
                 
+            // LLM-Dev:v2 Fix inverse navigation to avoid shadow FK (CategoryId1)
             entity.HasOne(e => e.Category)
-                .WithMany()
+                .WithMany(c => c.TransactionSplits)
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
         });        

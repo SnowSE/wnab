@@ -63,21 +63,10 @@ namespace WNAB.Logic.Data.Migrations
                 oldClrType: typeof(decimal),
                 oldType: "numeric");
 
-            migrationBuilder.AddColumn<int>(
-                name: "CategoryId",
-                table: "TransactionSplits",
-                type: "integer",
-                nullable: true);
-
             migrationBuilder.AddPrimaryKey(
                 name: "PK_TransactionSplits",
                 table: "TransactionSplits",
                 column: "Id");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionSplits_CategoryId",
-                table: "TransactionSplits",
-                column: "CategoryId1");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_TransactionSplits_Categories_CategoryId",
@@ -99,7 +88,6 @@ namespace WNAB.Logic.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-
             migrationBuilder.DropForeignKey(
                 name: "FK_TransactionSplits_Categories_CategoryId",
                 table: "TransactionSplits");
@@ -112,27 +100,19 @@ namespace WNAB.Logic.Data.Migrations
                 name: "PK_TransactionSplits",
                 table: "TransactionSplits");
 
-            migrationBuilder.DropIndex(
-                name: "IX_TransactionSplits_CategoryId1",
-                table: "TransactionSplits");
-
-            migrationBuilder.DropColumn(
-                name: "CategoryId1",
-                table: "TransactionSplits");
-
-            migrationBuilder.RenameTable(
-                name: "TransactionSplits",
-                newName: "TransactionSplit");
-
             migrationBuilder.RenameIndex(
                 name: "IX_TransactionSplits_TransactionId",
-                table: "TransactionSplit",
+                table: "TransactionSplits",
                 newName: "IX_TransactionSplit_TransactionId");
 
             migrationBuilder.RenameIndex(
                 name: "IX_TransactionSplits_CategoryId",
-                table: "TransactionSplit",
+                table: "TransactionSplits",
                 newName: "IX_TransactionSplit_CategoryId");
+
+            migrationBuilder.RenameTable(
+                name: "TransactionSplits",
+                newName: "TransactionSplit");
 
             migrationBuilder.AlterColumn<DateTime>(
                 name: "UpdatedAt",

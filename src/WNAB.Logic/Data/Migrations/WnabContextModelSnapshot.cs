@@ -227,9 +227,6 @@ namespace WNAB.Logic.Data.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("CategoryId1")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -351,14 +348,10 @@ namespace WNAB.Logic.Data.Migrations
             modelBuilder.Entity("WNAB.Logic.Data.TransactionSplit", b =>
                 {
                     b.HasOne("WNAB.Logic.Data.Category", "Category")
-                        .WithMany()
+                        .WithMany("TransactionSplits")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("WNAB.Logic.Data.Category", null)
-                        .WithMany("TransactionSplits")
-                        .HasForeignKey("CategoryId1");
 
                     b.HasOne("WNAB.Logic.Data.Transaction", "Transaction")
                         .WithMany("TransactionSplits")
