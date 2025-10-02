@@ -13,14 +13,14 @@ namespace WNAB.Logic.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
     [Migration("20250929194440_new-transaction")]
-    partial class newtransaction
+    partial class NewTransaction
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.9")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);

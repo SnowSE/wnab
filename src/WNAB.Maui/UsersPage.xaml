@@ -2,7 +2,9 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:behaviors="clr-namespace:WNAB.Maui.Behaviors"
+             xmlns:local="clr-namespace:WNAB.Maui"
              x:Class="WNAB.Maui.UsersPage"
+             x:DataType="local:UsersViewModel"
              Title="Users">
     <ContentPage.Behaviors>
         <!-- LLM-Dev:v3 MVVM Toolkit generates LoadCommand for [RelayCommand] async methods -->
@@ -15,7 +17,7 @@
                 <Label Text="No users yet." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="local:UserItem">
                     <HorizontalStackLayout Padding="8,6" Spacing="12">
                         <Label Text="{Binding First}" FontAttributes="Bold" />
                         <Label Text="{Binding Last}" />

@@ -5,7 +5,7 @@ using WNAB.Logic.Data;
 
 namespace WNAB.Maui;
 
-public partial class NewTransactionViewModel : ObservableObject
+public partial class TransactionViewModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
 
@@ -26,7 +26,7 @@ public partial class NewTransactionViewModel : ObservableObject
 
     public event EventHandler? RequestClose; // Raised to close popup
 
-    public NewTransactionViewModel(TransactionManagementService transactions)
+    public TransactionViewModel(TransactionManagementService transactions)
     {
         _transactions = transactions;
     }

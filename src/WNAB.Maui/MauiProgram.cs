@@ -23,8 +23,8 @@ public static class MauiProgram
 		// DI registrations for MVVM
 		builder.Services.AddSingleton<IPopupService, PopupService>();
 		builder.Services.AddTransient<MainPageViewModel>();
-		builder.Services.AddTransient<NewTransactionViewModel>();
-		builder.Services.AddTransient<NewTransactionPopup>();
+		builder.Services.AddTransient<TransactionViewModel>();
+		builder.Services.AddTransient<TransactionPopup>();
 		builder.Services.AddTransient<AddCategoryViewModel>();
 		builder.Services.AddTransient<AddCategoryPopup>();
 		builder.Services.AddTransient<AddUserViewModel>();

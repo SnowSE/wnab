@@ -2,9 +2,9 @@ using CommunityToolkit.Maui.Views;
 
 namespace WNAB.Maui;
 
-public partial class NewTransactionPopup : Popup
+public partial class TransactionPopup : Popup
 {
-    public NewTransactionPopup(NewTransactionViewModel vm)
+    public TransactionPopup(TransactionViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
