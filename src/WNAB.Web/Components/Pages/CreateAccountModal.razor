@@ -110,8 +110,7 @@
             _isCreating = true;
             StateHasChanged();
 
-            // LLM-Dev:v4 Use saved user ID instead of manual input, matching MAUI pattern
-            var record = AccountManagementService.CreateAccountRecord(_name);
+            var record = AccountManagementService.CreateAccountRecord(_name, _userId);
             var id = await AccountsService.CreateAccountAsync(_userId, record);
             _result = $"Account '{_name}' created successfully with ID {id}";
             
