@@ -17,7 +17,10 @@ public partial class StepDefinitions
 			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
 
 			var record = CategoryManagementService.CreateCategoryRecord(name!, user.Id == 0 ? 1 : user.Id);
-			var category = new Category(record);
+			var category = new Category(record)
+			{
+				Id = user.Categories.Count + 1 // LLM-Dev v6.5: Assign test ID so CreateTransactionSplitRecord doesn't fail
+			};
 			user.Categories.Add(category);
 		}
 		// Store: user already in context; collection updated by reference
@@ -35,7 +38,10 @@ public partial class StepDefinitions
 			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
 
 			var record = CategoryManagementService.CreateCategoryRecord(name!, user.Id == 0 ? 1 : user.Id);
-			var category = new Category(record);
+			var category = new Category(record)
+			{
+				Id = user.Categories.Count + 1 // LLM-Dev v6.5: Assign test ID so CreateTransactionSplitRecord doesn't fail
+			};
 			user.Categories.Add(category);
 		}
 		// Store: user already in context; collection updated by reference

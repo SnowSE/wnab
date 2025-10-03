@@ -19,8 +19,15 @@ public partial class StepDefinitions
 		var firstname = row["FirstName"];
 		var lastname = row["LastName"];
 		var email = row["Email"];
-		// Act
-		User user = new() { FirstName = firstname, LastName = lastname, Email = email};
+		var userId = int.Parse(row["Id"]); // LLM-Dev v6.4: Get user ID from feature data instead of hardcoding
+		
+		// Act - create user with ID from feature data
+		User user = new() { 
+			Id = userId,
+			FirstName = firstname, 
+			LastName = lastname, 
+			Email = email
+		};
 		// Store
 		context["User"] = user;
 	}

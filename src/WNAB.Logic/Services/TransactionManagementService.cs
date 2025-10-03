@@ -19,38 +19,28 @@ public class TransactionManagementService
     }
 
 	public static TransactionRecord CreateTransactionRecord(int accountId, string payee, string description, 
-        decimal amount, DateTime transactionDate, List<TransactionSplitRecord> splits)
+        decimal amount, DateTime transactionDate)
     {
         if (accountId <= 0) throw new ArgumentOutOfRangeException(nameof(accountId), "AccountId must be positive.");
         if (string.IsNullOrWhiteSpace(payee)) throw new ArgumentException("Payee required", nameof(payee));
         if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Description required", nameof(description));
         if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
-        if (splits == null || !splits.Any()) throw new ArgumentException("At least one split required", nameof(splits));
         
-        // Validate splits sum to transaction amount
-        var splitsTotal = splits.Sum(s => s.Amount);
-        if (Math.Abs(splitsTotal - amount) > 0.01m) // Allow small rounding differences
-            throw new ArgumentException($"Splits total ({splitsTotal:C}) must equal transaction amount ({amount:C})", nameof(splits));
-
-        return new TransactionRecord(accountId, payee, description, amount, transactionDate, splits);
+        return new TransactionRecord(accountId, payee, description, amount, transactionDate);
     }
 
     public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount, string? notes = null)
     {
         if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
+        if (transactionId <= 0) throw new ArgumentOutOfRangeException(nameof(transactionId), "TransactionId must be positive.");
         if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
-		if (transactionId)
         return new TransactionSplitRecord(categoryId, transactionId, amount);
     }
 
     public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee, string description,
         decimal amount, DateTime transactionDate, int categoryId, string? notes = null)
     {
-        var splits = new List<TransactionSplitRecord>
-        {
-            CreateTransactionSplitRecord(categoryId, amount, notes)
-        };
-        return CreateTransactionRecord(accountId, payee, description, amount, transactionDate, splits);
+        return CreateTransactionRecord(accountId, payee, description, amount, transactionDate);
     }
 
 
@@ -68,21 +58,40 @@ public class TransactionManagementService
 
     public async Task<List<Transaction>> GetTransactionsForAccountAsync(int accountId, CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"accounts/{accountId}/transactions", ct);
+        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"transactions/account?accountId={accountId}", ct);
         return transactions ?? new();
     }
 
     public async Task<List<Transaction>> GetTransactionsAsync(int? accountId = null, CancellationToken ct = default)
     {
-        var url = accountId.HasValue ? $"transactions?accountId={accountId.Value}" : "transactions";
+        var url = accountId.HasValue ? $"transactions/account?accountId={accountId.Value}" : "transactions";
         var transactions = await _http.GetFromJsonAsync<List<Transaction>>(url, ct);
         return transactions ?? new();
     }
 
     public async Task<List<Transaction>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"users/{userId}/transactions", ct);
+        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"transactions?userId={userId}", ct);
         return transactions ?? new();
+    }
+
+    // LLM-Dev: Add TransactionSplit management methods to match API endpoints
+    public async Task<int> CreateTransactionSplitAsync(TransactionSplitRecord record, CancellationToken ct = default)
+    {
+        if (record is null) throw new ArgumentNullException(nameof(record));
+
+        var response = await _http.PostAsJsonAsync("transactionsplits", record, ct);
+        response.EnsureSuccessStatusCode();
+
+        var created = await response.Content.ReadFromJsonAsync<TransactionSplit>(cancellationToken: ct);
+        if (created is null) throw new InvalidOperationException("API returned no content when creating transaction split.");
+        return created.Id;
+    }
+
+    public async Task<List<TransactionSplit>> GetTransactionSplitsForCategoryAsync(int categoryId, CancellationToken ct = default)
+    {
+        var splits = await _http.GetFromJsonAsync<List<TransactionSplit>>($"transactionsplits?CategoryId={categoryId}", ct);
+        return splits ?? new();
     }
 
 

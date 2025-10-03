@@ -11,8 +11,8 @@ Feature: Account Management
 
   Scenario: Create a user and a checking account
     Given the created user
-      | FirstName | LastName | Email                  |
-      | Bob       | Johnson  | bob.j@example.io       |
+      | Id | FirstName | LastName | Email                  |
+      | 1  | Bob       | Johnson  | bob.j@example.io       |
     And the following account for user "bob.j@example.io"
       | AccountName      | AccountType | OpeningBalance |
       | EverydayChecking | bank        | 1500.00        |

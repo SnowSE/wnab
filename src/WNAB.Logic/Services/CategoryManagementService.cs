@@ -47,7 +47,7 @@ public class CategoryManagementService
     // LLM-Dev:v2 Add list method so UI components don't need HttpClient.
     public async Task<List<Category>> GetCategoriesAsync(CancellationToken ct = default)
     {
-        var items = await _http.GetFromJsonAsync<List<Category>>("categories", ct);
+        var items = await _http.GetFromJsonAsync<List<Category>>("all/categories", ct);
         return items ?? new();
     }
 
@@ -55,7 +55,7 @@ public class CategoryManagementService
     public async Task<List<Category>> GetCategoriesForUserAsync(int userId, CancellationToken ct = default)
     {
         if (userId <= 0) return new();
-        var list = await _http.GetFromJsonAsync<List<Category>>($"users/categories?userId={userId}", ct);
+        var list = await _http.GetFromJsonAsync<List<Category>>($"categories?userId={userId}", ct);
         return list ?? new();
     }
 }

@@ -11,8 +11,8 @@ Feature: Category Allocation
 
   Scenario: Create user, category, and allocate budget for current month
     Given the created user
-      | FirstName | LastName | Email                |
-      | Carol     | Wang     | carol.w@example.io   |
+      | Id | FirstName | LastName | Email                |
+      | 4  | Carol     | Wang     | carol.w@example.io   |
     And the following category for user "carol.w@example.io"
       | CategoryName |
       | Groceries    |
@@ -25,8 +25,8 @@ Feature: Category Allocation
 
   Scenario: Multiple allocations across months
     Given the created user
-      | FirstName | LastName | Email                |
-      | Dana      | Lee      | dana.lee@example.io  |
+      | Id | FirstName | LastName | Email                |
+      | 5  | Dana      | Lee      | dana.lee@example.io  |
     And the following category for user "dana.lee@example.io"
       | CategoryName |
       | Utilities    |
@@ -43,8 +43,8 @@ Feature: Category Allocation
 
   Scenario: Allocate budget to multiple categories
     Given the created user
-      | FirstName | LastName | Email                 |
-      | Fiona     | Patel    | fiona.p@example.io    |
+      | Id | FirstName | LastName | Email                 |
+      | 6  | Fiona     | Patel    | fiona.p@example.io    |
     And the following categories for user "fiona.p@example.io"
       | CategoryName |
       | Dining       |

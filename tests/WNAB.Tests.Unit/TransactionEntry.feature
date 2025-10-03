@@ -7,8 +7,8 @@ Shows how a user can enter a transaction in the application.
 @tag1
 Scenario: Buy groceries
 	Given the created user
-		| FirstName | LastName | Email                |
-		| John      | Doe      | john.doe@example.com |
+		| Id | FirstName | LastName | Email                |
+		| 1  | John      | Doe      | john.doe@example.com |
 	And the following account for user "john.doe@example.com"
 		| AccountName     | AccountType | OpeningBalance |
 		| Checking        | Checking    | 1000.00        |
@@ -32,8 +32,8 @@ Scenario: Buy groceries
 
 Scenario: Buy groceries and personal care
 	Given the created user
-		| FirstName | LastName | Email                |
-		| Jane      | Smith    | jane.smith@example.com |
+		| Id | FirstName | LastName | Email                  |
+		| 2  | Jane      | Smith    | jane.smith@example.com |
 	And the following account for user "jane.smith@example.com"
 		| AccountName     | AccountType | OpeningBalance |
 		| Checking        | Checking    | 1000.00        |

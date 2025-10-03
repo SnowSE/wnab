@@ -25,14 +25,13 @@ namespace WNAB.Tests.Unit
                 : context.Get<List<Account>>($"Accounts:{user.Email.ToLower()}");
             var account = accounts.First();
             
-            // Store transaction record for later use (with empty splits initially)
+            // Store transaction record for later use (without splits - they'll be created separately)
             var transactionRecord = TransactionManagementService.CreateTransactionRecord(
                 account.Id,
                 payee,
                 memo,
                 amount,
-                date,
-                new List<TransactionSplitRecord>() // Empty splits initially
+                date
             );
             
             // Store the transaction record
@@ -54,8 +53,9 @@ namespace WNAB.Tests.Unit
                 var amount = decimal.Parse(row["Amount"].ToString());
                 var category = categories.Single(c => c.Name == categoryName);
                 
-                // Create split record using service method
-                splitRecords.Add(TransactionManagementService.CreateTransactionSplitRecord(category.Id, amount, null));
+                // Create split record using service method (we'll set transactionId later)
+                // Note: using 1 as placeholder transactionId since we don't have the actual transaction ID yet
+                splitRecords.Add(TransactionManagementService.CreateTransactionSplitRecord(category.Id, 1, amount));
             }
             
             // Store the split records
@@ -65,22 +65,23 @@ namespace WNAB.Tests.Unit
         [When("I enter the transaction with split")]
         public void WhenIEnterTheTransactionWithSplit()
         {
-            // Get the pre-created transaction record and split records from context
+            // LLM-Dev v6.2: Updated to work with new transaction/split separation
+            // In the new flow, we keep the transaction record as-is and the splits separately
+            // The transaction and splits would be created via API calls in real usage
+            // For testing purposes, we just verify the records are correctly structured
+            
+            // Get the transaction record and split records from context
             var transactionRecord = context.Get<TransactionRecord>("TransactionRecord");
             var splitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
             
-            // Create the final TransactionRecord with the splits using the service static method
-            var finalRecord = TransactionManagementService.CreateTransactionRecord(
-                transactionRecord.AccountId,
-                transactionRecord.Payee,
-                transactionRecord.Description,
-                transactionRecord.Amount,
-                transactionRecord.TransactionDate,
-                splitRecords
-            );
+            // Update split records with a mock transaction ID (1) to simulate the API flow
+            var updatedSplitRecords = splitRecords.Select(split => 
+                TransactionManagementService.CreateTransactionSplitRecord(split.CategoryId, 1, split.Amount)
+            ).ToList();
             
-            // Store the final complete record
-            context["TransactionRecord"] = finalRecord;
+            // Store the updated split records and keep the transaction record
+            context["TransactionSplitRecords"] = updatedSplitRecords;
+            // Transaction record remains unchanged
         }
 
         [Then("I should have the following transaction entry")]
@@ -104,6 +105,7 @@ namespace WNAB.Tests.Unit
         [Then("I should have the following transaction splits")]
         public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
         {
+            // LLM-Dev v6.2: Updated to work with separate transaction split records
             // Inputs (expected)
             var expectedSplits = dataTable.Rows.Select(row => new
             {
@@ -111,17 +113,17 @@ namespace WNAB.Tests.Unit
                 Amount = decimal.Parse(row["Amount"].ToString())
             }).ToList();
 
-            // Actual
-            var actualRecord = context.Get<TransactionRecord>("TransactionRecord");
+            // Actual - get splits from context instead of transaction record
+            var actualSplitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
             var user = context.Get<User>("User");
             var categories = user.Categories.ToList();
 
             // Assert
-            actualRecord.Splits.Count.ShouldBe(expectedSplits.Count);
+            actualSplitRecords.Count.ShouldBe(expectedSplits.Count);
             for (int i = 0; i < expectedSplits.Count; i++)
             {
                 var expectedSplit = expectedSplits[i];
-                var actualSplit = actualRecord.Splits[i];
+                var actualSplit = actualSplitRecords[i];
                 var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
 
                 actualSplit.Amount.ShouldBe(expectedSplit.Amount);

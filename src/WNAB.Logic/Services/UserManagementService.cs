@@ -49,7 +49,7 @@ public class UserManagementService
 	// LLM-Dev:v2 Add list method so UI does not create HttpClients directly.
 	public async Task<List<User>> GetUsersAsync(CancellationToken ct = default)
 	{
-		var users = await _http.GetFromJsonAsync<List<User>>("users", ct);
+		var users = await _http.GetFromJsonAsync<List<User>>("all/users", ct);
 		return users ?? new();
 	}
 

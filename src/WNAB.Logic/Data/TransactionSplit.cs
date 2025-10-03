@@ -28,13 +28,14 @@ public class TransactionSplit
     [NotMapped]
     public string CategoryName { get; set; } = string.Empty;
 
-    // LLM-Dev:v1 Convenience ctor from record
+    // LLM-Dev:v2 Convenience ctor from record - fixed property name
     public TransactionSplit(TransactionSplitRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
         CategoryId = record.CategoryId;
+		TransactionId = record.TransactionId;
         Amount = record.Amount;
-        Notes = record.Notes;
+        Notes = String.Empty;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;
     }

@@ -29,14 +29,14 @@ public class CategoryAllocationManagementService
     }
 
     /// <summary>
-    /// Sends the provided CategoryAllocationRecord to the API via POST /categories/allocation and returns the created allocation Id.
+    /// Sends the provided CategoryAllocationRecord to the API via POST /allocations and returns the created allocation Id.
     /// </summary>
     public async Task<int> CreateCategoryAllocationAsync(CategoryAllocationRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));
 
         // LLM-Dev: POST to REST endpoint that accepts CategoryAllocationRecord and returns new Id
-        var response = await _http.PostAsJsonAsync("categories/allocation", record, ct);
+        var response = await _http.PostAsJsonAsync("allocations", record, ct);
         response.EnsureSuccessStatusCode();
 
         var created = await response.Content.ReadFromJsonAsync<IdResponse>(cancellationToken: ct);
@@ -45,4 +45,12 @@ public class CategoryAllocationManagementService
     }
 
     private sealed record IdResponse(int Id);
+
+    // LLM-Dev: Add method to get allocations for a specific category
+    public async Task<List<CategoryAllocation>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken ct = default)
+    {
+        if (categoryId <= 0) return new();
+        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"allocations?categoryId={categoryId}", ct);
+        return allocations ?? new();
+    }
 }

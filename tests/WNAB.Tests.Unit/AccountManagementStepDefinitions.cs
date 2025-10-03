@@ -52,7 +52,7 @@ public partial class StepDefinitions
 		for (int i = 0; i < stagedRows.Count; i++)
 		{
 			var r = stagedRows[i];
-			var rec = AccountManagementService.CreateAccountRecord(r["AccountName"]);
+			var rec = AccountManagementService.CreateAccountRecord(r["AccountName"], user.Id);
 			var acct = new Account(rec)
 			{
 				Id = nextAccountId++,
