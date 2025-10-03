@@ -184,7 +184,6 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
     {
         AccountId = rec.AccountId,
         Payee = rec.Payee,
-        Description = rec.Description,
         Amount = rec.Amount,
         TransactionDate = rec.TransactionDate,
         Account = account

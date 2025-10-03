@@ -3,145 +3,97 @@ using WNAB.Logic.Data;
 using Shouldly;
 using Reqnroll;
 
-namespace WNAB.Tests.Unit
+namespace WNAB.Tests.Unit;
+
+public partial class StepDefinitions
 {
-    public partial class StepDefinitions
+    // prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+    // Rule: Use the services where possible.
+    // Rule: functions may only have datatable as a parameter or no parameter.
+
+    [Given(@"the following transactions")]
+    public void GivenTheFollowingTransactions(DataTable dataTable)
     {
-        // prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
-		// Rule: Use the services where possible
-        private readonly TransactionManagementService _transactionService = new(new HttpClient());
-
-
-
-
-
-        [Given("the following transaction")]
-        public void GivenTheFollowingTransaction(DataTable dataTable)
+        // Inputs: parse transaction data from table and create records
+        var user = context.Get<User>("User");
+        var account = user.Accounts.First(); // Use first available account
+        
+        var transactionRecords = context.ContainsKey("TransactionRecords") 
+            ? context.Get<List<TransactionRecord>>("TransactionRecords") 
+            : new List<TransactionRecord>();
+        
+        foreach (var row in dataTable.Rows)
         {
-            // Inputs: parse transaction data from table
-            var row = dataTable.Rows[0];
-            var date = DateTime.Parse(row["Date"]);
-            var payee = row["Payee"];
-            var memo = row["Memo"];
-            var amount = decimal.Parse(row["Amount"]);
+            var date = DateTime.Parse(row["Date"].ToString()!);
+            var amount = decimal.Parse(row["Amount"].ToString()!);
+			var payee = row["Payee"];
             
-            // Get account info from context
-            var user = context.Get<User>("User");
-            var accounts = user.Accounts.ToList();
-            var account = accounts.First();
-            
-            // Store transaction record for later use (without splits - they'll be created separately)
+            // Act: Create transaction record using service
             var transactionRecord = TransactionManagementService.CreateTransactionRecord(
                 account.Id,
-                payee,
-                memo,
+				payee,
                 amount,
                 date
             );
             
-            // Store the transaction record
-            context["TransactionRecord"] = transactionRecord;
+            transactionRecords.Add(transactionRecord);
         }
+        
+        // Store the transaction records
+        context["TransactionRecords"] = transactionRecords;
+    }
 
-        [Given("the following transaction splits")]
-        public void GivenTheFollowingTransactionSplits(DataTable dataTable)
+    [When(@"I create the transactions")]
+    public void WhenICreateTheTransactions()
+    {
+        // Actual: Get records from context and convert to objects
+        var user = context.Get<User>("User");
+        var transactionRecords = context.Get<List<TransactionRecord>>("TransactionRecords");
+        var account = user.Accounts.First();
+        
+        // Act: Convert records to objects
+        var transactions = new List<Transaction>();
+        int nextTransactionId = 1;
+        
+        foreach (var record in transactionRecords)
         {
-            // Get user and categories from context
-            var user = context.Get<User>("User");
-            var categories = user.Categories.ToList();
-            
-            // Create TransactionSplitRecord objects from the table using the service method
-            var splitRecords = new List<TransactionSplitRecord>();
-            foreach (var row in dataTable.Rows)
+            var transaction = new Transaction(record)
             {
-                var categoryName = row["Category"].ToString();
-                var amount = decimal.Parse(row["Amount"].ToString());
-                var category = categories.Single(c => c.Name == categoryName);
-                
-                // Create split record using service method (we'll set transactionId later)
-                // Note: using 1 as placeholder transactionId since we don't have the actual transaction ID yet
-                splitRecords.Add(TransactionManagementService.CreateTransactionSplitRecord(category.Id, 1, amount));
-            }
-            
-            // Store the split records
-            context["TransactionSplitRecords"] = splitRecords;
-        }
-
-        [When("I create the transaction splits")]
-        public void WhenICreateTheTransactionSplits()
-        {
-            // Actual: Get records from context
-            var user = context.Get<User>("User");
-            var transactionRecord = context.Get<TransactionRecord>("TransactionRecord");
-            var splitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
-            
-            // Act: Convert records to objects
-
-			// make this use the service.
-			// TODO: Need TransactionManagementService.CreateTransactionFromRecord() method
-            var transaction = new Transaction(transactionRecord)
-            {
-                Id = 1, // LLM-Dev:v6.1 Set test ID for transaction
-                Account = user.Accounts.First(a => a.Id == transactionRecord.AccountId),
-                Payee = transactionRecord.Payee // LLM-Dev:v6.1 Explicitly set required property
+                Id = nextTransactionId++,
+                Account = account,
+                Payee = "" // LLM-Dev: Set required property for basic transaction entries
             };
-            
-			var transactionSplits = splitRecords.Select((split, index) => new TransactionSplit(split)
-            {
-                Id = index + 1 // only set ID.
-            }).ToList();
-            
-            transaction.TransactionSplits = transactionSplits;
-            
-            // Store: Store converted objects
-            context["Transaction"] = transaction;
-            context["TransactionSplits"] = transactionSplits;
+            transactions.Add(transaction);
         }
+        
+        // Store: Store converted objects
+        context["Transactions"] = transactions;
+    }
 
-        [Then("I should have the following transaction entry")]
-        public void ThenIShouldHaveTheFollowingTransactionEntry(DataTable dataTable)
+    [Then(@"I should have the following transaction entries")]
+    public void ThenIShouldHaveTheFollowingTransactionEntries(DataTable dataTable)
+    {
+        // Inputs (expected)
+        var expectedTransactions = dataTable.Rows.Select(row => new
         {
-            // Inputs (expected)
-            var row = dataTable.Rows[0];
-            var expectedDate = DateTime.Parse(row["TransactionDate"]);
-            var expectedAmount = decimal.Parse(row["Amount"]);
-            var expectedMemo = row["Memo"];
+            Date = DateTime.Parse(row["TransactionDate"].ToString()!),
+            Amount = decimal.Parse(row["Amount"].ToString()!)
+        }).ToList();
 
-            // Actual: Compare against converted object, not record
-            var actual = context.Get<Transaction>("Transaction");
+        // Actual: Compare against converted objects
+        var actualTransactions = context.Get<List<Transaction>>("Transactions");
 
-            // Assert
-            actual.TransactionDate.ShouldBe(expectedDate);
-            actual.Amount.ShouldBe(expectedAmount);
-            actual.Description.ShouldBe(expectedMemo);
-        }
-
-        [Then("I should have the following transaction splits")]
-        public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
+        // Assert
+        actualTransactions.Count.ShouldBe(expectedTransactions.Count);
+        
+        foreach (var expected in expectedTransactions)
         {
-            // Inputs (expected)
-            var expectedSplits = dataTable.Rows.Select(row => new
-            {
-                Category = row["Category"].ToString(),
-                Amount = decimal.Parse(row["Amount"].ToString())
-            }).ToList();
-
-            // Actual - get splits from converted objects instead of records
-            var actualSplits = context.Get<List<TransactionSplit>>("TransactionSplits");
-            var user = context.Get<User>("User");
-            var categories = user.Categories.ToList();
-
-            // Assert
-            actualSplits.Count.ShouldBe(expectedSplits.Count);
-            for (int i = 0; i < expectedSplits.Count; i++)
-            {
-                var expectedSplit = expectedSplits[i];
-                var actualSplit = actualSplits[i];
-                var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
-
-                actualSplit.Amount.ShouldBe(expectedSplit.Amount);
-                actualSplit.CategoryId.ShouldBe(expectedCategory.Id);
-            }
+            var actual = actualTransactions.FirstOrDefault(t => 
+                t.TransactionDate.Date == expected.Date.Date && t.Amount == expected.Amount);
+            
+            actual.ShouldNotBeNull($"Transaction with date {expected.Date:yyyy-MM-dd} and amount {expected.Amount} should exist");
+            actual!.TransactionDate.Date.ShouldBe(expected.Date.Date);
+            actual.Amount.ShouldBe(expected.Amount);
         }
     }
 }

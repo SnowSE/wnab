@@ -18,15 +18,14 @@ public class TransactionManagementService
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-	public static TransactionRecord CreateTransactionRecord(int accountId, string payee, string description, 
+	public static TransactionRecord CreateTransactionRecord(int accountId, string payee,
         decimal amount, DateTime transactionDate)
     {
         if (accountId <= 0) throw new ArgumentOutOfRangeException(nameof(accountId), "AccountId must be positive.");
         if (string.IsNullOrWhiteSpace(payee)) throw new ArgumentException("Payee required", nameof(payee));
-        if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Description required", nameof(description));
         if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
         
-        return new TransactionRecord(accountId, payee, description, amount, transactionDate);
+        return new TransactionRecord(accountId, payee, amount, transactionDate);
     }
 
     public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount, string? notes = null)
@@ -37,10 +36,10 @@ public class TransactionManagementService
         return new TransactionSplitRecord(categoryId, transactionId, amount);
     }
 
-    public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee, string description,
+    public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee,
         decimal amount, DateTime transactionDate, int categoryId, string? notes = null)
     {
-        return CreateTransactionRecord(accountId, payee, description, amount, transactionDate);
+        return CreateTransactionRecord(accountId, payee, amount, transactionDate);
     }
 
 

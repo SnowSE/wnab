@@ -47,7 +47,7 @@ public partial class TransactionViewModel : ObservableObject
         try
         {
             var record = TransactionManagementService.CreateSimpleTransactionRecord(
-                AccountId, Payee, Memo, Amount, DateTime.Now, CategoryId);
+                AccountId, Payee, Amount, DateTime.Now, CategoryId);
             
             await _transactions.CreateTransactionAsync(record);
             RequestClose?.Invoke(this, EventArgs.Empty);
