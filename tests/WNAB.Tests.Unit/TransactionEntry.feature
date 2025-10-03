@@ -1,8 +1,6 @@
 ﻿Feature: TransactionEntry
 
 Shows how a user can enter a transaction in the application.
-# LLM-Dev v6.0: Updated to separate transaction creation from split creation following service patterns.
-# Given transaction creates basic transaction info, Given splits creates split records, When combines them.
 
 @tag1
 Scenario: Buy groceries

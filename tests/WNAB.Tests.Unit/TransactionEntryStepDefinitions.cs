@@ -65,21 +65,16 @@ namespace WNAB.Tests.Unit
         [When("I enter the transaction with split")]
         public void WhenIEnterTheTransactionWithSplit()
         {
-            // LLM-Dev v6.2: Updated to work with new transaction/split separation
-            // In the new flow, we keep the transaction record as-is and the splits separately
-            // The transaction and splits would be created via API calls in real usage
-            // For testing purposes, we just verify the records are correctly structured
-            
-            // Get the transaction record and split records from context
+            // LLM-Dev v6.3: Updated to pull user from context and use proper transaction ID
+            // Get the user, transaction record and split records from context
+            var user = context.Get<User>("User");
             var transactionRecord = context.Get<TransactionRecord>("TransactionRecord");
             var splitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
             
-            // Update split records with a mock transaction ID (1) to simulate the API flow
             var updatedSplitRecords = splitRecords.Select(split => 
-                TransactionManagementService.CreateTransactionSplitRecord(split.CategoryId, 1, split.Amount)
+                TransactionManagementService.CreateTransactionSplitRecord(split.CategoryId, user.Id, split.Amount)
             ).ToList();
             
-            // Store the updated split records and keep the transaction record
             context["TransactionSplitRecords"] = updatedSplitRecords;
             // Transaction record remains unchanged
         }

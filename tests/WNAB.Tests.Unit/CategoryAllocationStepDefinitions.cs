@@ -1,4 +1,4 @@
-using WNAB.Logic; // LLM-Dev:v4.3 Refactor: store categories on User instead of per-user catKey
+using WNAB.Logic; 
 using WNAB.Logic.Data;
 
 namespace WNAB.Tests.Unit;
