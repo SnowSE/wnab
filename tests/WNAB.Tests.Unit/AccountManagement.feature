@@ -10,10 +10,10 @@ Feature: Account Management
       | Id | FirstName | LastName | Email                  |
       | 1  | Bob       | Johnson  | bob.j@example.io       |
     And the following account for user
-      | AccountName      | 
-      | EverydayChecking | 
+      | AccountName      | AccountType |
+      | EverydayChecking | Checking    |
     When I create the accounts
     Then the user should have the following accounts
-      | AccountName      | 
-      | EverydayChecking | 
+      | AccountName      | AccountType |
+      | EverydayChecking | Checking    | 
 

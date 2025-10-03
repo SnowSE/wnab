@@ -41,6 +41,7 @@ public partial class StepDefinitions
 		// Inputs (expected)
 		var row = dataTable.Rows.Single();
 		var accountName = row["AccountName"];
+		var accountType = dataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
 		
 		// Actual
 		var user = context.Get<User>("User");
@@ -48,8 +49,9 @@ public partial class StepDefinitions
 		// Act: Create account record using service
 		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
 		
-		// Store
+		// Store both record and accountType for later use
 		context["AccountRecord"] = accountRecord;
+		context["AccountType"] = accountType;
 	}
 
 	[Given(@"I create the accounts")]
@@ -84,13 +86,15 @@ public partial class StepDefinitions
 		// Actual - get required context (user and record should already exist from Given steps)
 		var user = context.Get<User>("User");
 		var record = context.Get<AccountRecord>("AccountRecord");
+		var accountType = context.ContainsKey("AccountType") ? context.Get<string>("AccountType") : "bank";
 		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
 
 		// Act
 		var account = new Account(record)
 		// only ever set the ID here, nothing else
 		{
-			Id = accounts.Count + 1
+			Id = accounts.Count + 1,
+			AccountType = accountType // Override the default "bank" type if needed
 		};
 		accounts.Add(account);
 		
@@ -119,6 +123,35 @@ public partial class StepDefinitions
 			{
 				match.CachedBalance.ShouldBe(decimal.Parse(row["CachedBalance"]));
 			}
+		}
+	}
+
+	[Given(@"the created accounts")]
+	public void GivenTheCreatedAccounts(DataTable dataTable)
+	{
+		// Inputs: parse account data and create accounts directly
+		var user = context.Get<User>("User");
+		
+		// Initialize user accounts if not already done
+		if (user.Accounts == null)
+			user.Accounts = new List<Account>();
+
+		var existingAccounts = user.Accounts.ToList();
+		int nextAccountId = existingAccounts.Any() ? existingAccounts.Max(a => a.Id) + 1 : 1;
+		
+		foreach (var row in dataTable.Rows)
+		{
+			var name = row["AccountName"].ToString()!;
+			// Act: Create account record using service
+			var record = AccountManagementService.CreateAccountRecord(name, user.Id == 0 ? 1 : user.Id);
+			
+			// Convert to account object immediately
+			var account = new Account(record)
+			{
+				Id = nextAccountId++
+			};
+			
+			user.Accounts.Add(account);
 		}
 	}
 }

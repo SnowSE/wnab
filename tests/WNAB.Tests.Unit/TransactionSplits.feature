@@ -8,15 +8,15 @@ Feature: Transaction Splits
     Given the created user
       | Id | FirstName | LastName | Email                |
       | 1  | John      | Doe      | john.doe@example.com |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Checking    |
     And the existing categories
       | CategoryName |
       | Groceries    |
-    And the existing transactions
-      | Date      | Amount |
-      | 9/10/2025 | 150.00 |
+    And the created transactions
+      | Date      | Payee        | Amount |
+      | 9/10/2025 | Grocery Store| 150.00 |
     And the following transaction splits
       | Category  | Amount |
       | Groceries | 150.00 |
@@ -29,16 +29,16 @@ Feature: Transaction Splits
     Given the created user
       | Id | FirstName | LastName | Email                  |
       | 2  | Jane      | Smith    | jane.smith@example.com |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Checking    |
     And the existing categories
       | CategoryName  |
       | Groceries     |
       | Personal Care |
-    And the existing transactions
-      | Date      | Amount |
-      | 9/10/2025 | 150.00 |
+    And the created transactions
+      | Date      | Payee      | Amount |
+      | 9/10/2025 | Target     | 150.00 |
     And the following transaction splits
       | Category      | Amount |
       | Groceries     | 100.00 |
@@ -53,7 +53,7 @@ Feature: Transaction Splits
     Given the created user
       | Id | FirstName | LastName | Email                 |
       | 3  | Bob       | Johnson  | bob.j@example.io      |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Checking    |
     And the existing categories
@@ -62,9 +62,9 @@ Feature: Transaction Splits
       | Dining        |
       | Gas           |
       | Entertainment |
-    And the existing transactions
-      | Date      | Amount |
-      | 9/15/2025 | 500.00 |
+    And the created transactions
+      | Date      | Payee    | Amount |
+      | 9/15/2025 | Costco   | 500.00 |
     And the following transaction splits
       | Category      | Amount |
       | Groceries     | 200.00 |

@@ -9,12 +9,12 @@
     Given the created user
       | Id | FirstName | LastName | Email                |
       | 1  | John      | Doe      | john.doe@example.com |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Checking    |
     And the following transactions
-      | Date      | Amount |
-      | 9/10/2025 | 150.00 |
+      | Date      | Payee        | Amount |
+      | 9/10/2025 | Test Store   | 150.00 |
     When I create the transactions
     Then I should have the following transaction entries
       | TransactionDate | Amount |
@@ -24,14 +24,14 @@
     Given the created user
       | Id | FirstName | LastName | Email                  |
       | 2  | Jane      | Smith    | jane.smith@example.com |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Checking    |
     And the following transactions
-      | Date      | Amount |
-      | 9/10/2025 | 150.00 |
-      | 9/11/2025 | 75.50  |
-      | 9/12/2025 | 200.00 |
+      | Date      | Payee           | Amount |
+      | 9/10/2025 | Grocery Store   | 150.00 |
+      | 9/11/2025 | Gas Station     | 75.50  |
+      | 9/12/2025 | Restaurant      | 200.00 |
     When I create the transactions
     Then I should have the following transaction entries
       | TransactionDate | Amount |
@@ -43,12 +43,12 @@
     Given the created user
       | Id | FirstName | LastName | Email                 |
       | 3  | Bob       | Johnson  | bob.j@example.io      |
-    And the existing accounts
+    And the created accounts
       | AccountName |
       | Savings     |
     And the following transactions
-      | Date      | Amount  |
-      | 9/15/2025 | 1000.00 |
+      | Date      | Payee       | Amount  |
+      | 9/15/2025 | Bank        | 1000.00 |
     When I create the transactions
     Then I should have the following transaction entries
       | TransactionDate | Amount  |

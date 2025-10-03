@@ -45,7 +45,8 @@ public partial class StepDefinitions
 			var allocation = new CategoryAllocation(record)
 			// the only thing that should ever be set here is an ID, nothing else.
 			{
-				Id = nextId++
+				Id = nextId++,
+				Category = category // Set the navigation property for test validation
 			};
 			allocations.Add(allocation);
 		}

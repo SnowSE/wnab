@@ -96,4 +96,43 @@ public partial class StepDefinitions
             actual.Amount.ShouldBe(expected.Amount);
         }
     }
+
+    [Given(@"the created transactions")]
+    public void GivenTheCreatedTransactions(DataTable dataTable)
+    {
+        // Inputs: parse transaction data and create transactions directly
+        var user = context.Get<User>("User");
+        var account = user.Accounts.First(); // Use first available account
+        
+        var existingTransactions = context.ContainsKey("Transactions") 
+            ? context.Get<List<Transaction>>("Transactions") 
+            : new List<Transaction>();
+        int nextTransactionId = existingTransactions.Any() ? existingTransactions.Max(t => t.Id) + 1 : 1;
+        
+        foreach (var row in dataTable.Rows)
+        {
+            var date = DateTime.Parse(row["Date"].ToString()!);
+            var payee = row["Payee"].ToString()!;
+            var amount = decimal.Parse(row["Amount"].ToString()!);
+            
+            // Act: Create transaction record using service
+            var record = TransactionManagementService.CreateTransactionRecord(
+                account.Id,
+                payee,
+                amount,
+                date
+            );
+            
+            // Convert to transaction object immediately
+            var transaction = new Transaction(record)
+            {
+                Id = nextTransactionId++
+            };
+            
+            existingTransactions.Add(transaction);
+        }
+        
+        // Store: Store transactions for later use
+        context["Transactions"] = existingTransactions;
+    }
 }
