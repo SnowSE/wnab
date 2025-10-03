@@ -1,6 +1,7 @@
 using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace WNAB.Maui.Services;
@@ -9,12 +10,21 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly OidcClient _oidcClient;
     private LoginResult? _loginResult;
+    private readonly ILogger<AuthenticationService> _logger;
 
-    public AuthenticationService(IConfiguration configuration)
+    public AuthenticationService(IConfiguration configuration, ILogger<AuthenticationService> logger)
     {
+        _logger = logger;
         var authority = configuration["Keycloak:Authority"] ?? "https://engineering.snow.edu/auth/realms/SnowCollege";
         var clientId = configuration["Keycloak:ClientId"] ?? "wnab-maui";
+
+        // Use different redirect URIs based on platform
+#if WINDOWS
+        // For Windows, we'll use a dynamic port that the browser will determine
+        var redirectUri = "http://localhost/";
+#else
         var redirectUri = configuration["Keycloak:RedirectUri"] ?? "wnab://callback";
+#endif
 
         var options = new OidcClientOptions
         {
@@ -22,7 +32,15 @@ public class AuthenticationService : IAuthenticationService
             ClientId = clientId,
             Scope = "openid profile email",
             RedirectUri = redirectUri,
-            Browser = new WebBrowserAuthenticator()
+#if WINDOWS
+            Browser = new Platforms.Windows.WindowsBrowser(logger),
+#else
+            Browser = new WebBrowserAuthenticator(),
+#endif
+            Policy = new Policy
+            {
+                RequireIdentityTokenSignature = false
+            }
         };
 
         _oidcClient = new OidcClient(options);
@@ -32,11 +50,14 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            _loginResult = await _oidcClient.LoginAsync(new LoginRequest());
+            var loginRequest = new LoginRequest();
+            _logger.LogInformation("Starting login with redirect URI: {RedirectUri}", _oidcClient.Options.RedirectUri);
+
+            _loginResult = await _oidcClient.LoginAsync(loginRequest);
 
             if (_loginResult.IsError)
             {
-                Console.WriteLine($"Login error: {_loginResult.Error}");
+                _logger.LogError("Login error: {Error}, Description: {ErrorDescription}", _loginResult.Error, _loginResult.ErrorDescription);
                 return false;
             }
 
@@ -49,7 +70,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Login exception: {ex.Message}");
+            _logger.LogError(ex, "Login exception occurred");
             return false;
         }
     }

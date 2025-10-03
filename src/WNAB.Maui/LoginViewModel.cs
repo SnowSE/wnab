@@ -1,31 +1,85 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
-// LLM-Dev:v2 Minimal VM to save a user ID to SecureStorage. Updated to use Shell.Current for alerts (avoids deprecated Application.MainPage).
 public partial class LoginViewModel : ObservableObject
 {
+    private readonly IAuthenticationService _authenticationService;
+
     [ObservableProperty]
-    private string? userId;
+    private string? statusMessage;
+
+    [ObservableProperty]
+    private bool isAuthenticated;
+
+    public LoginViewModel(IAuthenticationService authenticationService)
+    {
+        _authenticationService = authenticationService;
+        _ = CheckAuthenticationStatusAsync();
+    }
+
+    private async Task CheckAuthenticationStatusAsync()
+    {
+        IsAuthenticated = await _authenticationService.IsAuthenticatedAsync();
+        if (IsAuthenticated)
+        {
+            var userName = _authenticationService.GetUserName();
+            StatusMessage = $"Logged in as {userName}";
+        }
+    }
 
     [RelayCommand]
-    private async Task SaveUserId()
+    private async Task LoginAsync()
     {
-        // Basic validation
-        var id = (UserId ?? string.Empty).Trim();
-        if (string.IsNullOrWhiteSpace(id))
+        try
         {
-            if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Missing User ID", "Please enter a user ID.", "OK");
-            return;
+            StatusMessage = "Logging in...";
+            var success = await _authenticationService.LoginAsync();
+
+            if (success)
+            {
+                IsAuthenticated = true;
+                var userName = _authenticationService.GetUserName();
+                StatusMessage = $"Successfully logged in as {userName}";
+
+                if (Shell.Current is not null)
+                    await Shell.Current.DisplayAlert("Success", "Login successful!", "OK");
+            }
+            else
+            {
+                StatusMessage = "Login failed. Please try again.";
+                if (Shell.Current is not null)
+                    await Shell.Current.DisplayAlert("Error", "Login failed. Please try again.", "OK");
+            }
         }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlert("Error", $"Login error: {ex.Message}", "OK");
+        }
+    }
 
-        // Persist securely
-        await SecureStorage.Default.SetAsync("userId", id);
+    [RelayCommand]
+    private async Task LogoutAsync()
+    {
+        try
+        {
+            StatusMessage = "Logging out...";
+            await _authenticationService.LogoutAsync();
+            IsAuthenticated = false;
+            StatusMessage = "Logged out successfully";
 
-        if (Shell.Current is not null)
-            await Shell.Current.DisplayAlert("Saved", "User ID saved securely.", "OK");
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlert("Success", "Logout successful!", "OK");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error: {ex.Message}";
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlert("Error", $"Logout error: {ex.Message}", "OK");
+        }
     }
 }

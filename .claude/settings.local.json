@@ -6,7 +6,10 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet clean:*)",
       "Bash(Select-String -Pattern \"App\\.razor|CS0246|Razor\" -Context 2)",
-      "Bash(dotnet msbuild:*)"
+      "Bash(dotnet msbuild:*)",
+      "Read(//d/MauiAspire/**)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet sln:*)"
     ],
     "deny": [],
     "ask": []

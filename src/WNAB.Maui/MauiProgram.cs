@@ -1,9 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Reflection;
 using CommunityToolkit.Maui;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
 using WNAB.Logic; // LLM-Dev: Use shared Logic services in MAUI too
 using WNAB.Maui.Services;
 
@@ -22,6 +21,8 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
+
+		builder.AddServiceDefaults();
 
 		// Add configuration from appsettings.json
 		var assembly = Assembly.GetExecutingAssembly();
@@ -79,7 +80,7 @@ public static class MauiProgram
 	builder.Services.AddTransient<LoginPage>();
 
 #if DEBUG
-		builder.Logging.AddDebug();
+	builder.Logging.AddDebug();
 #endif
 
 	var app = builder.Build();

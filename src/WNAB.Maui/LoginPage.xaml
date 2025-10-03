@@ -4,10 +4,28 @@
              x:Class="WNAB.Maui.LoginPage"
              Title="Login">
     <VerticalStackLayout Padding="24" Spacing="16">
-        <Label Text="Enter your User ID" />
-        <Entry Placeholder="User ID" Text="{Binding UserId}" />
+        <Label Text="WNAB Login"
+               FontSize="24"
+               FontAttributes="Bold"
+               HorizontalOptions="Center"
+               Margin="0,0,0,20"/>
 
-        <Button Text="Save"
-                Command="{Binding SaveUserIdCommand}" />
+        <Label Text="{Binding StatusMessage}"
+               HorizontalOptions="Center"
+               IsVisible="{Binding StatusMessage, Converter={StaticResource IsNotNullConverter}}"/>
+
+        <Button Text="Login with OAuth/OIDC"
+                Command="{Binding LoginCommand}"
+                IsVisible="{Binding IsAuthenticated, Converter={StaticResource InverseBoolConverter}}"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                Margin="0,20,0,0"/>
+
+        <Button Text="Logout"
+                Command="{Binding LogoutCommand}"
+                IsVisible="{Binding IsAuthenticated}"
+                BackgroundColor="{StaticResource Secondary}"
+                TextColor="White"
+                Margin="0,20,0,0"/>
     </VerticalStackLayout>
 </ContentPage>

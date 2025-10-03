@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>c3f87951-e3c4-4400-ada5-76bcb629f5cf</UserSecretsId>
@@ -17,6 +17,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WNAB.API\WNAB.API.csproj" />
+	  <ProjectReference Include="..\WNAB.Maui\WNAB.Maui.csproj" >
+		  <SetTargetFramework>TargetFramework=net10.0-windows10.0.19041.0</SetTargetFramework>
+	  </ProjectReference>
     <ProjectReference Include="..\WNAB.Web\WNAB.Web.csproj" />
   </ItemGroup>
 

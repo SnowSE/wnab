@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace WNAB.Maui;
 
@@ -9,9 +10,10 @@ public partial class MainPageViewModel : ObservableObject
 {
     private readonly IPopupService _popupService;
 
-    public MainPageViewModel(IPopupService popupService)
+    public MainPageViewModel(IPopupService popupService, ILogger<MainPageViewModel> logger)
     {
         _popupService = popupService;
+        logger.LogError("Where are these logs showing up?!");
     }
 
     // LLM-Dev:v1 Add simple signed-in indicator sourced from SecureStorage
