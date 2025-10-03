@@ -9,23 +9,38 @@ namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
+	// LLM-Dev v7.1: Updated to follow prescribed pattern: Given stores records, When converts to objects, Then compares objects
 	[Given(@"the following account for user ""(.*)""")]
 	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
 	{
-		// Inputs: stage minimal row data
+		// Inputs: parse account data and create record
 		var row = dataTable.Rows.Single();
-		var rowsKey = $"StagedAccountRows:{email.ToLower()}";
-		var stagedRows = context.ContainsKey(rowsKey)
-			? context.Get<List<Dictionary<string, string>>>(rowsKey)
-			: new List<Dictionary<string, string>>();
-		stagedRows.Add(new Dictionary<string, string>
+		var accountName = row["AccountName"];
+		var accountType = row["AccountType"]; 
+		var openingBalance = decimal.Parse(row["OpeningBalance"]);
+		
+		// Get user info from context
+		var user = context.Get<User>("User");
+		
+		// Act: Create account record using service
+		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
+		
+		// Store: Store record with additional info needed for conversion
+		var accountInfo = new Dictionary<string, object>
 		{
-			["AccountName"] = row["AccountName"],
-			["AccountType"] = row["AccountType"],
-			["OpeningBalance"] = row["OpeningBalance"],
-		});
-		// Store
-		context[rowsKey] = stagedRows;
+			["Record"] = accountRecord,
+			["AccountType"] = accountType,
+			["OpeningBalance"] = openingBalance,
+			["UserEmail"] = email.ToLower()
+		};
+		
+		var recordsKey = $"AccountRecords:{email.ToLower()}";
+		var accountRecords = context.ContainsKey(recordsKey)
+			? context.Get<List<Dictionary<string, object>>>(recordsKey)
+			: new List<Dictionary<string, object>>();
+		accountRecords.Add(accountInfo);
+		
+		context[recordsKey] = accountRecords;
 	}
 
 	// Alias for readability in features
@@ -33,38 +48,41 @@ public partial class StepDefinitions
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
-		// Actual: get staged rows and current user
+		// Actual: get account records and current user
 		if (!context.ContainsKey("User"))
 		{
 			WhenICreateTheUser();
 		}
 		var user = context.Get<User>("User");
 		var emailKey = user.Email.ToLower();
-		var rowsKey = $"StagedAccountRows:{emailKey}";
-		var stagedRows = context.ContainsKey(rowsKey)
-			? context.Get<List<Dictionary<string, string>>>(rowsKey)
-			: new List<Dictionary<string, string>>();
+		var recordsKey = $"AccountRecords:{emailKey}";
+		var accountRecords = context.ContainsKey(recordsKey)
+			? context.Get<List<Dictionary<string, object>>>(recordsKey)
+			: new List<Dictionary<string, object>>();
 
-		// Act: create accounts
+		// Act: convert records to objects
 		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
 		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
 
-		for (int i = 0; i < stagedRows.Count; i++)
+		foreach (var accountInfo in accountRecords)
 		{
-			var r = stagedRows[i];
-			var rec = AccountManagementService.CreateAccountRecord(r["AccountName"], user.Id);
-			var acct = new Account(rec)
+			var record = (AccountRecord)accountInfo["Record"];
+			var accountType = (string)accountInfo["AccountType"];
+			var openingBalance = (decimal)accountInfo["OpeningBalance"];
+			
+			// Convert record to object
+			var account = new Account(record)
 			{
 				Id = nextAccountId++,
-				AccountType = r["AccountType"],
-				CachedBalance = decimal.Parse(r["OpeningBalance"]),
+				AccountType = accountType,
+				CachedBalance = openingBalance,
 				CachedBalanceDate = DateTime.UtcNow,
-				UserId = user.Id,
 				User = user
 			};
-			accounts.Add(acct);
+			accounts.Add(account);
 		}
-		// Store
+		
+		// Store: Store converted objects
 		context["Accounts"] = accounts;
 		user.Accounts = accounts;
 	}
