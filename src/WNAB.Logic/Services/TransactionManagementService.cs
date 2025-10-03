@@ -13,19 +13,12 @@ public class TransactionManagementService
 {
     private readonly HttpClient _http;
 
-    /// <summary>
-    /// Construct with an HttpClient configured with API BaseAddress (e.g. https://localhost:7077/)
-    /// </summary>
     public TransactionManagementService(HttpClient http)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-    // LLM-Dev: Static factory for transaction record to unify creation without HttpClient/service instances.
-    /// <summary>
-    /// Creates a <see cref="TransactionRecord"/> DTO from inputs.
-    /// </summary>
-    public static TransactionRecord CreateTransactionRecord(int accountId, string payee, string description, 
+	public static TransactionRecord CreateTransactionRecord(int accountId, string payee, string description, 
         decimal amount, DateTime transactionDate, List<TransactionSplitRecord> splits)
     {
         if (accountId <= 0) throw new ArgumentOutOfRangeException(nameof(accountId), "AccountId must be positive.");
@@ -42,22 +35,25 @@ public class TransactionManagementService
         return new TransactionRecord(accountId, payee, description, amount, transactionDate, splits);
     }
 
-    /// <summary>
-    /// Helper method to create a simple single-category transaction record.
-    /// </summary>
+    public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount, string? notes = null)
+    {
+        if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
+        if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
+		if (transactionId)
+        return new TransactionSplitRecord(categoryId, transactionId, amount);
+    }
+
     public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee, string description,
         decimal amount, DateTime transactionDate, int categoryId, string? notes = null)
     {
         var splits = new List<TransactionSplitRecord>
         {
-            new TransactionSplitRecord(categoryId, amount, notes)
+            CreateTransactionSplitRecord(categoryId, amount, notes)
         };
         return CreateTransactionRecord(accountId, payee, description, amount, transactionDate, splits);
     }
 
-    /// <summary>
-    /// Sends the provided <see cref="TransactionRecord"/> to the API via POST /transactions and returns the created transaction Id.
-    /// </summary>
+
     public async Task<int> CreateTransactionAsync(TransactionRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));
@@ -70,18 +66,12 @@ public class TransactionManagementService
         return created.Id;
     }
 
-    /// <summary>
-    /// Gets transactions for a specific account.
-    /// </summary>
     public async Task<List<Transaction>> GetTransactionsForAccountAsync(int accountId, CancellationToken ct = default)
     {
         var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"accounts/{accountId}/transactions", ct);
         return transactions ?? new();
     }
 
-    /// <summary>
-    /// Gets all transactions with optional filtering.
-    /// </summary>
     public async Task<List<Transaction>> GetTransactionsAsync(int? accountId = null, CancellationToken ct = default)
     {
         var url = accountId.HasValue ? $"transactions?accountId={accountId.Value}" : "transactions";
@@ -89,22 +79,11 @@ public class TransactionManagementService
         return transactions ?? new();
     }
 
-    /// <summary>
-    /// Gets all transactions for a specific user across all their accounts.
-    /// </summary>
     public async Task<List<Transaction>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
     {
         var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"users/{userId}/transactions", ct);
         return transactions ?? new();
     }
 
-    // LLM-Dev v1: Helper to convert ViewModel to DTO for simplified service usage
-    /// <summary>
-    /// Converts a ViewModel with splits to a TransactionRecord DTO.
-    /// </summary>
-    public static TransactionRecord FromViewModel(int accountId, string payee, string memo, 
-        decimal amount, DateTime transactionDate, IEnumerable<TransactionSplitRecord> splits)
-    {
-        return CreateTransactionRecord(accountId, payee, memo, amount, transactionDate, splits.ToList());
-    }
+
 }

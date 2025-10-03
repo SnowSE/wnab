@@ -5,62 +5,82 @@ namespace WNAB.Tests.Unit
 {
     public partial class StepDefinitions
     {
-        // LLM-Dev v4.3: Use user.Categories instead of per-user context keys
+        // LLM-Dev v6.1: Create proper TransactionRecord in Given step (with empty splits), TransactionSplitRecords in separate Given step, combine using service in When step
+        private readonly TransactionManagementService _transactionService = new(new HttpClient());
 
         [Given("the following transaction")]
         public void GivenTheFollowingTransaction(DataTable dataTable)
         {
-            // Inputs (expected)
+            // Inputs: parse transaction data from table
             var row = dataTable.Rows[0];
-            // Store
-            context["TransactionDate"] = DateTime.Parse(row["Date"]);
-            context["TransactionPayee"] = row["Payee"];
-            context["TransactionMemo"] = row["Memo"];
-            context["TransactionAmount"] = decimal.Parse(row["Amount"]);
-        }
-
-        [When("I enter the transaction with split")]
-        public void WhenIEnterTheTransactionWithSplit(DataTable dataTable)
-        {
-            // Inputs (expected): build split items from the table
-            var splitItems = new List<(string Category, decimal Amount)>();
-            foreach (var row in dataTable.Rows)
-            {
-                splitItems.Add((row["Category"].ToString(), decimal.Parse(row["Amount"].ToString())));
-            }
-
-            // Actual: get transaction details and context objects
-            var date = context.Get<DateTime>("TransactionDate");
-            var payee = context.Get<string>("TransactionPayee");
-            var memo = context.Get<string>("TransactionMemo");
-            var amount = context.Get<decimal>("TransactionAmount");
-
+            var date = DateTime.Parse(row["Date"]);
+            var payee = row["Payee"];
+            var memo = row["Memo"];
+            var amount = decimal.Parse(row["Amount"]);
+            
+            // Get account info from context (should be set up in earlier steps)
             var user = context.Get<User>("User");
-            var categories = user.Categories.ToList();
             var accounts = context.ContainsKey("Accounts")
                 ? context.Get<List<Account>>("Accounts")
                 : context.Get<List<Account>>($"Accounts:{user.Email.ToLower()}");
             var account = accounts.First();
-
-            // Act: map inputs to DTOs and create the record
-            var splitRecords = new List<TransactionSplitRecord>();
-            foreach (var (categoryName, splitAmount) in splitItems)
-            {
-                var category = categories.Single(c => c.Name == categoryName);
-                splitRecords.Add(new TransactionSplitRecord(category.Id, splitAmount, null));
-            }
-
-            var record = TransactionManagementService.CreateTransactionRecord(
+            
+            // Store transaction record for later use (with empty splits initially)
+            var transactionRecord = TransactionManagementService.CreateTransactionRecord(
                 account.Id,
                 payee,
                 memo,
                 amount,
                 date,
+                new List<TransactionSplitRecord>() // Empty splits initially
+            );
+            
+            // Store the transaction record
+            context["TransactionRecord"] = transactionRecord;
+        }
+
+        [Given("the following transaction splits")]
+        public void GivenTheFollowingTransactionSplits(DataTable dataTable)
+        {
+            // Get user and categories from context
+            var user = context.Get<User>("User");
+            var categories = user.Categories.ToList();
+            
+            // Create TransactionSplitRecord objects from the table using the service method
+            var splitRecords = new List<TransactionSplitRecord>();
+            foreach (var row in dataTable.Rows)
+            {
+                var categoryName = row["Category"].ToString();
+                var amount = decimal.Parse(row["Amount"].ToString());
+                var category = categories.Single(c => c.Name == categoryName);
+                
+                // Create split record using service method
+                splitRecords.Add(TransactionManagementService.CreateTransactionSplitRecord(category.Id, amount, null));
+            }
+            
+            // Store the split records
+            context["TransactionSplitRecords"] = splitRecords;
+        }
+
+        [When("I enter the transaction with split")]
+        public void WhenIEnterTheTransactionWithSplit()
+        {
+            // Get the pre-created transaction record and split records from context
+            var transactionRecord = context.Get<TransactionRecord>("TransactionRecord");
+            var splitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
+            
+            // Create the final TransactionRecord with the splits using the service static method
+            var finalRecord = TransactionManagementService.CreateTransactionRecord(
+                transactionRecord.AccountId,
+                transactionRecord.Payee,
+                transactionRecord.Description,
+                transactionRecord.Amount,
+                transactionRecord.TransactionDate,
                 splitRecords
             );
-
-            // Store
-            context["TransactionRecord"] = record;
+            
+            // Store the final complete record
+            context["TransactionRecord"] = finalRecord;
         }
 
         [Then("I should have the following transaction entry")]

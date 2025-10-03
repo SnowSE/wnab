@@ -1,6 +1,8 @@
 ﻿Feature: TransactionEntry
 
 Shows how a user can enter a transaction in the application.
+# LLM-Dev v6.0: Updated to separate transaction creation from split creation following service patterns.
+# Given transaction creates basic transaction info, Given splits creates split records, When combines them.
 
 @tag1
 Scenario: Buy groceries
@@ -17,9 +19,10 @@ Scenario: Buy groceries
 	And the following transaction
 		| Date      | Payee   | Memo     | Amount |
 		| 9/10/2025 | Walmart | Buy food | 150.00 |
-	When I enter the transaction with split
+	And the following transaction splits
 		| Category  | Amount |
 		| Groceries | 150.00 |
+	When I enter the transaction with split
 	Then I should have the following transaction entry
 		| TransactionDate | Amount | Memo     |
 		| 9/10/2025       | 150.00 | Buy food |
@@ -42,10 +45,11 @@ Scenario: Buy groceries and personal care
 	And the following transaction
 		| Date      | Payee   | Memo        | Amount |
 		| 9/10/2025 | Walmart | Walmart run | 150.00 |
-	When I enter the transaction with split
+	And the following transaction splits
 		| Category      | Amount |
 		| Groceries     | 100.00 |
 		| Personal Care | 50.00  |
+	When I enter the transaction with split
 	Then I should have the following transaction splits
 		| Category      | Amount |
 		| Groceries     | 100.00 |
