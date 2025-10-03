@@ -42,7 +42,7 @@ public class Account
         ArgumentNullException.ThrowIfNull(record);
         AccountName = record.Name;
 		UserId = record.UserId;
-        AccountType = "bank";
+        AccountType = "bank"; // we can set this later!
         CachedBalance = 0m;
         CachedBalanceDate = DateTime.UtcNow;
         IsActive = true;
