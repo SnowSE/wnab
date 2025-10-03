@@ -7,8 +7,13 @@ namespace WNAB.Tests.Unit
 {
     public partial class StepDefinitions
     {
-        // LLM-Dev v7.1: Updated to follow prescribed pattern: Given stores records, When converts to objects, Then compares objects
+        // prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+		// Rule: Use the services where possible
         private readonly TransactionManagementService _transactionService = new(new HttpClient());
+
+
+
+
 
         [Given("the following transaction")]
         public void GivenTheFollowingTransaction(DataTable dataTable)
@@ -20,11 +25,9 @@ namespace WNAB.Tests.Unit
             var memo = row["Memo"];
             var amount = decimal.Parse(row["Amount"]);
             
-            // Get account info from context (should be set up in earlier steps)
+            // Get account info from context
             var user = context.Get<User>("User");
-            var accounts = context.ContainsKey("Accounts")
-                ? context.Get<List<Account>>("Accounts")
-                : context.Get<List<Account>>($"Accounts:{user.Email.ToLower()}");
+            var accounts = user.Accounts.ToList();
             var account = accounts.First();
             
             // Store transaction record for later use (without splits - they'll be created separately)
@@ -45,28 +48,6 @@ namespace WNAB.Tests.Unit
         {
             // Get user and categories from context
             var user = context.Get<User>("User");
-            
-            // LLM-Dev v1: Convert category records to objects if not already done (like in CategoryAllocationStepDefinitions)
-            if (context.ContainsKey("CategoryRecords"))
-            {
-                var categoryRecords = context.Get<List<CategoryRecord>>("CategoryRecords");
-                var convertedCategories = new List<Category>();
-                int categoryId = 1;
-                
-                foreach (var record in categoryRecords)
-                {
-                    var category = new Category(record)
-                    {
-                        Id = categoryId++,
-                        User = user
-                    };
-                    convertedCategories.Add(category);
-                }
-                
-                user.Categories = convertedCategories;
-                context.Remove("CategoryRecords"); // Remove records after conversion
-            }
-            
             var categories = user.Categories.ToList();
             
             // Create TransactionSplitRecord objects from the table using the service method
@@ -86,8 +67,8 @@ namespace WNAB.Tests.Unit
             context["TransactionSplitRecords"] = splitRecords;
         }
 
-        [When("I enter the transaction with split")]
-        public void WhenIEnterTheTransactionWithSplit()
+        [When("I create the transaction splits")]
+        public void WhenICreateTheTransactionSplits()
         {
             // Actual: Get records from context
             var user = context.Get<User>("User");
@@ -95,6 +76,9 @@ namespace WNAB.Tests.Unit
             var splitRecords = context.Get<List<TransactionSplitRecord>>("TransactionSplitRecords");
             
             // Act: Convert records to objects
+
+			// make this use the service.
+			// TODO: Need TransactionManagementService.CreateTransactionFromRecord() method
             var transaction = new Transaction(transactionRecord)
             {
                 Id = 1, // LLM-Dev:v6.1 Set test ID for transaction
@@ -102,12 +86,9 @@ namespace WNAB.Tests.Unit
                 Payee = transactionRecord.Payee // LLM-Dev:v6.1 Explicitly set required property
             };
             
-            var transactionSplits = splitRecords.Select((split, index) => new TransactionSplit(split)
+			var transactionSplits = splitRecords.Select((split, index) => new TransactionSplit(split)
             {
-                Id = index + 1, // LLM-Dev:v6.1 Set test ID for splits
-                TransactionId = transaction.Id,
-                Transaction = transaction,
-                Category = user.Categories.First(c => c.Id == split.CategoryId)
+                Id = index + 1 // only set ID.
             }).ToList();
             
             transaction.TransactionSplits = transactionSplits;
@@ -138,7 +119,6 @@ namespace WNAB.Tests.Unit
         [Then("I should have the following transaction splits")]
         public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
         {
-            // LLM-Dev v6.2: Updated to work with converted transaction split objects
             // Inputs (expected)
             var expectedSplits = dataTable.Rows.Select(row => new
             {

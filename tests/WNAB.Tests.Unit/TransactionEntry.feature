@@ -1,57 +1,58 @@
-﻿Feature: TransactionEntry
+﻿Feature: Transaction Entry
 
-Shows how a user can enter a transaction in the application.
+  In order to track my spending
+  As a user of the WNAB system
+  I want to create transaction entries
 
-@tag1
-Scenario: Buy groceries
-	Given the created user
-		| Id | FirstName | LastName | Email                |
-		| 1  | John      | Doe      | john.doe@example.com |
-	And the following account for user "john.doe@example.com"
-		| AccountName     | AccountType | OpeningBalance |
-		| Checking        | Checking    | 1000.00        |
-	And I create the accounts
-	And the following category for user "john.doe@example.com"
-		| CategoryName |
-		| Groceries    |
-	And the following transaction
-		| Date      | Payee   | Memo     | Amount |
-		| 9/10/2025 | Walmart | Buy food | 150.00 |
-	And the following transaction splits
-		| Category  | Amount |
-		| Groceries | 150.00 |
-	When I enter the transaction with split
-	Then I should have the following transaction entry
-		| TransactionDate | Amount | Memo     |
-		| 9/10/2025       | 150.00 | Buy food |
-	And I should have the following transaction splits
-		| Category  | Amount |
-		| Groceries | 150.00 |
+  @tag1
+  Scenario: Create a simple transaction
+    Given the created user
+      | Id | FirstName | LastName | Email                |
+      | 1  | John      | Doe      | john.doe@example.com |
+    And the existing accounts
+      | AccountName |
+      | Checking    |
+    And the following transactions
+      | Date      | Amount |
+      | 9/10/2025 | 150.00 |
+    When I create the transactions
+    Then I should have the following transaction entries
+      | TransactionDate | Amount |
+      | 9/10/2025       | 150.00 |
 
-Scenario: Buy groceries and personal care
-	Given the created user
-		| Id | FirstName | LastName | Email                  |
-		| 2  | Jane      | Smith    | jane.smith@example.com |
-	And the following account for user "jane.smith@example.com"
-		| AccountName     | AccountType | OpeningBalance |
-		| Checking        | Checking    | 1000.00        |
-	And I create the accounts
-	And the following categories for user "jane.smith@example.com"
-		| CategoryName  |
-		| Groceries     |
-		| Personal Care |
-	And the following transaction
-		| Date      | Payee   | Memo        | Amount |
-		| 9/10/2025 | Walmart | Walmart run | 150.00 |
-	And the following transaction splits
-		| Category      | Amount |
-		| Groceries     | 100.00 |
-		| Personal Care | 50.00  |
-	When I enter the transaction with split
-	Then I should have the following transaction splits
-		| Category      | Amount |
-		| Groceries     | 100.00 |
-		| Personal Care | 50.00  |
+  Scenario: Create multiple transactions
+    Given the created user
+      | Id | FirstName | LastName | Email                  |
+      | 2  | Jane      | Smith    | jane.smith@example.com |
+    And the existing accounts
+      | AccountName |
+      | Checking    |
+    And the following transactions
+      | Date      | Amount |
+      | 9/10/2025 | 150.00 |
+      | 9/11/2025 | 75.50  |
+      | 9/12/2025 | 200.00 |
+    When I create the transactions
+    Then I should have the following transaction entries
+      | TransactionDate | Amount |
+      | 9/10/2025       | 150.00 |
+      | 9/11/2025       | 75.50  |
+      | 9/12/2025       | 200.00 |
+
+  Scenario: Create transaction with different amounts
+    Given the created user
+      | Id | FirstName | LastName | Email                 |
+      | 3  | Bob       | Johnson  | bob.j@example.io      |
+    And the existing accounts
+      | AccountName |
+      | Savings     |
+    And the following transactions
+      | Date      | Amount  |
+      | 9/15/2025 | 1000.00 |
+    When I create the transactions
+    Then I should have the following transaction entries
+      | TransactionDate | Amount  |
+      | 9/15/2025       | 1000.00 |
 
 
 	

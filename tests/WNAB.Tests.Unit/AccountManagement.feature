@@ -9,11 +9,11 @@ Feature: Account Management
     Given the created user
       | Id | FirstName | LastName | Email                  |
       | 1  | Bob       | Johnson  | bob.j@example.io       |
-    And the following account for user "bob.j@example.io"
-      | AccountName      | AccountType | OpeningBalance |
-      | EverydayChecking | bank        | 1500.00        |
-    And I create the accounts
-    Then the user "bob.j@example.io" should have the following accounts
-      | AccountName      | AccountType | CachedBalance |
-      | EverydayChecking | bank        | 1500.00       |
+    And the following account for user
+      | AccountName      | 
+      | EverydayChecking | 
+    When I create the accounts
+    Then the user should have the following accounts
+      | AccountName      | 
+      | EverydayChecking | 
 

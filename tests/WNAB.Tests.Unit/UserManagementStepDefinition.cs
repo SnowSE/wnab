@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic; // LLM-Dev:v4.1 Readability pass: Inputs -> Actual -> Act/Store or Assert
+using WNAB.Logic;
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -10,6 +10,9 @@ namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
+
+	// prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+	// Rule: Use the services where possible
 	[Given(@"the created user")]
 	public void Giventhecreateduser(DataTable dataTable)
 	{
@@ -59,6 +62,7 @@ public partial class StepDefinitions
 		var record = context.Get<UserRecord>("UserRecord");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
 		// Act
+		// TODO: Need UserManagementService.CreateUserFromRecord() method
 		var user = new User(record);
 		// Store
 		user.Id = users.Count + 1;

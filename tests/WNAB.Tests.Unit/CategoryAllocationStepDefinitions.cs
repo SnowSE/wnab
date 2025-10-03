@@ -1,13 +1,18 @@
 using WNAB.Logic; 
 using WNAB.Logic.Data;
+using Shouldly;
+using Reqnroll;
 
 namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
-	// prescribed pattern: (Given) stores records, (When) converts to objects, (Then) compares objects
-	[Given(@"the following category for user ""(.*)""")]
-	public void Giventhefollowingcategoryforuser(string email, DataTable dataTable)
+	// prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+	// Rule: Use the services where possible.
+	// Rule: functions may only have datatable as a parameter or no parameter.
+
+	[Given(@"the following category")]
+	public void Giventhefollowingcategoryforuser(DataTable dataTable)
 	{
 		// Inputs: parse category data and create records
 		var user = context.Get<User>("User");
@@ -27,8 +32,8 @@ public partial class StepDefinitions
 		context["CategoryRecords"] = categoryRecords;
 	}
 
-	[Given(@"the following categories for user ""(.*)""")]
-	public void Giventhefollowingcategoriesforuser(string email, DataTable dataTable)
+	[Given(@"the following categories")]
+	public void Giventhefollowingcategoriesforuser(DataTable dataTable)
 	{
 		// Inputs: parse category data and create records  
 		var user = context.Get<User>("User");
@@ -48,6 +53,63 @@ public partial class StepDefinitions
 		context["CategoryRecords"] = categoryRecords;
 	}
 
+	[Given(@"I create the category")]
+	public void GivenICreateTheCategory()
+	{
+		// Actual: Convert category records to objects
+		var user = context.Get<User>("User");
+		var categoryRecords = context.Get<List<CategoryRecord>>("CategoryRecords");
+		var convertedCategories = new List<Category>();
+		int categoryId = 1;
+		
+		foreach (var record in categoryRecords)
+		{
+			var category = new Category(record)
+			{
+				Id = categoryId++
+			};
+			convertedCategories.Add(category);
+		}
+		
+		// Initialize user categories if not already done
+		if (user.Categories == null)
+			user.Categories = new List<Category>();
+		
+		foreach (var category in convertedCategories)
+		{
+			user.Categories.Add(category);
+		}
+	}
+
+	[Given(@"I create the categories")]
+	public void GivenICreateTheCategories()
+	{
+		// Actual: Convert category records to objects
+		var user = context.Get<User>("User");
+		var categoryRecords = context.Get<List<CategoryRecord>>("CategoryRecords");
+		var convertedCategories = new List<Category>();
+		int categoryId = 1;
+		
+		foreach (var record in categoryRecords)
+		{
+			var category = new Category(record)
+			// the only thing that should ever be set here is an ID, nothing else.
+			{
+				Id = categoryId++
+			};
+			convertedCategories.Add(category);
+		}
+		
+		// Initialize user categories if not already done
+		if (user.Categories == null)
+			user.Categories = new List<Category>();
+		
+		foreach (var category in convertedCategories)
+		{
+			user.Categories.Add(category);
+		}
+	}
+
 	[When(@"I allocate the following amounts")]
 	public void WhenIallocatethefollowingamounts(DataTable dataTable)
 	{
@@ -62,15 +124,13 @@ public partial class StepDefinitions
 			foreach (var record in categoryRecords)
 			{
 				var category = new Category(record)
+				// the only thing that should ever be set here is an ID, nothing else.
 				{
-					Id = categoryId++,
-					User = user
+					Id = categoryId++
 				};
 				convertedCategories.Add(category);
 			}
 			
-			user.Categories = convertedCategories;
-			context.Remove("CategoryRecords"); // Remove records after conversion
 		}
 		
 		var categories = user.Categories.ToList();
@@ -98,10 +158,11 @@ public partial class StepDefinitions
 		foreach (var record in allocationRecords)
 		{
 			var category = categories.Single(c => c.Id == record.CategoryId);
+
 			var allocation = new CategoryAllocation(record)
+			// the only thing that should ever be set here is an ID, nothing else.
 			{
-				Id = nextId++,
-				Category = category
+				Id = nextId++
 			};
 			allocations.Add(allocation);
 		}
@@ -110,8 +171,8 @@ public partial class StepDefinitions
 		context["Allocations"] = allocations;
 	}
 
-	[Then(@"I should have the following category allocations for user ""(.*)""")]
-	public void ThenIshouldhavethefollowingcategoryallocationsforuser(string email, DataTable dataTable)
+	[Then(@"I should have the following category allocations")]
+	public void ThenIshouldhavethefollowingcategoryallocationsforuser(DataTable dataTable)
 	{
 		// Inputs (expected)
 		var expectedRows = dataTable.Rows.ToList();

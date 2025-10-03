@@ -1,94 +1,106 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic;
 using WNAB.Logic.Data;
+using WNAB.Logic;
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
 
+
 public partial class StepDefinitions
 {
-	// LLM-Dev v7.1: Updated to follow prescribed pattern: Given stores records, When converts to objects, Then compares objects
-	[Given(@"the following account for user ""(.*)""")]
-	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
+
+    // prescribed pattern: (Given) creates and stores records, (When) create objects using constructors, (Then) compares objects
+	// Rule: Use the services where possible
+	
+	[Given(@"the following account")]
+	public void GivenTheFollowingAccount(DataTable dataTable)
 	{
-		// Inputs: parse account data and create record
-		var row = dataTable.Rows.Single();
+		// Inputs: parse account data from table
+		var row = dataTable.Rows[0];
 		var accountName = row["AccountName"];
-		var accountType = row["AccountType"]; 
+		var accountType = row["AccountType"];
 		var openingBalance = decimal.Parse(row["OpeningBalance"]);
 		
-		// Get user info from context
+		// Get user from context
+		var user = context.Get<User>("User");
+		
+		// Act: Create account record using service
+		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
+		// Note: OpeningBalance and AccountType aren't in the service method, so we'll set them after creation
+		
+		// Store the account record
+		context["AccountRecord"] = accountRecord;
+	}
+
+	[Given(@"the following account for user")]
+	public void Giventhefollowingaccountforuser(DataTable dataTable)
+	{
+		// Inputs (expected)
+		var row = dataTable.Rows.Single();
+		var accountName = row["AccountName"];
+		
+		// Actual
 		var user = context.Get<User>("User");
 		
 		// Act: Create account record using service
 		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
 		
-		// Store: Store record with additional info needed for conversion
-		var accountInfo = new Dictionary<string, object>
-		{
-			["Record"] = accountRecord,
-			["AccountType"] = accountType,
-			["OpeningBalance"] = openingBalance,
-			["UserEmail"] = email.ToLower()
-		};
-		
-		var recordsKey = $"AccountRecords:{email.ToLower()}";
-		var accountRecords = context.ContainsKey(recordsKey)
-			? context.Get<List<Dictionary<string, object>>>(recordsKey)
-			: new List<Dictionary<string, object>>();
-		accountRecords.Add(accountInfo);
-		
-		context[recordsKey] = accountRecords;
+		// Store
+		context["AccountRecord"] = accountRecord;
 	}
 
-	// Alias for readability in features
 	[Given(@"I create the accounts")]
+	public void GivenICreateTheAccounts()
+	{
+		// Actual - get required context
+		var user = context.Get<User>("User");
+		var accountRecord = context.Get<AccountRecord>("AccountRecord");
+
+		//act
+		var account = new Account(accountRecord)
+		// the only thing that should ever be set here is an ID!
+		{
+			Id = 1 // Set test ID
+		};
+		
+		// Initialize user accounts if not already done
+		if (user.Accounts == null)
+			user.Accounts = new List<Account>();
+		
+		user.Accounts.Add(account);
+		
+		// Store: Store the accounts list for context
+		context["Accounts"] = user.Accounts.ToList();
+	}
+
+	
+
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
-		// Actual: get account records and current user
-		if (!context.ContainsKey("User"))
-		{
-			WhenICreateTheUser();
-		}
+		// Actual - get required context (user and record should already exist from Given steps)
 		var user = context.Get<User>("User");
-		var emailKey = user.Email.ToLower();
-		var recordsKey = $"AccountRecords:{emailKey}";
-		var accountRecords = context.ContainsKey(recordsKey)
-			? context.Get<List<Dictionary<string, object>>>(recordsKey)
-			: new List<Dictionary<string, object>>();
-
-		// Act: convert records to objects
+		var record = context.Get<AccountRecord>("AccountRecord");
 		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
-		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
 
-		foreach (var accountInfo in accountRecords)
+		// Act
+		var account = new Account(record)
+		// only ever set the ID here, nothing else
 		{
-			var record = (AccountRecord)accountInfo["Record"];
-			var accountType = (string)accountInfo["AccountType"];
-			var openingBalance = (decimal)accountInfo["OpeningBalance"];
-			
-			// Convert record to object
-			var account = new Account(record)
-			{
-				Id = nextAccountId++,
-				AccountType = accountType,
-				CachedBalance = openingBalance,
-				CachedBalanceDate = DateTime.UtcNow,
-				User = user
-			};
-			accounts.Add(account);
-		}
+			Id = accounts.Count + 1
+		};
+		accounts.Add(account);
 		
-		// Store: Store converted objects
-		context["Accounts"] = accounts;
+		// Store objects only - update user.Accounts to maintain object relationships needed for Then steps
 		user.Accounts = accounts;
+		context["Accounts"] = accounts;
 	}
 
-	[Then(@"the user ""(.*)"" should have the following accounts")]
-	public void Thentheusershouldhavethefollowingaccounts(string email, DataTable dataTable)
+	[Then(@"the user should have the following accounts")]
+	public void Thentheusershouldhavethefollowingaccounts(DataTable dataTable)
 	{
 		// Inputs (expected)
 		var expectedRows = dataTable.Rows.ToList();

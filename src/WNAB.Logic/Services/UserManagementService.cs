@@ -10,18 +10,13 @@ public class UserManagementService
 {
 	private readonly HttpClient _http;
 
-	/// <summary>
-	/// Construct with an HttpClient configured with API BaseAddress (e.g. https://localhost:7077/)
-	/// </summary>
+
 	public UserManagementService(HttpClient http)
 	{
 		_http = http ?? throw new ArgumentNullException(nameof(http));
 	}
 
-	// LLM-Dev: Split into two methods as requested: one to create the DTO, one to send it to the API.
-	/// <summary>
-	/// Creates a <see cref="UserRecord"/> DTO from inputs.
-	/// </summary>
+
 	public static UserRecord CreateUserRecord(string firstName, string lastName, string email)
 	{
 		if (string.IsNullOrWhiteSpace(firstName)) throw new ArgumentException("First name required", nameof(firstName));
@@ -30,9 +25,6 @@ public class UserManagementService
 		return new UserRecord(firstName, lastName, email);
 	}
 
-	/// <summary>
-	/// Sends the provided <see cref="UserRecord"/> to the API via POST /users and returns the created user Id.
-	/// </summary>
 	public async Task<int> CreateUserAsync(UserRecord record, CancellationToken ct = default)
 	{
 		if (record is null) throw new ArgumentNullException(nameof(record));
@@ -46,18 +38,13 @@ public class UserManagementService
 
 	private sealed record UserCreatedResponse(int Id, string FirstName, string LastName, string Email);
 
-	// LLM-Dev:v2 Add list method so UI does not create HttpClients directly.
+
 	public async Task<List<User>> GetUsersAsync(CancellationToken ct = default)
 	{
 		var users = await _http.GetFromJsonAsync<List<User>>("all/users", ct);
 		return users ?? new();
 	}
 
-	// LLM-Dev:v3 Add user validation method to check if user exists by ID for login validation.
-	/// <summary>
-	/// Validates if a user exists by checking the users list from the API.
-	/// Returns the user if found, null if not found.
-	/// </summary>
 	public async Task<User?> GetUserByIdAsync(int userId, CancellationToken ct = default)
 	{
 		var users = await GetUsersAsync(ct);
