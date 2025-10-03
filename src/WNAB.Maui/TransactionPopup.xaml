@@ -5,20 +5,94 @@
                xmlns:local="clr-namespace:WNAB.Maui"
                x:Class="WNAB.Maui.TransactionPopup"
                x:DataType="local:TransactionViewModel"
-               Color="MidnightBlue"
-               >
-    <VerticalStackLayout BackgroundColor="Purple" Padding="20" Spacing="16" WidthRequest="320" >
-        <Label  Text="New Transaction" FontAttributes="Bold" HorizontalOptions="Center" />
-        <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="10">
-            <Label  Text="Amount:" />
-            <Entry Grid.Column="1" Keyboard="Numeric" Text="{Binding Amount}" Placeholder="0.00" />
-
-            <Label Grid.Row="1" Text="Memo:" />
-            <Entry Grid.Row="1" Grid.Column="1" Text="{Binding Memo}" Placeholder="Description" />
-        </Grid>
+               Color="MidnightBlue">
+    <!-- LLM-Dev:v2 Enhanced transaction popup with all required fields and proper styling -->
+    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="400" BackgroundColor="White">
+        <Label Text="New Transaction" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="Black" 
+               FontSize="18" />
+        
+        <!-- LLM-Dev:v2 Status message for validation feedback -->
+        <Label Text="{Binding StatusMessage}" 
+               HorizontalOptions="Center" 
+               TextColor="DarkSlateGray" 
+               FontSize="14" />
+        
+        <!-- LLM-Dev:v2 Complete form with all transaction fields -->
+        <StackLayout Spacing="12">
+            <!-- Account Picker -->
+            <StackLayout Spacing="4">
+                <Label Text="Account" TextColor="Black" FontSize="14" />
+                <Picker ItemsSource="{Binding AvailableAccounts}"
+                        SelectedItem="{Binding SelectedAccount}"
+                        ItemDisplayBinding="{Binding AccountName}"
+                        Title="Select Account"
+                        BackgroundColor="LightGray"
+                        TextColor="Black" />
+            </StackLayout>
+            
+            <!-- Payee -->
+            <StackLayout Spacing="4">
+                <Label Text="Payee" TextColor="Black" FontSize="14" />
+                <Entry Text="{Binding Payee}" 
+                       Placeholder="Enter payee name" 
+                       BackgroundColor="LightGray"
+                       TextColor="Black"
+                       PlaceholderColor="Gray" />
+            </StackLayout>
+            
+            <!-- Date Picker -->
+            <StackLayout Spacing="4">
+                <Label Text="Date" TextColor="Black" FontSize="14" />
+                <DatePicker Date="{Binding TransactionDate}"
+                            BackgroundColor="LightGray"
+                            TextColor="Black" />
+            </StackLayout>
+            
+            <!-- Amount -->
+            <StackLayout Spacing="4">
+                <Label Text="Amount" TextColor="Black" FontSize="14" />
+                <Entry Text="{Binding Amount}" 
+                       Keyboard="Numeric" 
+                       Placeholder="0.00" 
+                       BackgroundColor="LightGray"
+                       TextColor="Black"
+                       PlaceholderColor="Gray" />
+            </StackLayout>
+            
+            <!-- Category Picker -->
+            <StackLayout Spacing="4">
+                <Label Text="Category" TextColor="Black" FontSize="14" />
+                <Picker ItemsSource="{Binding AvailableCategories}"
+                        SelectedItem="{Binding SelectedCategory}"
+                        ItemDisplayBinding="{Binding Name}"
+                        Title="Select Category"
+                        BackgroundColor="LightGray"
+                        TextColor="Black" />
+            </StackLayout>
+            
+            <!-- Memo -->
+            <StackLayout Spacing="4">
+                <Label Text="Memo (Optional)" TextColor="Black" FontSize="14" />
+                <Entry Text="{Binding Memo}" 
+                       Placeholder="Add notes or description" 
+                       BackgroundColor="LightGray"
+                       TextColor="Black"
+                       PlaceholderColor="Gray" />
+            </StackLayout>
+        </StackLayout>
+        
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
-            <Button Text="Cancel" Command="{Binding CancelCommand}" />
-            <Button Text="Save" Command="{Binding SaveCommand}" />
+            <Button Text="Cancel" 
+                    Command="{Binding CancelCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="Save" 
+                    Command="{Binding SaveCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
 </toolkit:Popup>
