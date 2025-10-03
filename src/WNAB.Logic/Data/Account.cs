@@ -36,7 +36,7 @@ public class Account
     public User User { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
-    // LLM-Dev:v3 Convenience ctor from record (UserId comes from record, API also passes it separately)
+    // LLM-Dev:v4 Convenience ctor from record - use AccountType from record
     public Account(AccountRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
