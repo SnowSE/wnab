@@ -63,7 +63,8 @@ public partial class LoginViewModel : ObservableObject
             await SecureStorage.Default.SetAsync("userId", id);
 
             if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Login Successful", $"Welcome {user.FirstName} {user.LastName}!", "OK");
+            // purposely not saying await so that we don't have two popups showing at once :) -OA 10/3/2025
+                Shell.Current.DisplayAlert("Login Successful", $"Welcome {user.FirstName} {user.LastName}!", "OK");
 
             // LLM-Dev:v4 Close popup after successful login (MainPageViewModel will refresh display)
             RequestClose?.Invoke(this, EventArgs.Empty);
