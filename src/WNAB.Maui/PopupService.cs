@@ -52,4 +52,14 @@ internal class PopupService : IPopupService
             await page.ShowPopupAsync(popup);
         }
     }
+
+    public async Task ShowLoginAsync()
+    {
+        var popup = _services.GetRequiredService<LoginPage>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
+    }
 }

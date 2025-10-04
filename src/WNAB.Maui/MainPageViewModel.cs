@@ -99,10 +99,13 @@ public partial class MainPageViewModel : ObservableObject
         await Shell.Current.GoToAsync("Users");
     }
 
+    // LLM-Dev:v8 Updated to use popup service since LoginPage is now a popup
     [RelayCommand]
     private async Task NavigateToLogin()
     {
-        await Shell.Current.GoToAsync("Login");
+        await _popupService.ShowLoginAsync();
+        // LLM-Dev:v8 Refresh user display after login popup closes
+        await RefreshUserId();
     }
 
     // LLM-Dev:v7 Added unified auth toolbar command routing to sign-in / sign-out logic
