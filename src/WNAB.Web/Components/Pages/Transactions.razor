@@ -1,0 +1,249 @@
+@page "/transactions"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject TransactionManagementService TransactionsService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@layout MainLayoutNoSidebar
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Transactions</h1>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal">
+            <i class="bi bi-plus-circle me-1"></i>
+            Create Transaction
+        </button>
+        <button class="btn btn-outline-secondary ms-2" @onclick="RefreshAsync" disabled="@_isLoading">
+            @if (_isLoading)
+            {
+                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            }
+            else
+            {
+                <i class="bi bi-arrow-clockwise me-1"></i>
+            }
+            Refresh
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
+{
+    <div class="alert alert-info">@_statusMessage</div>
+}
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+
+<div class="responsive-panel">
+    @if (_items is null)
+    {
+        <div class="text-center p-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading transactions...</p>
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <div class="text-center p-4">
+            <i class="bi bi-receipt fs-1 text-muted"></i>
+            <p class="mt-2">No transactions found. Click "Create Transaction" to add your first transaction.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Payee</th>
+                        <th>Description</th>
+                        <th>Account</th>
+                        <th>Categories</th>
+                        <th class="text-end">Amount</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in _items)
+                    {
+                        <tr>
+                            <td class="text-muted">@t.TransactionDate.ToString("MMM dd, yyyy")</td>
+                            <td class="fw-semibold">@t.Payee</td>
+                            <td>@t.Description</td>
+                            <td>
+                                <span class="badge bg-secondary">@t.AccountName</span>
+                            </td>
+                            <td>
+                                @if (t.TransactionSplits?.Any() == true)
+                                {
+                                    @if (t.TransactionSplits.Count == 1)
+                                    {
+                                        <span class="badge bg-info">@t.TransactionSplits.First().CategoryName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info">@t.TransactionSplits.Count categories</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">No category</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <span class="@(t.Amount >= 0 ? "text-success" : "text-danger")">
+                                    @t.Amount.ToString("C")
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewTransaction(t.Id)">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(t.Id)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Include the Create Transaction Modal -->
+<CreateTransactionModal OnTransactionCreated="RefreshTransactionsAfterCreate" />
+
+@code {
+    // LLM-Dev:v1 Updated to use popup modals instead of navigation pages, matching MAUI pattern
+    private int _userId;
+    private bool _isLoggedIn;
+    private bool _isLoading;
+    private List<TransactionDto>? _items;
+    private string? _error;
+    private string? _statusMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeAsync();
+    }
+
+    // LLM-Dev:v1 Added initialization method to automatically load user session and transactions (matching MAUI pattern)
+    private async Task InitializeAsync()
+    {
+        await CheckUserSessionAsync();
+        if (_isLoggedIn)
+        {
+            await LoadTransactionsAsync();
+        }
+    }
+
+    // LLM-Dev:v1 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
+    private async Task CheckUserSessionAsync()
+    {
+        try
+        {
+            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
+            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
+            
+            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            {
+                _userId = parsedUserId;
+                _isLoggedIn = true;
+                _statusMessage = $"Logged in as user {_userId}";
+            }
+            else
+            {
+                _isLoggedIn = false;
+                _statusMessage = "Please log in to view transactions";
+                _items = new List<TransactionDto>();
+            }
+        }
+        catch
+        {
+            _isLoggedIn = false;
+            _statusMessage = "Error checking login status";
+            _items = new List<TransactionDto>();
+        }
+    }
+
+    // LLM-Dev:v1 Load transactions for the current user (matching MAUI pattern)
+    private async Task LoadTransactionsAsync()
+    {
+        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
+        
+        try
+        {
+            _isLoading = true;
+            _error = null;
+            _statusMessage = "Loading transactions...";
+            StateHasChanged();
+            
+            // LLM-Dev:v1 Use service list method to load all transactions for user
+            _items = await TransactionsService.GetTransactionsForUserAsync(_userId);
+            _statusMessage = _items.Count == 0 ? "No transactions found" : $"Loaded {_items.Count} transactions";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error loading transactions: {ex.Message}";
+            _statusMessage = null;
+        }
+        finally 
+        { 
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev:v1 Add refresh command for manual reload (matching MAUI pattern)
+    private async Task RefreshAsync()
+    {
+        await CheckUserSessionAsync();
+        if (_isLoggedIn)
+        {
+            await LoadTransactionsAsync();
+        }
+    }
+
+    // LLM-Dev:v1 Handler for when transaction is created in modal to refresh list
+    private async Task RefreshTransactionsAfterCreate()
+    {
+        await LoadTransactionsAsync();
+    }
+
+    // LLM-Dev:v1 Add action handlers for table actions
+    private void ViewTransaction(int transactionId)
+    {
+        // This could open a view transaction modal popup - for now just show an alert
+        // In a future version, this could open a view/edit transaction modal popup
+    }
+
+    private async Task DeleteTransaction(int transactionId)
+    {
+        if (await ConfirmDelete())
+        {
+            try
+            {
+                // Implementation would call delete service method
+                await LoadTransactionsAsync(); // Refresh after delete
+            }
+            catch (Exception ex)
+            {
+                _error = $"Error deleting transaction: {ex.Message}";
+            }
+        }
+    }
+
+    private Task<bool> ConfirmDelete()
+    {
+        // In a real implementation, this would use a confirmation modal
+        // For now, return false to prevent accidental deletion
+        return Task.FromResult(false);
+    }
+}

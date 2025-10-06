@@ -89,6 +89,16 @@ public class TransactionManagementService
         return transactions ?? new();
     }
 
+    /// <summary>
+    /// Gets all transactions for a specific user across all their accounts.
+    /// LLM-Dev:v2 Returns DTOs to avoid circular reference issues.
+    /// </summary>
+    public async Task<List<TransactionDto>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
+    {
+        var transactions = await _http.GetFromJsonAsync<List<TransactionDto>>($"users/{userId}/transactions", ct);
+        return transactions ?? new();
+    }
+
     // LLM-Dev v1: Helper to convert ViewModel to DTO for simplified service usage
     /// <summary>
     /// Converts a ViewModel with splits to a TransactionRecord DTO.

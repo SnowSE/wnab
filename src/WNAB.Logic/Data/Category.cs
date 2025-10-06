@@ -30,4 +30,18 @@ public class Category
     public User User { get; set; } = null!;
     public ICollection<CategoryAllocation> Allocations { get; set; } = new List<CategoryAllocation>();
     public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
+
+    // LLM-Dev:v1 Convenience ctor from record
+    public Category(CategoryRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        Name = record.Name;
+        UserId = record.UserId;
+        IsActive = true;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Parameterless ctor for EF Core
+    public Category() { }
 }

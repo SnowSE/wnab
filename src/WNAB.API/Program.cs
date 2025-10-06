@@ -134,6 +134,13 @@ app.MapGet("/categories", async (WnabContext db) =>
     return Results.Ok(categories);
 }).RequireAuthorization();
 
+// LLM-Dev:v4 Add endpoint to get categories for a specific user (following same pattern as accounts)
+app.MapGet("/users/categories", (int userId, WnabContext db) =>
+{
+    var categories = db.Categories.Where(c => c.UserId == userId && c.IsActive);
+    return Results.Ok(categories);
+});
+
 app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
@@ -200,7 +207,7 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 // New RESTful create endpoints (POST) - secured with authorization
 app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
 {
-    var user = new User { Email = rec.Email, FirstName = rec.Name, LastName = rec.Name };
+    var user = new User { Email = rec.Email, FirstName = rec.FirstName, LastName = rec.LastName };
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });
@@ -246,21 +253,28 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
     var account = await db.Accounts.FindAsync(rec.AccountId);
     if (account is null) return Results.NotFound($"Account {rec.AccountId} not found");
 
-    // Create the transaction
+    // LLM-Dev:v3 ALL DateTimes must be UTC for PostgreSQL
+    var utcNow = DateTime.UtcNow;
+    var utcTransactionDate = rec.TransactionDate.Kind == DateTimeKind.Utc 
+        ? rec.TransactionDate 
+        : DateTime.SpecifyKind(rec.TransactionDate, DateTimeKind.Utc);
+
     var transaction = new Transaction
     {
         AccountId = rec.AccountId,
         Payee = rec.Payee,
         Description = rec.Description,
         Amount = rec.Amount,
-        TransactionDate = rec.TransactionDate,
-        Account = account
+        TransactionDate = utcTransactionDate,
+        Account = account,
+        CreatedAt = utcNow,
+        UpdatedAt = utcNow
     };
 
     db.Transactions.Add(transaction);
     await db.SaveChangesAsync(); // Save to get transaction ID
 
-    // Create transaction splits
+    // Create transaction splits - ALL DateTimes must be UTC
     foreach (var splitRecord in rec.Splits)
     {
         var split = new TransactionSplit
@@ -269,22 +283,24 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
             CategoryId = splitRecord.CategoryId,
             Amount = splitRecord.Amount,
             Notes = splitRecord.Notes,
-            Transaction = transaction
+            Transaction = transaction,
+            CreatedAt = utcNow,
+            UpdatedAt = utcNow
         };
         db.TransactionSplits.Add(split);
     }
 
     await db.SaveChangesAsync();
-    return Results.Created($"/transactions/{transaction.Id}", transaction);
+    
+    // LLM-Dev:v5 Reload transaction without navigation properties to avoid circular reference
+    var result = await db.Transactions.AsNoTracking().FirstOrDefaultAsync(t => t.Id == transaction.Id);
+    return Results.Created($"/transactions/{transaction.Id}", result);
 }).RequireAuthorization();
 
 app.MapGet("/transactions", async (int? accountId, WnabContext db) =>
 {
-    var query = db.Transactions
-        .Include(t => t.TransactionSplits)
-        .ThenInclude(ts => ts.Category)
-        .Include(t => t.Account)
-        .AsNoTracking();
+    // LLM-Dev:v6 No Include() to avoid circular references
+    var query = db.Transactions.AsNoTracking();
 
     if (accountId.HasValue)
         query = query.Where(t => t.AccountId == accountId.Value);
@@ -295,10 +311,41 @@ app.MapGet("/transactions", async (int? accountId, WnabContext db) =>
 
 app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabContext db) =>
 {
+    // LLM-Dev:v6 No Include() to avoid circular references
     var transactions = await db.Transactions
         .Where(t => t.AccountId == accountId)
-        .Include(t => t.TransactionSplits)
-        .ThenInclude(ts => ts.Category)
+        .AsNoTracking()
+        .ToListAsync();
+    
+    return Results.Ok(transactions);
+});
+
+// LLM-Dev:v8 Add endpoint to get all transactions for a specific user across all their accounts
+app.MapGet("/users/{userId}/transactions", async (int userId, WnabContext db) =>
+{
+    // LLM-Dev:v8 Use DTO to include Account/Category names without circular reference
+    var transactions = await db.Transactions
+        .Where(t => t.Account.UserId == userId)
+        .OrderByDescending(t => t.TransactionDate)
+        .Select(t => new TransactionDto(
+            t.Id,
+            t.AccountId,
+            t.Account.AccountName,
+            t.Payee,
+            t.Description,
+            t.Amount,
+            t.TransactionDate,
+            t.IsReconciled,
+            t.CreatedAt,
+            t.UpdatedAt,
+            t.TransactionSplits.Select(ts => new TransactionSplitDto(
+                ts.Id,
+                ts.CategoryId,
+                ts.Category.Name,
+                ts.Amount,
+                ts.Notes
+            )).ToList()
+        ))
         .AsNoTracking()
         .ToListAsync();
 

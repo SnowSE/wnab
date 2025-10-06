@@ -29,4 +29,20 @@ public class Transaction
     // Navigation properties
     public Account Account { get; set; } = null!;
     public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
+
+    // LLM-Dev:v1 Convenience ctor from record (splits should be constructed separately)
+    public Transaction(TransactionRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        AccountId = record.AccountId;
+        Payee = record.Payee;
+        Description = record.Description;
+        Amount = record.Amount;
+        TransactionDate = record.TransactionDate;
+        CreatedAt = DateTime.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    // Parameterless ctor for EF Core
+    public Transaction() { }
 }

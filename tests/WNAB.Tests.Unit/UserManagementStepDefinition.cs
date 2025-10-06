@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic; // LLM-Dev: Use services to create DTO records
+using WNAB.Logic; // LLM-Dev:v4.1 Readability pass: Inputs -> Actual -> Act/Store or Assert
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -13,75 +13,67 @@ public partial class StepDefinitions
 	[Given(@"the created user")]
 	public void Giventhecreateduser(DataTable dataTable)
 	{
-		// LLM-Dev:v3 Gherkin-callable hybrid step to create a user directly from the table.
+		// Inputs (expected)
 		if (dataTable == null) throw new ArgumentNullException(nameof(dataTable));
 		var row = dataTable.Rows.Single();
-		// Support either a single "Name" column or separate FirstName/LastName columns.
-		var name = dataTable.Header.Contains("Name")
-			? row["Name"]
-			: $"{row["FirstName"]} {row["LastName"]}";
+		var firstname = row["FirstName"];
+		var lastname = row["LastName"];
 		var email = row["Email"];
-		// Stage a DTO and delegate to existing creation logic for consistency.
-		var userRecord = UserManagementService.CreateUserRecord(name, email);
-		context["UserRecord"] = userRecord;
-		WhenICreateTheUser();
+		// Act
+		User user = new() { FirstName = firstname, LastName = lastname, Email = email};
+		// Store
+		context["User"] = user;
 	}
 
 	[Given(@"the system has no existing users")]
 	public void Giventhesystemhasnoexistingusers(DataTable _)
 	{
-		// LLM-Dev:v2 Initialize empty user list for scenario isolation
+		// Store
 		context["Users"] = new List<User>();
 	}
 
 	[Given(@"the following user")]
 	public void Giventhefollowinguser(DataTable dataTable)
 	{
-		// LLM-Dev:v2 Build a DTO using the service and stage only the record in context.
+		// Inputs (expected)
 		var row = dataTable.Rows.Single();
-		var fullName = $"{row["FirstName"]} {row["LastName"]}";
-		// LLM-Dev:v2 Build record via static method; no HttpClient or service instance needed
-		var userRecord = UserManagementService.CreateUserRecord(fullName, row["Email"]);
-		context["UserRecord"] = userRecord; // LLM-Dev:v2 Store DTO; entity will be created during When
+		var firstName = row["FirstName"];
+		var lastName = row["LastName"];
+		// Act
+		var userRecord = UserManagementService.CreateUserRecord(firstName, lastName, row["Email"]);
+		// Store
+		context["UserRecord"] = userRecord;
 	}
 
 	[When(@"I create the user")]
 	public void WhenICreateTheUser()
 	{
-		// LLM-Dev:v2 Create a User entity from the staged UserRecord and persist it in scenario context.
+		// Actual
 		var record = context.Get<UserRecord>("UserRecord");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
-		// Derive first/last name from record.Name (first token = FirstName; remainder = LastName)
-		var parts = record.Name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		var firstName = parts.Length > 0 ? parts[0] : record.Name;
-		var lastName = parts.Length > 1 ? string.Join(" ", parts.Skip(1)) : string.Empty;
-		var user = new User
-		{
-			FirstName = firstName,
-			LastName = lastName,
-			Email = record.Email,
-			IsActive = true,
-			CreatedAt = DateTime.UtcNow,
-			UpdatedAt = DateTime.UtcNow
-		};
-		// Assign a simple incremental Id
+		// Act
+		var user = new User(record);
+		// Store
 		user.Id = users.Count + 1;
 		users.Add(user);
 		context["Users"] = users;
-		context["User"] = user; // LLM-Dev:v2 Expose created entity for subsequent steps
+		context["User"] = user;
 	}
 
 	[Then(@"I should have the following user in the system")]
 	public void ThenIShouldHaveTheFollowingUserInTheSystem(DataTable dataTable)
 	{
+		// Inputs (expected)
 		var expectedRow = dataTable.Rows.Single();
-		var users = context.Get<List<User>>("Users");
-		var email = expectedRow["Email"];
-		var actual = users.SingleOrDefault(u => u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
-		actual.ShouldNotBeNull(); // LLM-Dev: Existence check
-		actual!.FirstName.ShouldBe(expectedRow["FirstName"]);
+		// Actual
+		var actual = context.Get<User>("User");
+		// Assert
+		actual.FirstName.ShouldBe(expectedRow["FirstName"]);
 		actual.LastName.ShouldBe(expectedRow["LastName"]);
-		// If IsActive column provided, assert; else skip (defensive for future scenarios)
+		if (dataTable.Header.Contains("Email"))
+		{
+			actual.Email.ShouldBe(expectedRow["Email"]);
+		}
 		if (dataTable.Header.Contains("IsActive"))
 		{
 			bool expectedActive = bool.Parse(expectedRow["IsActive"].ToString());

@@ -1,59 +1,69 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="WNAB.Maui.MainPage">
+             xmlns:local="clr-namespace:WNAB.Maui"
+             x:Class="WNAB.Maui.MainPage"
+             x:DataType="local:MainPageViewModel">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Sign Out"
+        <ToolbarItem Text="{Binding LogInSignOutText}"
                      Priority="0"
                      Order="Primary"
-                     Command="{Binding SignOutCommand}" />
+                     Command="{Binding LogInSignOutCommand}" />
     </ContentPage.ToolbarItems>
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Label
-                Text="{Binding UserDisplay}"
-                TextColor="Gray"
-                HorizontalOptions="End"
-                AutomationId="SignedInIndicator" />
-            <Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+    <ContentPage.Content>
+        <ScrollView>
+            <VerticalStackLayout
+                Padding="30,0"
+                Spacing="25">
+                <Label
+                    Text="{Binding UserDisplay}"
+                    TextColor="Gray"
+                    HorizontalOptions="End"
+                    AutomationId="SignedInIndicator" />
+                
+               
+                <Label
+                    Text="Welcome to &#10;WNAB"
+                    Style="{StaticResource SubHeadline}"
+                    SemanticProperties.HeadingLevel="Level2"
+                    SemanticProperties.Description="Welcome to WNAB - We Need A Budget" />
 
-           
-            <Label
-                Text="Welcome to &#10;.NET Multi-platform App UI"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I" />
+                <Label
+                    Text="Manage your finances with ease. Use the buttons below to access different sections."
+                    Style="{StaticResource BodyLarge}"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
 
-          
+                <!-- LLM-Dev:v2 Updated navigation buttons to replace shell navigation -->
+                <!-- <Button
+                    Text="Login"
+                    Command="{Binding NavigateToLoginCommand}"
+                    HorizontalOptions="Fill" /> -->
 
-            <Button
-                Text="Add New Transaction"
-                Command="{Binding OpenNewTransactionCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="Manage Users"
+                    Command="{Binding NavigateToUsersCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="Add Category"
-                Command="{Binding OpenAddCategoryCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="View Categories"
+                    Command="{Binding NavigateToCategoriesCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="Add User"
-                Command="{Binding OpenAddUserCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="View Accounts"
+                    Command="{Binding NavigateToAccountsCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="Add Account"
-                Command="{Binding OpenAddAccountCommand}"
-                HorizontalOptions="Fill" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- LLM-Dev:v3 Combined View and Manage transactions into single button -->
+                <Button
+                    Text="Manage Transactions"
+                    Command="{Binding NavigateToTransactionsCommand}"
+                    HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </ContentPage.Content>
 
 </ContentPage>

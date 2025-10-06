@@ -10,10 +10,10 @@
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
-            <!-- Value Converters -->
-            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
-            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            
+            <!-- LLM-Dev: v1 Added converters for data binding -->
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+            <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

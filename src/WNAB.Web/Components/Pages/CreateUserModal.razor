@@ -1,0 +1,101 @@
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject UserManagementService UsersService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createUserModalLabel">Create User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <EditForm Model="this" OnValidSubmit="Create">
+                <div class="modal-body">
+                    @if (!string.IsNullOrWhiteSpace(_error))
+                    {
+                        <div class="alert alert-danger">@_error</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_result))
+                    {
+                        <div class="alert alert-success">@_result</div>
+                    }
+                    
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Email</label>
+                            <input class="form-control" type="email" @bind-value="_email" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">First Name</label>
+                            <input class="form-control" @bind-value="_firstName" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Name</label>
+                            <input class="form-control" @bind-value="_lastName" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-primary" type="submit" disabled="@_isCreating">
+                        @if (_isCreating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Create User
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    // LLM-Dev:v4 Modal popup component for creating users, matching MAUI popup pattern
+    private string? _email;
+    private string? _firstName;
+    private string? _lastName;
+    private bool _isCreating;
+    private string? _result;
+    private string? _error;
+
+    [Parameter] public EventCallback OnUserCreated { get; set; }
+
+    private async Task Create()
+    {
+        _result = _error = null;
+        
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_firstName) || string.IsNullOrWhiteSpace(_lastName))
+        {
+            _error = "Please fill in all required fields";
+            return;
+        }
+
+        try
+        {
+            _isCreating = true;
+            StateHasChanged();
+
+            // LLM-Dev:v5 Fix parameter order in CreateUserRecord call to match service signature (firstName, lastName, email)
+            var record = UserManagementService.CreateUserRecord(_firstName, _lastName, _email);
+            var id = await UsersService.CreateUserAsync(record);
+            _result = $"User '{_firstName} {_lastName}' created successfully with ID {id}";
+            
+            // Clear the fields for next use (matching MAUI pattern)
+            _email = _firstName = _lastName = string.Empty;
+            
+            // Notify parent component to refresh the users list
+            await OnUserCreated.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error creating user: {ex.Message}";
+        }
+        finally
+        {
+            _isCreating = false;
+            StateHasChanged();
+        }
+    }
+}

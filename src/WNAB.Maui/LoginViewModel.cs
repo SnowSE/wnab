@@ -1,85 +1,78 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Maui.Services;
+using Microsoft.Maui.Storage;
+using WNAB.Logic;
+using System;
+using System.Threading.Tasks;
 
 namespace WNAB.Maui;
 
+// LLM-Dev:v4 Updated to validate user exists in database before allowing login. Removed NavigateToHome command as popup auto-closes.
 public partial class LoginViewModel : ObservableObject
 {
-    private readonly IAuthenticationService _authenticationService;
+    private readonly UserManagementService _userService;
 
     [ObservableProperty]
-    private string? statusMessage;
+    private string? userId;
 
-    [ObservableProperty]
-    private bool isAuthenticated;
+    public event EventHandler? RequestClose; // Raised to close popup
 
-    public LoginViewModel(IAuthenticationService authenticationService)
+    [RelayCommand]
+    private void Cancel()
     {
-        _authenticationService = authenticationService;
-        _ = CheckAuthenticationStatusAsync();
+        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
-    private async Task CheckAuthenticationStatusAsync()
+    public LoginViewModel(UserManagementService userService)
     {
-        IsAuthenticated = await _authenticationService.IsAuthenticatedAsync();
-        if (IsAuthenticated)
-        {
-            var userName = _authenticationService.GetUserName();
-            StatusMessage = $"Logged in as {userName}";
-        }
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
     }
 
     [RelayCommand]
-    private async Task LoginAsync()
+    private async Task SaveUserId()
     {
+        // Basic validation
+        var id = (UserId ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlert("Missing User ID", "Please enter a user ID.", "OK");
+            return;
+        }
+
+        // Validate user ID is a number
+        if (!int.TryParse(id, out int userIdInt))
+        {
+            if (Shell.Current is not null)
+                await Shell.Current.DisplayAlert("Invalid User ID", "User ID must be a number.", "OK");
+            return;
+        }
+
         try
         {
-            StatusMessage = "Logging in...";
-            var success = await _authenticationService.LoginAsync();
-
-            if (success)
+            // LLM-Dev:v3 Check if user exists in database before allowing login
+            var user = await _userService.GetUserByIdAsync(userIdInt);
+            if (user is null)
             {
-                IsAuthenticated = true;
-                var userName = _authenticationService.GetUserName();
-                StatusMessage = $"Successfully logged in as {userName}";
+                if (Shell.Current is not null)
+                    await Shell.Current.DisplayAlert("User Not Found", "The specified user ID does not exist in the database or is inactive.", "OK");
+                return;
+            }
 
-                if (Shell.Current is not null)
-                    await Shell.Current.DisplayAlert("Success", "Login successful!", "OK");
-            }
-            else
-            {
-                StatusMessage = "Login failed. Please try again.";
-                if (Shell.Current is not null)
-                    await Shell.Current.DisplayAlert("Error", "Login failed. Please try again.", "OK");
-            }
+            // User exists, proceed with login
+            await SecureStorage.Default.SetAsync("userId", id);
+
+            if (Shell.Current is not null)
+            // purposely not saying await so that we don't have two popups showing at once :) -OA 10/3/2025
+                Shell.Current.DisplayAlert("Login Successful", $"Welcome {user.FirstName} {user.LastName}!", "OK");
+
+            // LLM-Dev:v4 Close popup after successful login (MainPageViewModel will refresh display)
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error: {ex.Message}";
             if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Error", $"Login error: {ex.Message}", "OK");
-        }
-    }
-
-    [RelayCommand]
-    private async Task LogoutAsync()
-    {
-        try
-        {
-            StatusMessage = "Logging out...";
-            await _authenticationService.LogoutAsync();
-            IsAuthenticated = false;
-            StatusMessage = "Logged out successfully";
-
-            if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Success", "Logout successful!", "OK");
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error: {ex.Message}";
-            if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Error", $"Logout error: {ex.Message}", "OK");
+                await Shell.Current.DisplayAlert("Login Error", $"Failed to validate user: {ex.Message}", "OK");
         }
     }
 }

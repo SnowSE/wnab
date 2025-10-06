@@ -1,5 +1,4 @@
 using CommunityToolkit.Maui.Views;
-using Microsoft.Maui.Controls;
 
 namespace WNAB.Maui;
 
@@ -12,39 +11,55 @@ internal class PopupService : IPopupService
         _services = services;
     }
 
-    public Task ShowNewTransactionAsync()
+    public async Task ShowNewTransactionAsync()
     {
-        // TODO: The CommunityToolkit.Maui v12 API changed - needs updating
-        // Temporarily returning completed task until popup API is fixed
-        return Task.CompletedTask;
-
         // Resolve popup (allows DI into popup later)
-        //var popup = _services.GetRequiredService<NewTransactionPopup>();
-        //return MainThread.InvokeOnMainThreadAsync(async () =>
-        //{
-        //    var page = Shell.Current?.CurrentPage ?? Application.Current?.MainPage;
-        //    if (page is not null)
-        //    {
-        //        await page.ShowPopupAsync(popup);
-        //    }
-        //});
+        var popup = _services.GetRequiredService<TransactionPopup>();
+        // Need a current page to display from; use Application.Current.MainPage
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
     }
 
-    public Task ShowAddCategoryAsync()
+    public async Task ShowAddCategoryAsync()
     {
-        // TODO: The CommunityToolkit.Maui v12 API changed - needs updating
-        return Task.CompletedTask;
+        var popup = _services.GetRequiredService<AddCategoryPopup>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
     }
 
-    public Task ShowAddUserAsync()
+    public async Task ShowAddUserAsync()
     {
-        // TODO: The CommunityToolkit.Maui v12 API changed - needs updating
-        return Task.CompletedTask;
+        var popup = _services.GetRequiredService<AddUserPopup>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
     }
 
-    public Task ShowAddAccountAsync()
+    public async Task ShowAddAccountAsync()
     {
-        // TODO: The CommunityToolkit.Maui v12 API changed - needs updating
-        return Task.CompletedTask;
+        var popup = _services.GetRequiredService<AddAccountPopup>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
+    }
+
+    public async Task ShowLoginAsync()
+    {
+        var popup = _services.GetRequiredService<LoginPage>();
+        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
+        if (page is not null)
+        {
+            await page.ShowPopupAsync(popup);
+        }
     }
 }
