@@ -77,14 +77,14 @@
                             <td class="fw-semibold">@t.Payee</td>
                             <td>@t.Description</td>
                             <td>
-                                <span class="badge bg-secondary">@t.Account?.AccountName</span>
+                                <span class="badge bg-secondary">@t.AccountName</span>
                             </td>
                             <td>
                                 @if (t.TransactionSplits?.Any() == true)
                                 {
                                     @if (t.TransactionSplits.Count == 1)
                                     {
-                                        <span class="badge bg-info">@t.TransactionSplits.First().Category?.Name</span>
+                                        <span class="badge bg-info">@t.TransactionSplits.First().CategoryName</span>
                                     }
                                     else
                                     {
@@ -125,7 +125,7 @@
     private int _userId;
     private bool _isLoggedIn;
     private bool _isLoading;
-    private List<Transaction>? _items;
+    private List<TransactionDto>? _items;
     private string? _error;
     private string? _statusMessage;
 
@@ -162,14 +162,14 @@
             {
                 _isLoggedIn = false;
                 _statusMessage = "Please log in to view transactions";
-                _items = new List<Transaction>();
+                _items = new List<TransactionDto>();
             }
         }
         catch
         {
             _isLoggedIn = false;
             _statusMessage = "Error checking login status";
-            _items = new List<Transaction>();
+            _items = new List<TransactionDto>();
         }
     }
 

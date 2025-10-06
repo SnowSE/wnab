@@ -3,11 +3,19 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:local="clr-namespace:WNAB.Maui"
+               xmlns:converters="clr-namespace:WNAB.Maui.Converters"
                x:Class="WNAB.Maui.TransactionPopup"
                x:DataType="local:TransactionViewModel"
                Color="MidnightBlue">
     <!-- LLM-Dev:v2 Enhanced transaction popup with all required fields and proper styling -->
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="400" BackgroundColor="White">
+        <!-- LLM-Dev:v3 Add converters for split transaction UI -->
+        <VerticalStackLayout.Resources>
+            <ResourceDictionary>
+                <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+                <converters:SplitButtonTextConverter x:Key="SplitButtonTextConverter" />
+            </ResourceDictionary>
+        </VerticalStackLayout.Resources>
         <Label Text="New Transaction" 
                FontAttributes="Bold" 
                HorizontalOptions="Center" 
@@ -64,13 +72,108 @@
             
             <!-- Category Picker -->
             <StackLayout Spacing="4">
-                <Label Text="Category" TextColor="Black" FontSize="14" />
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="Category" TextColor="Black" FontSize="14" VerticalOptions="Center" />
+                    <Button Text="{Binding IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}" 
+                            Command="{Binding ToggleSplitTransactionCommand}"
+                            BackgroundColor="LightBlue"
+                            TextColor="Black"
+                            FontSize="12"
+                            Padding="8,4"
+                            HeightRequest="32" />
+                </HorizontalStackLayout>
+                
+                <!-- LLM-Dev:v3 Single category picker - visible when NOT in split mode -->
                 <Picker ItemsSource="{Binding AvailableCategories}"
                         SelectedItem="{Binding SelectedCategory}"
                         ItemDisplayBinding="{Binding Name}"
                         Title="Select Category"
                         BackgroundColor="LightGray"
-                        TextColor="Black" />
+                        TextColor="Black"
+                        IsVisible="{Binding IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
+                
+                <!-- LLM-Dev:v3 Split mode UI - visible when in split mode -->
+                <StackLayout IsVisible="{Binding IsSplitTransaction}" Spacing="8">
+                    <!-- Split items list -->
+                    <CollectionView ItemsSource="{Binding Splits}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="local:TransactionSplitItem">
+                                <Grid ColumnDefinitions="*,Auto,Auto" 
+                                      ColumnSpacing="8" 
+                                      Padding="0,4"
+                                      BackgroundColor="WhiteSmoke"
+                                      Margin="0,2">
+                                    <Picker Grid.Column="0"
+                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=AvailableCategories}"
+                                            SelectedItem="{Binding SelectedCategory}"
+                                            ItemDisplayBinding="{Binding Name}"
+                                            Title="Category"
+                                            BackgroundColor="White"
+                                            TextColor="Black"
+                                            FontSize="12" />
+                                    <Entry Grid.Column="1"
+                                           Text="{Binding Amount}"
+                                           Keyboard="Numeric"
+                                           Placeholder="0.00"
+                                           WidthRequest="80"
+                                           BackgroundColor="White"
+                                           TextColor="Black"
+                                           FontSize="12"
+                                           HorizontalTextAlignment="End" />
+                                    <Button Grid.Column="2"
+                                            Text="✕"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=RemoveSplitCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="IndianRed"
+                                            TextColor="White"
+                                            WidthRequest="32"
+                                            HeightRequest="32"
+                                            FontSize="16"
+                                            Padding="0" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                    
+                    <!-- Add split button -->
+                    <Button Text="+ Add Split"
+                            Command="{Binding AddSplitCommand}"
+                            BackgroundColor="LightGreen"
+                            TextColor="Black"
+                            FontSize="12"
+                            Padding="8,4"
+                            HorizontalOptions="Start" />
+                    
+                    <!-- Split balance indicator -->
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="Balance:"
+                               TextColor="Black"
+                               FontSize="12"
+                               VerticalOptions="Center" />
+                        <Label Text="{Binding RemainingAmount, StringFormat='{0:C}'}"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" 
+                                           Binding="{Binding AreSplitsBalanced}" 
+                                           Value="True">
+                                    <Setter Property="TextColor" Value="Green" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" 
+                                           Binding="{Binding AreSplitsBalanced}" 
+                                           Value="False">
+                                    <Setter Property="TextColor" Value="Red" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label Text="remaining"
+                               TextColor="Gray"
+                               FontSize="12"
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </StackLayout>
             </StackLayout>
             
             <!-- Memo -->
