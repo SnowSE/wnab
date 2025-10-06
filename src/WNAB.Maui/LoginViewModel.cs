@@ -7,13 +7,21 @@ using System.Threading.Tasks;
 
 namespace WNAB.Maui;
 
-// LLM-Dev:v3 Updated to validate user exists in database before allowing login. Added UserManagementService dependency.
+// LLM-Dev:v4 Updated to validate user exists in database before allowing login. Removed NavigateToHome command as popup auto-closes.
 public partial class LoginViewModel : ObservableObject
 {
     private readonly UserManagementService _userService;
 
     [ObservableProperty]
     private string? userId;
+
+    public event EventHandler? RequestClose; // Raised to close popup
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        RequestClose?.Invoke(this, EventArgs.Empty);
+    }
 
     public LoginViewModel(UserManagementService userService)
     {
@@ -55,19 +63,16 @@ public partial class LoginViewModel : ObservableObject
             await SecureStorage.Default.SetAsync("userId", id);
 
             if (Shell.Current is not null)
-                await Shell.Current.DisplayAlert("Login Successful", $"Welcome {user.FirstName} {user.LastName}!", "OK");
+            // purposely not saying await so that we don't have two popups showing at once :) -OA 10/3/2025
+                Shell.Current.DisplayAlert("Login Successful", $"Welcome {user.FirstName} {user.LastName}!", "OK");
+
+            // LLM-Dev:v4 Close popup after successful login (MainPageViewModel will refresh display)
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
         catch (Exception ex)
         {
             if (Shell.Current is not null)
                 await Shell.Current.DisplayAlert("Login Error", $"Failed to validate user: {ex.Message}", "OK");
         }
-    }
-
-    // LLM-Dev:v4 Navigation command to return to home page
-    [RelayCommand]
-    private async Task NavigateToHome()
-    {
-        await Shell.Current.GoToAsync("//MainPage");
     }
 }

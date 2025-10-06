@@ -71,7 +71,7 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Load transactions for the current user
+    // LLM-Dev:v2 Load transactions for the current user (now using DTOs)
     [RelayCommand]
     private async Task LoadTransactionsAsync()
     {
@@ -86,8 +86,8 @@ public partial class TransactionsViewModel : ObservableObject
             var list = await _transactions.GetTransactionsForUserAsync(UserId);
             foreach (var t in list)
             {
-                // Create a description from transaction splits for display
-                var categoryNames = t.TransactionSplits.Select(ts => ts.Category?.Name ?? "Unknown").ToList();
+                // LLM-Dev:v2 DTO now has CategoryName directly in TransactionSplits
+                var categoryNames = t.TransactionSplits.Select(ts => ts.CategoryName ?? "Unknown").ToList();
                 var categoriesText = categoryNames.Count > 1 
                     ? $"{categoryNames.Count} categories" 
                     : categoryNames.FirstOrDefault() ?? "No category";
@@ -98,7 +98,7 @@ public partial class TransactionsViewModel : ObservableObject
                     t.Payee, 
                     t.Description, 
                     t.Amount, 
-                    t.Account?.AccountName ?? "Unknown Account",
+                    t.AccountName, // DTO has AccountName directly
                     categoriesText));
             }
                 

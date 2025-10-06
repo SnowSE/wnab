@@ -68,9 +68,9 @@ public class TransactionManagementService
         return transactions ?? new();
     }
 
-    public async Task<List<Transaction>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
+    public async Task<List<TransactionDto>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"transactions?userId={userId}", ct);
+        var transactions = await _http.GetFromJsonAsync<List<TransactionDto>>($"users/{userId}/transactions", ct);
         return transactions ?? new();
     }
 

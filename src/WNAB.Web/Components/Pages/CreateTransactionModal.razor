@@ -72,17 +72,78 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" @bind="_categoryId" required>
-                            <option value="0">Select a category...</option>
-                            @if (_categories != null)
-                            {
-                                @foreach (var category in _categories)
+                        <!-- LLM-Dev:v3 Category section with split transaction toggle -->
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label class="form-label mb-0">Category</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ToggleSplitTransaction">
+                                @(_isSplitTransaction ? "Single Category" : "Split Transaction")
+                            </button>
+                        </div>
+                        
+                        @if (!_isSplitTransaction)
+                        {
+                            <!-- LLM-Dev:v3 Single category mode -->
+                            <select class="form-select" @bind="_categoryId" required>
+                                <option value="0">Select a category...</option>
+                                @if (_categories != null)
                                 {
-                                    <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+                                    @foreach (var category in _categories)
+                                    {
+                                        <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+                                    }
                                 }
-                            }
-                        </select>
+                            </select>
+                        }
+                        else
+                        {
+                            <!-- LLM-Dev:v3 Split transaction mode -->
+                            <div class="border rounded p-3 bg-light">
+                                @if (_splits.Any())
+                                {
+                                    @foreach (var split in _splits)
+                                    {
+                                        <div class="row g-2 mb-2 align-items-center">
+                                            <div class="col-md-6">
+                                                <select class="form-select form-select-sm" @bind="split.CategoryId">
+                                                    <option value="0">Select category...</option>
+                                                    @if (_categories != null)
+                                                    {
+                                                        @foreach (var category in _categories)
+                                                        {
+                                                            <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+                                                        }
+                                                    }
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <input type="number" step="0.01" class="form-control form-control-sm" 
+                                                       @bind="split.Amount" placeholder="0.00" @oninput="@(() => StateHasChanged())" />
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-sm btn-danger w-100" 
+                                                        @onclick="@(() => RemoveSplit(split))"
+                                                        disabled="@(_splits.Count <= 1)">
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                
+                                <button type="button" class="btn btn-sm btn-success mb-2" @onclick="AddSplit">
+                                    + Add Split
+                                </button>
+                                
+                                <!-- LLM-Dev:v3 Balance indicator -->
+                                <div class="d-flex align-items-center gap-2 mt-2">
+                                    <small class="text-muted">Balance:</small>
+                                    <small class="fw-bold @(AreSplitsBalanced ? "text-success" : "text-danger")">
+                                        @RemainingAmount.ToString("C")
+                                    </small>
+                                    <small class="text-muted">remaining</small>
+                                </div>
+                            </div>
+                        }
                     </div>
                     
                     <div class="mb-3">
@@ -106,7 +167,7 @@
 </div>
 
 @code {
-    // LLM-Dev:v2 Modal popup component for creating transactions, matching MAUI popup pattern. Fixed binding issues.
+    // LLM-Dev:v3 Modal popup component for creating transactions with split support
     private int _accountId;
     private string _payee = string.Empty;
     private string _description = string.Empty;
@@ -114,6 +175,10 @@
     private DateTime _transactionDate = DateTime.Today;
     private int _categoryId;
     private string _notes = string.Empty;
+    
+    // LLM-Dev:v3 Split transaction support
+    private bool _isSplitTransaction = false;
+    private List<TransactionSplitModel> _splits = new List<TransactionSplitModel>();
     
     private int _userId;
     private bool _isLoggedIn;
@@ -126,6 +191,12 @@
     private List<Category>? _categories;
 
     [Parameter] public EventCallback OnTransactionCreated { get; set; }
+
+    // LLM-Dev:v3 Calculate remaining amount to allocate across splits
+    private decimal RemainingAmount => _amount - (_splits?.Sum(s => s.Amount) ?? 0);
+    
+    // LLM-Dev:v3 Check if splits are balanced with transaction amount
+    private bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
 
     protected override async Task OnInitializedAsync()
     {
@@ -181,6 +252,50 @@
         }
     }
 
+    // LLM-Dev:v3 Toggle between single and split transaction modes
+    private void ToggleSplitTransaction()
+    {
+        _isSplitTransaction = !_isSplitTransaction;
+        
+        // LLM-Dev:v4 Ensure splits list is initialized
+        if (_splits == null)
+        {
+            _splits = new List<TransactionSplitModel>();
+        }
+        
+        if (_isSplitTransaction && _splits.Count == 0)
+        {
+            // Initialize with one split containing the full amount
+            AddSplit();
+        }
+    }
+
+    // LLM-Dev:v3 Add a new split to the list
+    private void AddSplit()
+    {
+        // LLM-Dev:v4 Ensure splits list is initialized
+        if (_splits == null)
+        {
+            _splits = new List<TransactionSplitModel>();
+        }
+        
+        _splits.Add(new TransactionSplitModel
+        {
+            Amount = RemainingAmount > 0 ? RemainingAmount : 0,
+            CategoryId = 0
+        });
+    }
+
+    // LLM-Dev:v3 Remove a split from the list
+    private void RemoveSplit(TransactionSplitModel split)
+    {
+        // LLM-Dev:v4 Null check for safety
+        if (_splits != null && _splits.Count > 1)
+        {
+            _splits.Remove(split);
+        }
+    }
+
     private async Task Create()
     {
         _result = _error = null;
@@ -215,10 +330,34 @@
             return;
         }
 
-        if (_categoryId <= 0)
+        // LLM-Dev:v4 Only validate single category if NOT in split mode
+        if (!_isSplitTransaction && _categoryId <= 0)
         {
             _error = "Please select a category";
             return;
+        }
+
+        // LLM-Dev:v3 Validate splits if in split mode
+        if (_isSplitTransaction)
+        {
+            if (_splits.Count == 0)
+            {
+                _error = "Please add at least one split";
+                return;
+            }
+
+            if (!AreSplitsBalanced)
+            {
+                _error = $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
+                return;
+            }
+
+            // Validate each split has a category
+            if (_splits.Any(s => s.CategoryId <= 0))
+            {
+                _error = "Please select a category for all splits";
+                return;
+            }
         }
 
         try
@@ -226,9 +365,26 @@
             _isCreating = true;
             StateHasChanged();
 
-            // LLM-Dev:v1 Create transaction with single split for simplicity
-            var record = TransactionManagementService.CreateSimpleTransactionRecord(
-                _accountId, _payee, _amount, _transactionDate, _categoryId, string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+            // LLM-Dev:v3 Create transaction with splits or single category
+            TransactionRecord record;
+            
+            if (_isSplitTransaction)
+            {
+                // Create transaction with multiple splits
+                var splitRecords = _splits.Select(s => 
+                    new TransactionSplitRecord(s.CategoryId, s.Amount, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
+                ).ToList();
+                    
+                record = TransactionManagementService.CreateTransactionRecord(
+                    _accountId, _payee, _description, _amount, _transactionDate, splitRecords);
+            }
+            else
+            {
+                // Create simple single-category transaction
+                record = TransactionManagementService.CreateSimpleTransactionRecord(
+                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId, 
+                    string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+            }
             
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
@@ -259,5 +415,24 @@
         _transactionDate = DateTime.Today;
         _categoryId = 0;
         _notes = string.Empty;
+        _isSplitTransaction = false;
+        
+        // LLM-Dev:v4 Safely clear splits list
+        if (_splits == null)
+        {
+            _splits = new List<TransactionSplitModel>();
+        }
+        else
+        {
+            _splits.Clear();
+        }
+    }
+
+    // LLM-Dev:v3 Model for individual transaction splits in Blazor
+    private class TransactionSplitModel
+    {
+        public int CategoryId { get; set; }
+        public decimal Amount { get; set; }
+        public string? Notes { get; set; }
     }
 }
