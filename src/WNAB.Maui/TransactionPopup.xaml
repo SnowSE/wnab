@@ -7,15 +7,16 @@
                x:Class="WNAB.Maui.TransactionPopup"
                x:DataType="local:TransactionViewModel"
                Color="MidnightBlue">
-    <!-- LLM-Dev:v2 Enhanced transaction popup with all required fields and proper styling -->
-    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="400" BackgroundColor="White">
-        <!-- LLM-Dev:v3 Add converters for split transaction UI -->
-        <VerticalStackLayout.Resources>
-            <ResourceDictionary>
-                <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
-                <converters:SplitButtonTextConverter x:Key="SplitButtonTextConverter" />
-            </ResourceDictionary>
-        </VerticalStackLayout.Resources>
+    <!-- LLM-Dev:v4 Wrapped in ScrollView to handle long forms with splits -->
+    <ScrollView WidthRequest="400" MaximumHeightRequest="600">
+        <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="White">
+            <!-- LLM-Dev:v3 Add converters for split transaction UI -->
+            <VerticalStackLayout.Resources>
+                <ResourceDictionary>
+                    <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+                    <converters:SplitButtonTextConverter x:Key="SplitButtonTextConverter" />
+                </ResourceDictionary>
+            </VerticalStackLayout.Resources>
         <Label Text="New Transaction" 
                FontAttributes="Bold" 
                HorizontalOptions="Center" 
@@ -98,7 +99,7 @@
                     <CollectionView ItemsSource="{Binding Splits}"
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="local:TransactionSplitItem">
+                            <DataTemplate x:DataType="local:TransactionSplitViewModel">
                                 <Grid ColumnDefinitions="*,Auto,Auto" 
                                       ColumnSpacing="8" 
                                       Padding="0,4"
@@ -198,4 +199,5 @@
                     TextColor="White" />
         </HorizontalStackLayout>
     </VerticalStackLayout>
+    </ScrollView>
 </toolkit:Popup>

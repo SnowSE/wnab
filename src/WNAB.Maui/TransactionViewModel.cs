@@ -51,7 +51,7 @@ public partial class TransactionViewModel : ObservableObject
     public ObservableCollection<Category> AvailableCategories { get; } = new();
     
     // LLM-Dev:v3 Collection for managing transaction splits
-    public ObservableCollection<TransactionSplitItem> Splits { get; } = new();
+    public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
 
     private int _userId;
     private bool _isLoggedIn;
@@ -181,7 +181,7 @@ public partial class TransactionViewModel : ObservableObject
     private void AddSplit()
     {
         // LLM-Dev:v3 Create new split with remaining amount as default
-        var newSplit = new TransactionSplitItem
+        var newSplit = new TransactionSplitViewModel
         {
             Amount = RemainingAmount > 0 ? RemainingAmount : 0
         };
@@ -189,7 +189,7 @@ public partial class TransactionViewModel : ObservableObject
         // LLM-Dev:v3 Subscribe to property changes to update totals
         newSplit.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(TransactionSplitItem.Amount))
+            if (e.PropertyName == nameof(TransactionSplitViewModel.Amount))
             {
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(AreSplitsBalanced));
@@ -202,7 +202,7 @@ public partial class TransactionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void RemoveSplit(TransactionSplitItem split)
+    private void RemoveSplit(TransactionSplitViewModel split)
     {
         // LLM-Dev:v3 Prevent removing the last split in split mode
         if (Splits.Count > 1)

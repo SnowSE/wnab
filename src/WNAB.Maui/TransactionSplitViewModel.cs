@@ -3,9 +3,9 @@ using WNAB.Logic.Data;
 
 namespace WNAB.Maui;
 
-// LLM-Dev:v1 Observable model for individual transaction split items in the UI
+// LLM-Dev:v2 Observable ViewModel for individual transaction split items in the UI
 // Represents a single category allocation within a transaction split
-public partial class TransactionSplitItem : ObservableObject
+public partial class TransactionSplitViewModel : ObservableObject
 {
     [ObservableProperty]
     private Category? selectedCategory;
