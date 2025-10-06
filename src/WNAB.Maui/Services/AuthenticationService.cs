@@ -19,11 +19,18 @@ public class AuthenticationService : IAuthenticationService
         var clientId = configuration["Keycloak:ClientId"] ?? "wnab-maui";
 
         // Use different redirect URIs based on platform
+        string redirectUri;
+        IdentityModel.OidcClient.Browser.IBrowser browser;
+
 #if WINDOWS
-        // For Windows, we'll use a dynamic port that the browser will determine
-        var redirectUri = "http://localhost/";
+        // For Windows, create the browser first to get the actual redirect URI with port
+        var windowsBrowser = new Platforms.Windows.WindowsBrowser(logger);
+        redirectUri = windowsBrowser.RedirectUri;
+        browser = windowsBrowser;
+        _logger.LogInformation("Using Windows browser with redirect URI: {RedirectUri}", redirectUri);
 #else
-        var redirectUri = configuration["Keycloak:RedirectUri"] ?? "wnab://callback";
+        redirectUri = configuration["Keycloak:RedirectUri"] ?? "wnab://callback";
+        browser = new WebBrowserAuthenticator();
 #endif
 
         var options = new OidcClientOptions
@@ -32,11 +39,7 @@ public class AuthenticationService : IAuthenticationService
             ClientId = clientId,
             Scope = "openid profile email",
             RedirectUri = redirectUri,
-#if WINDOWS
-            Browser = new Platforms.Windows.WindowsBrowser(logger),
-#else
-            Browser = new WebBrowserAuthenticator(),
-#endif
+            Browser = browser,
             Policy = new Policy
             {
                 RequireIdentityTokenSignature = false
@@ -44,6 +47,8 @@ public class AuthenticationService : IAuthenticationService
         };
 
         _oidcClient = new OidcClient(options);
+        _logger.LogInformation("OidcClient configured - Authority: {Authority}, ClientId: {ClientId}, RedirectUri: {RedirectUri}",
+            authority, clientId, redirectUri);
     }
 
     public async Task<bool> LoginAsync()
@@ -52,6 +57,9 @@ public class AuthenticationService : IAuthenticationService
         {
             var loginRequest = new LoginRequest();
             _logger.LogInformation("Starting login with redirect URI: {RedirectUri}", _oidcClient.Options.RedirectUri);
+            _logger.LogInformation("Authority: {Authority}", _oidcClient.Options.Authority);
+            _logger.LogInformation("ClientId: {ClientId}", _oidcClient.Options.ClientId);
+            _logger.LogInformation("Scope: {Scope}", _oidcClient.Options.Scope);
 
             _loginResult = await _oidcClient.LoginAsync(loginRequest);
 
@@ -61,16 +69,28 @@ public class AuthenticationService : IAuthenticationService
                 return false;
             }
 
+            _logger.LogInformation("Login successful!");
+            _logger.LogInformation("Access token received: {HasAccessToken}", !string.IsNullOrEmpty(_loginResult.AccessToken));
+            _logger.LogInformation("Refresh token received: {HasRefreshToken}", !string.IsNullOrEmpty(_loginResult.RefreshToken));
+            _logger.LogInformation("ID token received: {HasIdToken}", !string.IsNullOrEmpty(_loginResult.IdentityToken));
+            _logger.LogInformation("Token expiration: {Expiration}", _loginResult.AccessTokenExpiration);
+
             // Store tokens securely
             await SecureStorage.SetAsync("access_token", _loginResult.AccessToken);
             await SecureStorage.SetAsync("refresh_token", _loginResult.RefreshToken ?? string.Empty);
             await SecureStorage.SetAsync("id_token", _loginResult.IdentityToken);
 
+            _logger.LogInformation("Tokens stored securely");
+
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Login exception occurred");
+            _logger.LogError(ex, "Login exception occurred: {Message}", ex.Message);
+            if (ex.InnerException != null)
+            {
+                _logger.LogError(ex.InnerException, "Inner exception: {InnerMessage}", ex.InnerException.Message);
+            }
             return false;
         }
     }

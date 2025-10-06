@@ -105,7 +105,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 // Add authentication and authorization middleware
 app.UseAuthentication();

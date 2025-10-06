@@ -13,7 +13,6 @@ public partial class MainPageViewModel : ObservableObject
     public MainPageViewModel(IPopupService popupService, ILogger<MainPageViewModel> logger)
     {
         _popupService = popupService;
-        logger.LogError("Where are these logs showing up?!");
     }
 
     // LLM-Dev:v1 Add simple signed-in indicator sourced from SecureStorage

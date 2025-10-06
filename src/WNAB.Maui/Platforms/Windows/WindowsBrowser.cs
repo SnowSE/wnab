@@ -2,7 +2,9 @@ using IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace WNAB.Maui.Platforms.Windows;
 
@@ -10,31 +12,31 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
 {
     private readonly int _port;
     private readonly ILogger _logger;
+    public string RedirectUri { get; }
 
     public WindowsBrowser(ILogger logger, int port = 0)
     {
         _logger = logger;
-        _port = port;
+        _port = port == 0 ? GetRandomUnusedPort() : port;
+        RedirectUri = $"http://localhost:{_port}/";
+        _logger.LogInformation("WindowsBrowser initialized with RedirectUri: {RedirectUri}", RedirectUri);
     }
 
     public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
     {
-        using var listener = new HttpListener();
-
-        // Use a random port if not specified
-        var port = _port == 0 ? GetRandomUnusedPort() : _port;
-        var redirectUri = $"http://localhost:{port}/";
-
-        listener.Prefixes.Add(redirectUri);
+        // Use TcpListener instead of HttpListener to avoid HTTP.sys request length limits
+        var tcpListener = new TcpListener(IPAddress.Loopback, _port);
 
         try
         {
-            listener.Start();
+            tcpListener.Start();
+            _logger.LogInformation("TCP listener started on {RedirectUri}", RedirectUri);
 
             // Replace the redirect_uri in the StartUrl with our actual port
             var startUrl = options.StartUrl;
-            _logger.LogInformation("Original StartUrl: {StartUrl}", startUrl);
-            _logger.LogInformation("Redirect URI with port: {RedirectUri}", redirectUri);
+            _logger.LogInformation("OAuth StartUrl (original): {StartUrl}", startUrl);
+            _logger.LogInformation("OAuth EndUrl: {EndUrl}", options.EndUrl);
+            _logger.LogInformation("Using RedirectUri: {RedirectUri}", RedirectUri);
 
             if (startUrl.Contains("redirect_uri="))
             {
@@ -50,7 +52,7 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
                     var oldRedirectUri = startUrl.Substring(startIndex, endIndex - startIndex);
                     startUrl = startUrl.Replace(
                         redirectUriParam + oldRedirectUri,
-                        redirectUriParam + Uri.EscapeDataString(redirectUri)
+                        redirectUriParam + Uri.EscapeDataString(RedirectUri)
                     );
                 }
             }
@@ -58,38 +60,73 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
             _logger.LogInformation("Modified StartUrl: {StartUrl}", startUrl);
 
             // Open the browser with the modified start URL
+            _logger.LogInformation("Opening system browser...");
             OpenBrowser(startUrl);
 
             // Wait for the callback
-            var context = await listener.GetContextAsync();
+            _logger.LogInformation("Waiting for OAuth callback...");
+            var client = await tcpListener.AcceptTcpClientAsync();
+            _logger.LogInformation("Callback received!");
 
-            var response = context.Response;
-            var responseString = "<html><head><meta http-equiv='refresh' content='10;url=https://engineering.snow.edu'></head><body>Please return to the app.</body></html>";
-            var buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            response.ContentLength64 = buffer.Length;
-            var responseOutput = response.OutputStream;
-            await responseOutput.WriteAsync(buffer, 0, buffer.Length);
-            responseOutput.Close();
+            string callbackUrl = "";
 
-            var url = context.Request.Url?.ToString();
-
-            if (string.IsNullOrEmpty(url))
+            using (var stream = client.GetStream())
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
+            using (var writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true })
             {
+                // Read the HTTP request line
+                var requestLine = await reader.ReadLineAsync();
+                _logger.LogInformation("Request line: {RequestLine}", requestLine);
+
+                if (requestLine != null && requestLine.StartsWith("GET"))
+                {
+                    // Extract the path and query string from the request line
+                    var parts = requestLine.Split(' ');
+                    if (parts.Length >= 2)
+                    {
+                        var pathAndQuery = parts[1];
+                        callbackUrl = RedirectUri.TrimEnd('/') + pathAndQuery;
+                        _logger.LogInformation("Extracted callback URL: {CallbackUrl}", callbackUrl);
+                    }
+                }
+
+                // Read and discard the rest of the headers
+                string? line;
+                while ((line = await reader.ReadLineAsync()) != null && !string.IsNullOrWhiteSpace(line))
+                {
+                    // Just consume the headers
+                }
+
+                // Send a simple HTTP response
+                await writer.WriteLineAsync("HTTP/1.1 200 OK");
+                await writer.WriteLineAsync("Content-Type: text/html");
+                await writer.WriteLineAsync("Connection: close");
+                await writer.WriteLineAsync();
+                await writer.WriteLineAsync("<html><body><h1>Success!</h1><p>You can close this window and return to the app.</p></body></html>");
+            }
+
+            client.Close();
+
+            if (string.IsNullOrEmpty(callbackUrl))
+            {
+                _logger.LogError("Failed to extract callback URL from request");
                 return new BrowserResult
                 {
                     ResultType = BrowserResultType.UnknownError,
-                    Error = "No URL received"
+                    Error = "Failed to extract callback URL"
                 };
             }
 
+            _logger.LogInformation("Returning success with Response URL: {Url}", callbackUrl);
             return new BrowserResult
             {
-                Response = url,
+                Response = callbackUrl,
                 ResultType = BrowserResultType.Success
             };
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException ex)
         {
+            _logger.LogWarning(ex, "OAuth flow was cancelled by user");
             return new BrowserResult
             {
                 ResultType = BrowserResultType.UserCancel
@@ -97,6 +134,7 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error during OAuth browser flow: {Message}", ex.Message);
             return new BrowserResult
             {
                 ResultType = BrowserResultType.UnknownError,
@@ -105,7 +143,8 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
         }
         finally
         {
-            listener.Stop();
+            tcpListener.Stop();
+            _logger.LogInformation("TCP listener stopped");
         }
     }
 

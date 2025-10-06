@@ -9,7 +9,9 @@
       "Bash(dotnet msbuild:*)",
       "Read(//d/MauiAspire/**)",
       "Bash(dotnet new:*)",
-      "Bash(dotnet sln:*)"
+      "Bash(dotnet sln:*)",
+      "WebFetch(domain:devblogs.microsoft.com)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

@@ -14,11 +14,15 @@ var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
 // Prefer http. Pass the endpoint reference directly; Aspire resolves it to a URL at runtime.
 // LLM-Dev: Avoid calling .Url on EndpointReference (not available at compile time).
 
-builder.AddProject<Projects.WNAB_Web>("wnab-web")
+var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
     .WithReference(api);
     // .WithEnvironment("ApiBaseUrl", api.GetEndpoint("http"));
 
 builder.AddProject<Projects.WNAB_Maui>("wnab-maui")
     .WithReference(api);
+
+var tunnel = builder.AddDevTunnel("wnab-tunnel")
+    .WithAnonymousAccess()
+    .WithReference(web.GetEndpoint("http"));
 
 builder.Build().Run();
