@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+gusing System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WNAB.Logic;

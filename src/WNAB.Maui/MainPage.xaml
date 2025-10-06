@@ -6,67 +6,64 @@
              x:DataType="local:MainPageViewModel">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Sign Out"
+        <ToolbarItem Text="{Binding LogInSignOutText}"
                      Priority="0"
                      Order="Primary"
-                     Command="{Binding SignOutCommand}" />
+                     Command="{Binding LogInSignOutCommand}" />
     </ContentPage.ToolbarItems>
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-            <Label
-                Text="{Binding UserDisplay}"
-                TextColor="Gray"
-                HorizontalOptions="End"
-                AutomationId="SignedInIndicator" />
-            <Image
-                Source="dotnet_bot.png"
-                HeightRequest="185"
-                Aspect="AspectFit"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine" />
+    <ContentPage.Content>
+        <ScrollView>
+            <VerticalStackLayout
+                Padding="30,0"
+                Spacing="25">
+                <Label
+                    Text="{Binding UserDisplay}"
+                    TextColor="Gray"
+                    HorizontalOptions="End"
+                    AutomationId="SignedInIndicator" />
+                
+               
+                <Label
+                    Text="Welcome to &#10;WNAB"
+                    Style="{StaticResource SubHeadline}"
+                    SemanticProperties.HeadingLevel="Level2"
+                    SemanticProperties.Description="Welcome to WNAB - We Need A Budget" />
 
-           
-            <Label
-                Text="Welcome to &#10;WNAB"
-                Style="{StaticResource SubHeadline}"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to WNAB - We Need A Budget" />
+                <Label
+                    Text="Manage your finances with ease. Use the buttons below to access different sections."
+                    Style="{StaticResource BodyLarge}"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center" />
 
-            <Label
-                Text="Manage your finances with ease. Use the buttons below to access different sections."
-                Style="{StaticResource BodyLarge}"
-                HorizontalOptions="Center"
-                HorizontalTextAlignment="Center" />
+                <!-- LLM-Dev:v2 Updated navigation buttons to replace shell navigation -->
+                <!-- <Button
+                    Text="Login"
+                    Command="{Binding NavigateToLoginCommand}"
+                    HorizontalOptions="Fill" /> -->
 
-            <!-- LLM-Dev:v2 Updated navigation buttons to replace shell navigation -->
-            <Button
-                Text="Login"
-                Command="{Binding NavigateToLoginCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="Manage Users"
+                    Command="{Binding NavigateToUsersCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="Manage Users"
-                Command="{Binding NavigateToUsersCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="View Categories"
+                    Command="{Binding NavigateToCategoriesCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="View Categories"
-                Command="{Binding NavigateToCategoriesCommand}"
-                HorizontalOptions="Fill" />
+                <Button
+                    Text="View Accounts"
+                    Command="{Binding NavigateToAccountsCommand}"
+                    HorizontalOptions="Fill" />
 
-            <Button
-                Text="View Accounts"
-                Command="{Binding NavigateToAccountsCommand}"
-                HorizontalOptions="Fill" />
-
-            <!-- LLM-Dev:v3 Combined View and Manage transactions into single button -->
-            <Button
-                Text="Manage Transactions"
-                Command="{Binding NavigateToTransactionsCommand}"
-                HorizontalOptions="Fill" />
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- LLM-Dev:v3 Combined View and Manage transactions into single button -->
+                <Button
+                    Text="Manage Transactions"
+                    Command="{Binding NavigateToTransactionsCommand}"
+                    HorizontalOptions="Fill" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </ContentPage.Content>
 
 </ContentPage>

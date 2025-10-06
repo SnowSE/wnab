@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:WNAB.Maui"
-             x:Class="WNAB.Maui.LoginPage"
-             x:DataType="local:LoginViewModel"
-             Title="Login">
-    
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Home"
-                     Priority="0"
-                     Order="Primary"
-                     Command="{Binding NavigateToHomeCommand}" />
-    </ContentPage.ToolbarItems>
-    
-    <VerticalStackLayout Padding="24" Spacing="16">
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:local="clr-namespace:WNAB.Maui"
+               x:Class="WNAB.Maui.LoginPage"
+               x:DataType="local:LoginViewModel"
+               Color="#3b3434">
+
+    <VerticalStackLayout BackgroundColor="#3b3434"  Padding="24" Spacing="16" WidthRequest="320">
+        <Label Text="Login" FontAttributes="Bold" HorizontalOptions="Center" />
         <Label Text="Enter your User ID" />
         <Entry Placeholder="User ID" Text="{Binding UserId}" />
-
-        <Button Text="Save"
-                Command="{Binding SaveUserIdCommand}" />
+        
+        <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
+            <Button Text="Cancel"
+                    Command="{Binding CancelCommand}" />
+            <Button Text="Save"
+                    Command="{Binding SaveUserIdCommand}" />
+        </HorizontalStackLayout>
     </VerticalStackLayout>
-</ContentPage>
+</toolkit:Popup>
