@@ -43,9 +43,15 @@ public partial class TransactionViewModel : ObservableObject
     [ObservableProperty]
     private Category? selectedCategory;
 
+    [ObservableProperty]
+    private bool isSplitTransaction = false;
+
     // LLM-Dev:v2 Observable collections for pickers
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
+    
+    // LLM-Dev:v3 Collection for managing transaction splits
+    public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
 
     private int _userId;
     private bool _isLoggedIn;
@@ -136,6 +142,77 @@ public partial class TransactionViewModel : ObservableObject
         CategoryId = value?.Id ?? 0;
     }
 
+    // LLM-Dev:v3 Calculate remaining amount to allocate across splits
+    public decimal RemainingAmount
+    {
+        get
+        {
+            var splitsTotal = Splits.Sum(s => s.Amount);
+            return Amount - splitsTotal;
+        }
+    }
+
+    // LLM-Dev:v3 Check if splits are balanced with transaction amount
+    public bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
+
+    // LLM-Dev:v3 Recalculate split totals when amount changes
+    partial void OnAmountChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(RemainingAmount));
+        OnPropertyChanged(nameof(AreSplitsBalanced));
+    }
+
+    [RelayCommand]
+    private void ToggleSplitTransaction()
+    {
+        IsSplitTransaction = !IsSplitTransaction;
+        
+        if (IsSplitTransaction)
+        {
+            // LLM-Dev:v3 Initialize with one split containing the full amount
+            if (Splits.Count == 0)
+            {
+                AddSplit();
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void AddSplit()
+    {
+        // LLM-Dev:v3 Create new split with remaining amount as default
+        var newSplit = new TransactionSplitViewModel
+        {
+            Amount = RemainingAmount > 0 ? RemainingAmount : 0
+        };
+        
+        // LLM-Dev:v3 Subscribe to property changes to update totals
+        newSplit.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TransactionSplitViewModel.Amount))
+            {
+                OnPropertyChanged(nameof(RemainingAmount));
+                OnPropertyChanged(nameof(AreSplitsBalanced));
+            }
+        };
+        
+        Splits.Add(newSplit);
+        OnPropertyChanged(nameof(RemainingAmount));
+        OnPropertyChanged(nameof(AreSplitsBalanced));
+    }
+
+    [RelayCommand]
+    private void RemoveSplit(TransactionSplitViewModel split)
+    {
+        // LLM-Dev:v3 Prevent removing the last split in split mode
+        if (Splits.Count > 1)
+        {
+            Splits.Remove(split);
+            OnPropertyChanged(nameof(RemainingAmount));
+            OnPropertyChanged(nameof(AreSplitsBalanced));
+        }
+    }
+
     [RelayCommand]
     private void Cancel()
     {
@@ -176,6 +253,29 @@ public partial class TransactionViewModel : ObservableObject
             return;
         }
 
+        // LLM-Dev:v3 Validate splits if in split mode
+        if (IsSplitTransaction)
+        {
+            if (Splits.Count == 0)
+            {
+                StatusMessage = "Please add at least one split";
+                return;
+            }
+
+            if (!AreSplitsBalanced)
+            {
+                StatusMessage = $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
+                return;
+            }
+
+            // LLM-Dev:v3 Validate each split has a category
+            if (Splits.Any(s => s.CategoryId <= 0))
+            {
+                StatusMessage = "Please select a category for all splits";
+                return;
+            }
+        }
+
         try
         {
             StatusMessage = "Creating transaction...";
@@ -184,8 +284,23 @@ public partial class TransactionViewModel : ObservableObject
             // DatePicker returns local DateTime, but PostgreSQL requires UTC for timestamp with time zone
             var utcTransactionDate = DateTime.SpecifyKind(TransactionDate, DateTimeKind.Utc);
             
-            var record = TransactionManagementService.CreateSimpleTransactionRecord(
-                AccountId, Payee, Memo, Amount, utcTransactionDate, CategoryId);
+            TransactionRecord record;
+            
+            if (IsSplitTransaction)
+            {
+                // LLM-Dev:v3 Create transaction with multiple splits
+                var splitRecords = Splits.Select(s => 
+                    new TransactionSplitRecord(s.CategoryId, s.Amount, s.Notes)).ToList();
+                    
+                record = TransactionManagementService.CreateTransactionRecord(
+                    AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
+            }
+            else
+            {
+                // LLM-Dev:v3 Create simple single-category transaction
+                record = TransactionManagementService.CreateSimpleTransactionRecord(
+                    AccountId, Payee, Memo, Amount, utcTransactionDate, CategoryId);
+            }
             
             await _transactions.CreateTransactionAsync(record);
             StatusMessage = "Transaction created successfully!";
@@ -197,6 +312,8 @@ public partial class TransactionViewModel : ObservableObject
             SelectedAccount = null;
             SelectedCategory = null;
             TransactionDate = DateTime.Today;
+            IsSplitTransaction = false;
+            Splits.Clear();
 
             RequestClose?.Invoke(this, EventArgs.Empty);
         }

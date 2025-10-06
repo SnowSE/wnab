@@ -231,14 +231,33 @@ app.MapGet("/accounts/{accountId}/transactions", async (int accountId, WnabConte
     return Results.Ok(transactions);
 });
 
-// LLM-Dev:v6 Add endpoint to get all transactions for a specific user across all their accounts
+// LLM-Dev:v8 Add endpoint to get all transactions for a specific user across all their accounts
 app.MapGet("/users/{userId}/transactions", async (int userId, WnabContext db) =>
 {
-    // LLM-Dev:v6 No Include() to avoid circular references
+    // LLM-Dev:v8 Use DTO to include Account/Category names without circular reference
     var transactions = await db.Transactions
         .Where(t => t.Account.UserId == userId)
-        .AsNoTracking()
         .OrderByDescending(t => t.TransactionDate)
+        .Select(t => new TransactionDto(
+            t.Id,
+            t.AccountId,
+            t.Account.AccountName,
+            t.Payee,
+            t.Description,
+            t.Amount,
+            t.TransactionDate,
+            t.IsReconciled,
+            t.CreatedAt,
+            t.UpdatedAt,
+            t.TransactionSplits.Select(ts => new TransactionSplitDto(
+                ts.Id,
+                ts.CategoryId,
+                ts.Category.Name,
+                ts.Amount,
+                ts.Notes
+            )).ToList()
+        ))
+        .AsNoTracking()
         .ToListAsync();
     
     return Results.Ok(transactions);
