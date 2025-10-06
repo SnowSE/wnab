@@ -10,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
+
 // Configure JWT Bearer authentication with Keycloak
 var keycloakConfig = builder.Configuration.GetSection("Keycloak");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -30,7 +33,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnAuthenticationFailed = context =>
             {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "Authentication failed: {Message}", context.Exception?.Message);
                 context.Response.Headers.Append("Authentication-Failed", "true");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                var hasAuth = context.Request.Headers.ContainsKey("Authorization");
+                logger.LogInformation("Message received. Has Authorization header: {HasAuth}", hasAuth);
+                if (hasAuth)
+                {
+                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                    var headerLength = authHeader?.Length ?? 0;
+                    logger.LogInformation("Authorization header present: {Header}", authHeader?.Substring(0, Math.Min(50, headerLength)));
+                }
                 return Task.CompletedTask;
             }
         };
@@ -66,6 +90,8 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
+
+app.MapOpenApi();
 
 // Enable authentication and authorization middleware
 app.UseAuthentication();

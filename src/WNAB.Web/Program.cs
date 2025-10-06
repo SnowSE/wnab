@@ -35,12 +35,12 @@ builder.Services.AddAuthentication(options =>
     options.ClientSecret = keycloakConfig["ClientSecret"];
     options.ResponseType = keycloakConfig["ResponseType"] ?? OpenIdConnectResponseType.Code;
     options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
-    options.SaveTokens = keycloakConfig.GetValue<bool>("SaveTokens");
+    options.SaveTokens = true; // Must be true to save tokens for API calls
     options.GetClaimsFromUserInfoEndpoint = keycloakConfig.GetValue<bool>("GetClaimsFromUserInfoEndpoint");
 
     // Add scopes
     options.Scope.Clear();
-    foreach (var scope in keycloakConfig.GetSection("Scopes").Get<string[]>() ?? new[] { "openid", "profile", "email" })
+    foreach (var scope in keycloakConfig.GetSection("Scopes").Get<string[]>() ?? new[] { "openid", "profile", "email", "wnab-api" })
     {
         options.Scope.Add(scope);
     }

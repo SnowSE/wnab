@@ -10,6 +10,8 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly OidcClient _oidcClient;
     private LoginResult? _loginResult;
+    private string? _currentAccessToken;
+    private DateTimeOffset _tokenExpiration;
     private readonly ILogger<AuthenticationService> _logger;
 
     public AuthenticationService(IConfiguration configuration, ILogger<AuthenticationService> logger)
@@ -75,6 +77,10 @@ public class AuthenticationService : IAuthenticationService
             _logger.LogInformation("ID token received: {HasIdToken}", !string.IsNullOrEmpty(_loginResult.IdentityToken));
             _logger.LogInformation("Token expiration: {Expiration}", _loginResult.AccessTokenExpiration);
 
+            // Store current token info
+            _currentAccessToken = _loginResult.AccessToken;
+            _tokenExpiration = _loginResult.AccessTokenExpiration;
+
             // Store tokens securely
             await SecureStorage.SetAsync("access_token", _loginResult.AccessToken);
             await SecureStorage.SetAsync("refresh_token", _loginResult.RefreshToken ?? string.Empty);
@@ -113,6 +119,8 @@ public class AuthenticationService : IAuthenticationService
             SecureStorage.Remove("id_token");
 
             _loginResult = null;
+            _currentAccessToken = null;
+            _tokenExpiration = DateTimeOffset.MinValue;
         }
         catch (Exception ex)
         {
@@ -125,22 +133,23 @@ public class AuthenticationService : IAuthenticationService
         try
         {
             // First try to get from memory
-            if (_loginResult != null && !string.IsNullOrEmpty(_loginResult.AccessToken))
+            if (!string.IsNullOrEmpty(_currentAccessToken))
             {
                 // Check if token is expired
-                if (_loginResult.AccessTokenExpiration > DateTime.UtcNow)
+                if (_tokenExpiration > DateTime.UtcNow)
                 {
-                    return _loginResult.AccessToken;
+                    return _currentAccessToken;
                 }
 
                 // Try to refresh token
-                if (!string.IsNullOrEmpty(_loginResult.RefreshToken))
+                if (_loginResult != null && !string.IsNullOrEmpty(_loginResult.RefreshToken))
                 {
                     var refreshResult = await _oidcClient.RefreshTokenAsync(_loginResult.RefreshToken);
                     if (!refreshResult.IsError)
                     {
-                        // Store the refreshed login result
-                        _loginResult = await _oidcClient.LoginAsync(new LoginRequest());
+                        // Update current token and expiration
+                        _currentAccessToken = refreshResult.AccessToken;
+                        _tokenExpiration = refreshResult.AccessTokenExpiration;
 
                         await SecureStorage.SetAsync("access_token", refreshResult.AccessToken);
                         await SecureStorage.SetAsync("refresh_token", refreshResult.RefreshToken ?? string.Empty);
@@ -153,6 +162,10 @@ public class AuthenticationService : IAuthenticationService
 
             // Try to get from secure storage
             var storedToken = await SecureStorage.GetAsync("access_token");
+            if (!string.IsNullOrEmpty(storedToken))
+            {
+                _currentAccessToken = storedToken;
+            }
             return storedToken;
         }
         catch (Exception ex)
