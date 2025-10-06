@@ -9,7 +9,7 @@ public partial class TransactionPopup : Popup
     {
         InitializeComponent();
         BindingContext = vm;
-        vm.RequestClose += (_, _) => Close();
+        vm.RequestClose += (_, _) => CloseAsync();
         
         // LLM-Dev:v2 Initialize the ViewModel to load accounts and categories
         _ = vm.InitializeAsync();
