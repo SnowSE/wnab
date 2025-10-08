@@ -1,0 +1,331 @@
+@page "/plan-budget"
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject CategoryManagementService CategoriesService
+@inject ProtectedLocalStorage ProtectedLocalStorage
+@inject NavigationManager Navigation
+@layout MainLayoutNoSidebar
+
+<!-- LLM-Dev: PlanBudget page converted from MAUI XAML to Blazor Razor component -->
+<!-- LLM-Dev: Maintains same layout pattern - categories list (togglable), main content area, and bottom toolbar -->
+
+<div class="plan-budget-container">
+    <!-- Toggle button when categories are hidden -->
+    @if (!_isCategoriesVisible)
+    {
+        <button class="btn btn-primary position-absolute" style="top: 0px; left: 150px; z-index: 1000;" @onclick="ToggleCategoriesVisibility">
+            Display Categories
+        </button>
+    }
+
+    <div class="d-flex h-100">
+        <!-- LLM-Dev: Left column - Categories list, visibility controlled by _isCategoriesVisible -->
+        @if (_isCategoriesVisible)
+        {
+            <div class="categories-panel bg-light border-end" style="width: 250px; overflow-y: auto;">
+                <div class="p-3">
+                    <!-- LLM-Dev: Header with title and close button in upper right corner -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold">Categories</h5>
+                        <button class="btn-close" @onclick="ToggleCategoriesVisibility"></button>
+                    </div>
+
+                    <!-- LLM-Dev: Button to create a new category -->
+                    <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#createCategoryModal" disabled="@(!_isLoggedIn)">
+                        <i class="bi bi-plus-circle me-1"></i> New Category
+                    </button>
+
+                    <!-- LLM-Dev: Available categories - clicking moves them to selected list -->
+                    @if (_categories != null && _categories.Count > 0)
+                    {
+                        <div class="list-group">
+                            @foreach (var category in _categories)
+                            {
+                                <button class="list-group-item list-group-item-action" @onclick="() => SelectCategory(category)">
+                                    @category.Name
+                                </button>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small">No available categories</p>
+                    }
+
+                    <!-- LLM-Dev: Status message for loading/error feedback -->
+                    @if (_isLoading)
+                    {
+                        <div class="mt-3 text-center">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">@_statusMessage</span>
+                            </div>
+                            <p class="small text-muted mt-1">@_statusMessage</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- LLM-Dev: Main content area - Budget planning with selected categories -->
+        <div class="flex-fill d-flex flex-column" style="overflow: hidden;">
+            <div class="flex-fill overflow-auto p-4">
+                <!-- LLM-Dev: Selected categories for budget planning -->
+                @if (_selectedCategories != null && _selectedCategories.Count > 0)
+                {
+                    @foreach (var category in _selectedCategories)
+                    {
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <!-- LLM-Dev: Vertical layout with category name on top, budget entry below, and remove button in corner -->
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="fw-bold mb-0">@category.Name</h6>
+                                    <button class="btn-close" @onclick="() => DeselectCategory(category)"></button>
+                                </div>
+                                
+                                <!-- LLM-Dev: Budget entry field below category name -->
+                                <div class="d-flex align-items-center">
+                                    <label class="me-2 mb-0">Budget Amount: $</label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           style="width: 150px;" 
+                                           step="0.01" 
+                                           placeholder="0.00"
+                                           @bind="category.BudgetAmount" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <!-- LLM-Dev: Empty state message when no categories selected -->
+                    <div class="text-center mt-5">
+                        <i class="bi bi-calendar-check fs-1 text-muted"></i>
+                        <p class="text-muted mt-3">No categories added to plan yet. Click 'Display Categories' to get started.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- LLM-Dev: Bottom toolbar with Save and Cancel buttons -->
+            <div class="bg-light border-top p-3">
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-secondary" @onclick="CancelAsync">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" @onclick="SaveAsync">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- LLM-Dev: Include the Create Category Modal -->
+<CreateCategoryModal OnCategoryCreated="OnCategoryCreated" />
+
+@code {
+    // LLM-Dev: Component for PlanBudget page following Blazor patterns
+    // LLM-Dev: Converted from PlanBudgetViewModel.cs, maintaining same business logic
+
+    private List<CategoryItem> _categories = new();
+    private List<BudgetCategoryItem> _selectedCategories = new();
+    private HashSet<int> _selectedCategoryIds = new();
+    
+    private bool _isLoading = false;
+    private bool _isLoggedIn = false;
+    private int _userId = 0;
+    private string _statusMessage = "Loading...";
+    private string? _error = null;
+    
+    // LLM-Dev: Controls visibility of the categories list (hidden by default)
+    private bool _isCategoriesVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckUserSessionAsync();
+        if (_isLoggedIn)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+
+    // LLM-Dev: Check if user is logged in and get user ID from protected storage (following Categories.razor pattern)
+    private async Task CheckUserSessionAsync()
+    {
+        try
+        {
+            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
+            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
+            
+            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            {
+                _userId = parsedUserId;
+                _isLoggedIn = true;
+                _statusMessage = $"Logged in as user {_userId}";
+            }
+            else
+            {
+                _isLoggedIn = false;
+                _statusMessage = "Please log in to view budget plan";
+                _categories.Clear();
+            }
+        }
+        catch
+        {
+            _isLoggedIn = false;
+            _statusMessage = "Error checking login status";
+            _categories.Clear();
+        }
+    }
+
+    // LLM-Dev: Load categories for the current user from the service, filtering out already selected ones
+    private async Task LoadCategoriesAsync()
+    {
+        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
+
+        try
+        {
+            _isLoading = true;
+            _statusMessage = "Loading categories...";
+            _error = null;
+            StateHasChanged();
+
+            _categories.Clear();
+            var items = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            
+            // LLM-Dev: Only add categories that haven't been selected yet
+            foreach (var c in items)
+            {
+                if (!_selectedCategoryIds.Contains(c.Id))
+                {
+                    _categories.Add(new CategoryItem(c.Id, c.Name));
+                }
+            }
+
+            _statusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error loading categories: {ex.Message}";
+            _statusMessage = string.Empty;
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev: Toggle categories list visibility
+    private void ToggleCategoriesVisibility()
+    {
+        _isCategoriesVisible = !_isCategoriesVisible;
+    }
+
+    // LLM-Dev: Handler for when category is created in modal to refresh list and add to selected
+    private async Task OnCategoryCreated()
+    {
+        var existingIds = new HashSet<int>(_categories.Select(c => c.Id));
+        existingIds.UnionWith(_selectedCategories.Select(c => c.Id));
+        
+        try
+        {
+            var allCategories = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            var newCategory = allCategories.FirstOrDefault(c => !existingIds.Contains(c.Id));
+            
+            if (newCategory != null)
+            {
+                var newItem = new BudgetCategoryItem(newCategory.Id, newCategory.Name, 0);
+                _selectedCategories.Add(newItem);
+                _selectedCategoryIds.Add(newCategory.Id);
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error adding category: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev: Move category from available list to selected list as BudgetCategoryItem
+    private void SelectCategory(CategoryItem category)
+    {
+        if (category != null && _categories.Contains(category))
+        {
+            _categories.Remove(category);
+            var budgetItem = new BudgetCategoryItem(category.Id, category.Name, 0);
+            _selectedCategories.Add(budgetItem);
+            _selectedCategoryIds.Add(category.Id);
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev: Move category from selected list back to available list
+    private void DeselectCategory(BudgetCategoryItem category)
+    {
+        if (category != null && _selectedCategories.Contains(category))
+        {
+            _selectedCategories.Remove(category);
+            _categories.Add(new CategoryItem(category.Id, category.Name));
+            _selectedCategoryIds.Remove(category.Id);
+            StateHasChanged();
+        }
+    }
+
+    // LLM-Dev: Cancel command with confirmation
+    private Task CancelAsync()
+    {
+        // In a real implementation, could use a confirmation modal
+        // For now, navigate directly to home
+        Navigation.NavigateTo("/", forceLoad: false);
+        return Task.CompletedTask;
+    }
+
+    // LLM-Dev: Save budget plan
+    private Task SaveAsync()
+    {
+        // TODO: Implement save logic when budget plan service is available
+        // For now, just show a placeholder message
+        _statusMessage = "Save functionality coming soon...";
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    // LLM-Dev: Helper classes for category data
+    private sealed record CategoryItem(int Id, string Name);
+
+    // LLM-Dev: BudgetCategoryItem class for selected categories with budget amounts
+    private sealed class BudgetCategoryItem
+    {
+        public int Id { get; }
+        public string Name { get; }
+        public decimal BudgetAmount { get; set; }
+
+        public BudgetCategoryItem(int id, string name, decimal budgetAmount = 0)
+        {
+            Id = id;
+            Name = name;
+            BudgetAmount = budgetAmount;
+        }
+    }
+}
+
+<style>
+    .plan-budget-container {
+        height: calc(100vh - 60px);
+        overflow: hidden;
+    }
+
+    .categories-panel {
+        height: 100%;
+    }
+
+    .list-group-item {
+        cursor: pointer;
+    }
+
+    .list-group-item:hover {
+        background-color: #e9ecef;
+    }
+</style>
