@@ -12,12 +12,14 @@
                      Command="{Binding NavigateToHomeCommand}" />
     </ContentPage.ToolbarItems>
     <!-- LLM-Dev: Grid layout with categories column on left (togglable), content area on right, and bottom toolbar -->
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*,Auto">
+    <!-- LLM-Dev v2: Changed row definitions to ensure bottom toolbar is always visible -->
+    <!-- LLM-Dev v3: Changed column definition from Auto to 250 to prevent content overflow when categories visible -->
+    <Grid ColumnDefinitions="250,*" RowDefinitions="*,Auto">
         
         <!-- LLM-Dev: Left column - Categories list following MVVM pattern, visibility controlled by IsCategoriesVisible -->
+        <!-- LLM-Dev v3: Removed WidthRequest since Grid column now defines width, prevents layout issues -->
         <Border Grid.Column="0" 
-                Grid.Row="0"
-                WidthRequest="250"
+                Grid.RowSpan="1"
                 Padding="10"
                 IsVisible="{Binding IsCategoriesVisible}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
@@ -65,8 +67,9 @@
         </Border>
         
         <!-- LLM-Dev: Center column - Budget planning content area with selected categories -->
+        <!-- LLM-Dev v2: Explicitly set Grid.RowSpan to 1 to ensure ScrollView doesn't overlap bottom toolbar -->
         <ScrollView Grid.Column="1"
-                    Grid.Row="0"
+                    Grid.RowSpan="1"
                     Padding="30,20">
             <VerticalStackLayout Spacing="20">
                 
@@ -92,20 +95,40 @@
                                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                                         StrokeThickness="1"
                                         Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeselectCategoryCommand}"
-                                                              CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <Label Grid.Column="0"
+                                    <!-- LLM-Dev v2: Vertical layout with category name on top, budget entry below, and remove button in corner -->
+                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                        <!-- LLM-Dev v2: Category name at top -->
+                                        <Label Grid.Row="0" Grid.Column="0"
                                                Text="{Binding Name}" 
                                                FontSize="18"
-                                               VerticalOptions="Center"/>
-                                        <Label Grid.Column="1"
+                                               FontAttributes="Bold"
+                                               Margin="0,0,0,8"/>
+                                        
+                                        <!-- LLM-Dev v2: Remove button in top-right corner -->
+                                        <Label Grid.Row="0" Grid.Column="1"
                                                Text="✕"
                                                FontSize="18"
                                                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                                               VerticalOptions="Center"/>
+                                               VerticalOptions="Start"
+                                               HorizontalOptions="End">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeselectCategoryCommand}"
+                                                                      CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        
+                                        <!-- LLM-Dev v2: Budget entry field below category name -->
+                                        <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="5">
+                                            <Label Text="Budget Amount: $" 
+                                                   FontSize="14"
+                                                   VerticalOptions="Center"/>
+                                            <Entry Text="{Binding BudgetAmount, Mode=TwoWay}"
+                                                   Keyboard="Numeric"
+                                                   WidthRequest="150"
+                                                   Placeholder="0.00"
+                                                   VerticalOptions="Center"
+                                                   HorizontalTextAlignment="End"/>
+                                        </HorizontalStackLayout>
                                     </Grid>
                                 </Border>
                             </DataTemplate>

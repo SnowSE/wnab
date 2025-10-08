@@ -16,8 +16,8 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
     // LLM-Dev: Available categories (left column)
     public ObservableCollection<CategoryItem> Categories { get; } = new();
     
-    // LLM-Dev: Selected categories for the budget plan (center column)
-    public ObservableCollection<CategoryItem> SelectedCategories { get; } = new();
+    // LLM-Dev v2: Selected categories for the budget plan (center column) with budget amounts
+    public ObservableCollection<BudgetCategoryItem> SelectedCategories { get; } = new();
     
     // LLM-Dev: Track IDs of selected categories to filter them from available list
     private readonly HashSet<int> _selectedCategoryIds = new();
@@ -157,7 +157,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         IsCategoriesVisible = !IsCategoriesVisible;
     }
 
-    // LLM-Dev: Add command to open Add Category popup and add new category to selected list
+    // LLM-Dev v2: Add command to open Add Category popup and add new category to selected list with budget amount
     [RelayCommand]
     private async Task AddCategory()
     {
@@ -167,7 +167,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         
         await _popupService.ShowAddCategoryAsync();
         
-        // LLM-Dev: After popup closes, find the newly created category and add to selected list
+        // LLM-Dev v2: After popup closes, find the newly created category and add to selected list as BudgetCategoryItem
         try
         {
             var allCategories = await _categoryService.GetCategoriesForUserAsync(UserId);
@@ -175,7 +175,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
             
             if (newCategory != null)
             {
-                var newItem = new CategoryItem(newCategory.Id, newCategory.Name);
+                var newItem = new BudgetCategoryItem(newCategory.Id, newCategory.Name, 0);
                 SelectedCategories.Add(newItem);
                 _selectedCategoryIds.Add(newCategory.Id);
             }
@@ -186,27 +186,46 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Move category from available list to selected list
+    // LLM-Dev v2: Move category from available list to selected list as BudgetCategoryItem
     [RelayCommand]
     private void SelectCategory(CategoryItem category)
     {
         if (category != null && Categories.Contains(category))
         {
             Categories.Remove(category);
-            SelectedCategories.Add(category);
+            var budgetItem = new BudgetCategoryItem(category.Id, category.Name, 0);
+            SelectedCategories.Add(budgetItem);
             _selectedCategoryIds.Add(category.Id);
         }
     }
 
-    // LLM-Dev: Move category from selected list back to available list
+    // LLM-Dev v2: Move category from selected list back to available list
     [RelayCommand]
-    private void DeselectCategory(CategoryItem category)
+    private void DeselectCategory(BudgetCategoryItem category)
     {
         if (category != null && SelectedCategories.Contains(category))
         {
             SelectedCategories.Remove(category);
-            Categories.Add(category);
+            Categories.Add(new CategoryItem(category.Id, category.Name));
             _selectedCategoryIds.Remove(category.Id);
         }
+    }
+}
+
+// LLM-Dev v1: BudgetCategoryItem class for selected categories with budget amounts
+// LLM-Dev v1: Extends CategoryItem with BudgetAmount property and implements INotifyPropertyChanged for two-way binding
+public sealed partial class BudgetCategoryItem : ObservableObject
+{
+    public int Id { get; }
+    public string Name { get; }
+
+    [ObservableProperty]
+    private decimal budgetAmount;
+
+    public BudgetCategoryItem(int id, string name, decimal budgetAmount = 0)
+    {
+        Id = id;
+        Name = name;
+        BudgetAmount = budgetAmount;
     }
 }
