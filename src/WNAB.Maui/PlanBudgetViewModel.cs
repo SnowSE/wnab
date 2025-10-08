@@ -11,8 +11,16 @@ namespace WNAB.Maui;
 public sealed partial class PlanBudgetViewModel : ObservableObject
 {
     private readonly CategoryManagementService _categoryService;
+    private readonly IPopupService _popupService;
 
+    // LLM-Dev: Available categories (left column)
     public ObservableCollection<CategoryItem> Categories { get; } = new();
+    
+    // LLM-Dev: Selected categories for the budget plan (center column)
+    public ObservableCollection<CategoryItem> SelectedCategories { get; } = new();
+    
+    // LLM-Dev: Track IDs of selected categories to filter them from available list
+    private readonly HashSet<int> _selectedCategoryIds = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -26,9 +34,14 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public PlanBudgetViewModel(CategoryManagementService categoryService)
+    // LLM-Dev: Controls visibility of the categories list (hidden by default)
+    [ObservableProperty]
+    private bool isCategoriesVisible = false;
+
+    public PlanBudgetViewModel(CategoryManagementService categoryService, IPopupService popupService)
     {
         _categoryService = categoryService;
+        _popupService = popupService;
     }
 
     // LLM-Dev: Initialize the view model by checking user session and loading categories
@@ -69,7 +82,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Load categories for the current user from the service
+    // LLM-Dev: Load categories for the current user from the service, filtering out already selected ones
     [RelayCommand]
     private async Task LoadCategoriesAsync()
     {
@@ -82,8 +95,14 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
             Categories.Clear();
 
             var items = await _categoryService.GetCategoriesForUserAsync(UserId);
+            // LLM-Dev: Only add categories that haven't been selected yet
             foreach (var c in items)
-                Categories.Add(new CategoryItem(c.Id, c.Name));
+            {
+                if (!_selectedCategoryIds.Contains(c.Id))
+                {
+                    Categories.Add(new CategoryItem(c.Id, c.Name));
+                }
+            }
 
             StatusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
         }
@@ -128,6 +147,66 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         if (confirmed)
         {
             await NavigateToHome();
+        }
+    }
+
+    // LLM-Dev: Toggle categories list visibility
+    [RelayCommand]
+    private void ToggleCategoriesVisibility()
+    {
+        IsCategoriesVisible = !IsCategoriesVisible;
+    }
+
+    // LLM-Dev: Add command to open Add Category popup and add new category to selected list
+    [RelayCommand]
+    private async Task AddCategory()
+    {
+        // Get current category IDs before showing popup
+        var existingIds = new HashSet<int>(Categories.Select(c => c.Id));
+        existingIds.UnionWith(SelectedCategories.Select(c => c.Id));
+        
+        await _popupService.ShowAddCategoryAsync();
+        
+        // LLM-Dev: After popup closes, find the newly created category and add to selected list
+        try
+        {
+            var allCategories = await _categoryService.GetCategoriesForUserAsync(UserId);
+            var newCategory = allCategories.FirstOrDefault(c => !existingIds.Contains(c.Id));
+            
+            if (newCategory != null)
+            {
+                var newItem = new CategoryItem(newCategory.Id, newCategory.Name);
+                SelectedCategories.Add(newItem);
+                _selectedCategoryIds.Add(newCategory.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error adding category: {ex.Message}";
+        }
+    }
+
+    // LLM-Dev: Move category from available list to selected list
+    [RelayCommand]
+    private void SelectCategory(CategoryItem category)
+    {
+        if (category != null && Categories.Contains(category))
+        {
+            Categories.Remove(category);
+            SelectedCategories.Add(category);
+            _selectedCategoryIds.Add(category.Id);
+        }
+    }
+
+    // LLM-Dev: Move category from selected list back to available list
+    [RelayCommand]
+    private void DeselectCategory(CategoryItem category)
+    {
+        if (category != null && SelectedCategories.Contains(category))
+        {
+            SelectedCategories.Remove(category);
+            Categories.Add(category);
+            _selectedCategoryIds.Remove(category.Id);
         }
     }
 }
