@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:WNAB.Maui"
              x:Class="WNAB.Maui.PlanBudgetPage"
-             x:DataType="local:PlanBudgetViewModel"
              Title="Plan Budget">
 
 
@@ -13,21 +11,10 @@
                      Order="Primary"
                      Command="{Binding NavigateToHomeCommand}" />
     </ContentPage.ToolbarItems>
-
-    <!-- LLM-Dev:v7 Added login check container following CategoriesPage pattern -->
-    <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
-        <!-- Login prompt when not logged in -->
-        <Label Grid.Row="0" Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
-               HorizontalOptions="Center" 
-               TextColor="Orange"
-               Margin="0,10" />
-        
-        <!-- Main content - only visible when logged in -->
-        <!-- LLM-Dev: Grid layout with categories column on left (togglable), content area on right, and bottom toolbar -->
-        <!-- LLM-Dev v2: Changed row definitions to ensure bottom toolbar is always visible -->
-        <!-- LLM-Dev v3: Changed column definition from Auto to 250 to prevent content overflow when categories visible -->
-        <Grid Grid.Row="1" ColumnDefinitions="250,*" RowDefinitions="*,Auto" IsVisible="{Binding IsLoggedIn}">
+    <!-- LLM-Dev: Grid layout with categories column on left (togglable), content area on right, and bottom toolbar -->
+    <!-- LLM-Dev v2: Changed row definitions to ensure bottom toolbar is always visible -->
+    <!-- LLM-Dev v3: Changed column definition from Auto to 250 to prevent content overflow when categories visible -->
+    <Grid ColumnDefinitions="250,*" RowDefinitions="*,Auto">
         <Button Text="Display Categories"
                     Command="{Binding ToggleCategoriesVisibilityCommand}"
                     HorizontalOptions="Start"
@@ -202,6 +189,5 @@
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}" />
             </HorizontalStackLayout>
         </Border>
-        </Grid>
     </Grid>
 </ContentPage>
