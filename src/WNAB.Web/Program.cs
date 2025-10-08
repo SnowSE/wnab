@@ -123,7 +123,7 @@ app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentica
     RedirectUri = "/"
 }, new[] { OpenIdConnectDefaults.AuthenticationScheme }));
 
-app.MapGet("/logout", async (HttpContext context) =>
+app.MapPost("/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new Microsoft.AspNetCore.Authentication.AuthenticationProperties
@@ -131,6 +131,6 @@ app.MapGet("/logout", async (HttpContext context) =>
         RedirectUri = "/"
     });
     return Results.Redirect("/");
-});
+}).RequireAuthorization();
 
 app.Run();
