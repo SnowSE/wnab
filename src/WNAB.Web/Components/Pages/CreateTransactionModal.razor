@@ -1,8 +1,6 @@
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject TransactionManagementService TransactionsService
 @inject AccountManagementService AccountsService
 @inject CategoryManagementService CategoriesService
-@inject ProtectedLocalStorage ProtectedLocalStorage
 
 <!-- Create Transaction Modal -->
 <div class="modal fade" id="createTransactionModal" tabindex="-1" aria-labelledby="createTransactionModalLabel" aria-hidden="true">
@@ -175,18 +173,16 @@
     private DateTime _transactionDate = DateTime.Today;
     private int _categoryId;
     private string _notes = string.Empty;
-    
+
     // LLM-Dev:v3 Split transaction support
     private bool _isSplitTransaction = false;
     private List<TransactionSplitModel> _splits = new List<TransactionSplitModel>();
-    
-    private int _userId;
-    private bool _isLoggedIn;
+
     private bool _isCreating;
     private string? _result;
     private string? _error;
     private string? _statusMessage;
-    
+
     private List<Account>? _accounts;
     private List<Category>? _categories;
 
@@ -194,44 +190,13 @@
 
     // LLM-Dev:v3 Calculate remaining amount to allocate across splits
     private decimal RemainingAmount => _amount - (_splits?.Sum(s => s.Amount) ?? 0);
-    
+
     // LLM-Dev:v3 Check if splits are balanced with transaction amount
     private bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
 
     protected override async Task OnInitializedAsync()
     {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await LoadAccountsAndCategoriesAsync();
-        }
-    }
-
-    // LLM-Dev:v1 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
-    private async Task CheckUserSessionAsync()
-    {
-        try
-        {
-            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
-            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
-            
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                _statusMessage = $"Creating transaction for user {_userId}";
-            }
-            else
-            {
-                _isLoggedIn = false;
-                _statusMessage = "Please log in first to create a transaction";
-            }
-        }
-        catch
-        {
-            _isLoggedIn = false;
-            _statusMessage = "Error checking login status";
-        }
+        await LoadAccountsAndCategoriesAsync();
     }
 
     private async Task LoadAccountsAndCategoriesAsync()
@@ -243,7 +208,7 @@
 
             // Load all categories (userId comes from authentication token)
             _categories = await CategoriesService.GetCategoriesForUserAsync();
-            
+
             StateHasChanged();
         }
         catch (Exception ex)
@@ -299,12 +264,6 @@
     private async Task Create()
     {
         _result = _error = null;
-        
-        if (!_isLoggedIn || _userId <= 0)
-        {
-            _error = "Please log in first to create a transaction";
-            return;
-        }
 
         if (_accountId <= 0)
         {
@@ -367,14 +326,14 @@
 
             // LLM-Dev:v3 Create transaction with splits or single category
             TransactionRecord record;
-            
+
             if (_isSplitTransaction)
             {
                 // Create transaction with multiple splits
-                var splitRecords = _splits.Select(s => 
+                var splitRecords = _splits.Select(s =>
                     new TransactionSplitRecord(s.CategoryId, s.Amount, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
                 ).ToList();
-                    
+
                 record = TransactionManagementService.CreateTransactionRecord(
                     _accountId, _payee, _description, _amount, _transactionDate, splitRecords);
             }
@@ -382,16 +341,16 @@
             {
                 // Create simple single-category transaction
                 record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId, 
+                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId,
                     string.IsNullOrWhiteSpace(_notes) ? null : _notes);
             }
-            
+
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
-            
+
             // Clear the form for next use (matching MAUI pattern)
             ClearForm();
-            
+
             // Notify parent component to refresh the transactions list
             await OnTransactionCreated.InvokeAsync();
         }
