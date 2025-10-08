@@ -51,11 +51,10 @@ public partial class TransactionViewModel : ObservableObject
     // LLM-Dev:v2 Observable collections for pickers
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
-    
+
     // LLM-Dev:v3 Collection for managing transaction splits
     public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
 
-    private int _userId;
     private bool _isLoggedIn;
 
     public TransactionViewModel(
@@ -78,21 +77,10 @@ public partial class TransactionViewModel : ObservableObject
             _isLoggedIn = await _authService.IsAuthenticatedAsync();
             if (_isLoggedIn)
             {
-                var userIdString = await SecureStorage.Default.GetAsync("userId");
-                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-                {
-                    _userId = parsedUserId;
-                    await LoadDataAsync();
-                }
-                else
-                {
-                    _isLoggedIn = false;
-                    StatusMessage = "Unable to get user information";
-                }
+                await LoadDataAsync();
             }
             else
             {
-                _isLoggedIn = false;
                 StatusMessage = "Please log in first";
             }
         }
@@ -109,9 +97,9 @@ public partial class TransactionViewModel : ObservableObject
         try
         {
             StatusMessage = "Loading...";
-            
-            var accountsTask = _accounts.GetAccountsForUserAsync(_userId);
-            var categoriesTask = _categories.GetCategoriesForUserAsync(_userId);
+
+            var accountsTask = _accounts.GetAccountsForUserAsync();
+            var categoriesTask = _categories.GetCategoriesForUserAsync();
 
             await Task.WhenAll(accountsTask, categoriesTask);
 
@@ -235,7 +223,7 @@ public partial class TransactionViewModel : ObservableObject
     private async Task Save()
     {
         // LLM-Dev:v2 Enhanced validation with user feedback
-        if (!_isLoggedIn || _userId <= 0)
+        if (!_isLoggedIn)
         {
             StatusMessage = "Please log in first";
             return;

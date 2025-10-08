@@ -21,9 +21,6 @@ public partial class TransactionsViewModel : ObservableObject
     private bool isBusy;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
@@ -55,19 +52,8 @@ public partial class TransactionsViewModel : ObservableObject
             IsLoggedIn = await _authService.IsAuthenticatedAsync();
             if (IsLoggedIn)
             {
-                var userIdString = await SecureStorage.Default.GetAsync("userId");
-                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-                {
-                    UserId = parsedUserId;
-                    var userName = _authService.GetUserName();
-                    StatusMessage = $"Logged in as {userName ?? "user"}";
-                }
-                else
-                {
-                    IsLoggedIn = false;
-                    StatusMessage = "Unable to get user information";
-                    Items.Clear();
-                }
+                var userName = await _authService.GetUserNameAsync();
+                StatusMessage = $"Logged in as {userName ?? "user"}";
             }
             else
             {
@@ -84,46 +70,46 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v2 Load transactions for the current user (now using DTOs)
+    // LLM-Dev:v2 Load transactions for the current authenticated user (now using DTOs)
     [RelayCommand]
     private async Task LoadTransactionsAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
-        
+        if (IsBusy || !IsLoggedIn) return;
+
         try
         {
             IsBusy = true;
             StatusMessage = "Loading transactions...";
             Items.Clear();
-            
-            var list = await _transactions.GetTransactionsForUserAsync(UserId);
+
+            var list = await _transactions.GetTransactionsForUserAsync();
             foreach (var t in list)
             {
                 // LLM-Dev:v2 DTO now has CategoryName directly in TransactionSplits
                 var categoryNames = t.TransactionSplits.Select(ts => ts.CategoryName ?? "Unknown").ToList();
-                var categoriesText = categoryNames.Count > 1 
-                    ? $"{categoryNames.Count} categories" 
+                var categoriesText = categoryNames.Count > 1
+                    ? $"{categoryNames.Count} categories"
                     : categoryNames.FirstOrDefault() ?? "No category";
 
                 Items.Add(new TransactionItem(
-                    t.Id, 
-                    t.TransactionDate, 
-                    t.Payee, 
-                    t.Description, 
-                    t.Amount, 
+                    t.Id,
+                    t.TransactionDate,
+                    t.Payee,
+                    t.Description,
+                    t.Amount,
                     t.AccountName, // DTO has AccountName directly
                     categoriesText));
             }
-                
+
             StatusMessage = list.Count == 0 ? "No transactions found" : $"Loaded {list.Count} transactions";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading transactions: {ex.Message}";
         }
-        finally 
-        { 
-            IsBusy = false; 
+        finally
+        {
+            IsBusy = false;
         }
     }
 

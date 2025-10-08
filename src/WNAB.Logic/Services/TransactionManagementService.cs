@@ -90,12 +90,12 @@ public class TransactionManagementService
     }
 
     /// <summary>
-    /// Gets all transactions for a specific user across all their accounts.
+    /// Gets all transactions for the current authenticated user across all their accounts.
     /// LLM-Dev:v2 Returns DTOs to avoid circular reference issues.
     /// </summary>
-    public async Task<List<TransactionDto>> GetTransactionsForUserAsync(int userId, CancellationToken ct = default)
+    public async Task<List<TransactionDto>> GetTransactionsForUserAsync(CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<TransactionDto>>($"users/{userId}/transactions", ct);
+        var transactions = await _http.GetFromJsonAsync<List<TransactionDto>>("transactions", ct);
         return transactions ?? new();
     }
 

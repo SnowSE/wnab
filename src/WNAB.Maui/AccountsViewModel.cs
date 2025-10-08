@@ -21,9 +21,6 @@ public partial class AccountsViewModel : ObservableObject
     private bool isBusy;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
@@ -55,19 +52,8 @@ public partial class AccountsViewModel : ObservableObject
             IsLoggedIn = await _authService.IsAuthenticatedAsync();
             if (IsLoggedIn)
             {
-                var userIdString = await SecureStorage.Default.GetAsync("userId");
-                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-                {
-                    UserId = parsedUserId;
-                    var userName = _authService.GetUserName();
-                    StatusMessage = $"Logged in as {userName ?? "user"}";
-                }
-                else
-                {
-                    IsLoggedIn = false;
-                    StatusMessage = "Unable to get user information";
-                    Items.Clear();
-                }
+                var userName = await _authService.GetUserNameAsync();
+                StatusMessage = $"Logged in as {userName ?? "user"}";
             }
             else
             {
@@ -84,31 +70,31 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Renamed from LoadAsync and updated to use stored user ID
+    // LLM-Dev: v1 Load accounts for current authenticated user
     [RelayCommand]
     private async Task LoadAccountsAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
-        
+        if (IsBusy || !IsLoggedIn) return;
+
         try
         {
             IsBusy = true;
             StatusMessage = "Loading accounts...";
             Items.Clear();
-            
-            var list = await _accounts.GetAccountsForUserAsync(UserId);
+
+            var list = await _accounts.GetAccountsForUserAsync();
             foreach (var a in list)
                 Items.Add(new AccountItem(a.Id, a.AccountName, a.AccountType, a.CachedBalance));
-                
+
             StatusMessage = list.Count == 0 ? "No accounts found" : $"Loaded {list.Count} accounts";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading accounts: {ex.Message}";
         }
-        finally 
-        { 
-            IsBusy = false; 
+        finally
+        {
+            IsBusy = false;
         }
     }
 

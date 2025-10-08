@@ -166,12 +166,25 @@ public class AuthenticationService : IAuthenticationService
             if (!string.IsNullOrEmpty(storedToken))
             {
                 _currentAccessToken = storedToken;
+
+                // Try to parse expiration from the token
+                try
+                {
+                    var handler = new JwtSecurityTokenHandler();
+                    var token = handler.ReadJwtToken(storedToken);
+                    _tokenExpiration = token.ValidTo;
+                }
+                catch
+                {
+                    // If we can't parse, assume it's valid for now
+                    _logger.LogWarning("Could not parse token expiration from stored token");
+                }
             }
             return storedToken;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Get token exception: {ex.Message}");
+            _logger.LogError(ex, "Get token exception: {Message}", ex.Message);
             return null;
         }
     }
@@ -182,15 +195,16 @@ public class AuthenticationService : IAuthenticationService
         return !string.IsNullOrEmpty(token);
     }
 
-    public string? GetUserName()
+    public async Task<string?> GetUserNameAsync()
     {
-        if (string.IsNullOrEmpty(_currentAccessToken))
+        var accessToken = await GetAccessTokenAsync();
+        if (string.IsNullOrEmpty(accessToken))
             return null;
 
         try
         {
             var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(_currentAccessToken);
+            var token = handler.ReadJwtToken(accessToken);
 
             // Try to get the 'name' claim
             var nameClaim = token.Claims.FirstOrDefault(c => c.Type == "name");

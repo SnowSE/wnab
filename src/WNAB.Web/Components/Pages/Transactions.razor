@@ -186,7 +186,8 @@
             StateHasChanged();
             
             // LLM-Dev:v1 Use service list method to load all transactions for user
-            _items = await TransactionsService.GetTransactionsForUserAsync(_userId);
+            // userId now comes from authentication token on the API side
+            _items = await TransactionsService.GetTransactionsForUserAsync();
             _statusMessage = _items.Count == 0 ? "No transactions found" : $"Loaded {_items.Count} transactions";
         }
         catch (Exception ex)

@@ -22,9 +22,6 @@ public sealed partial class CategoriesViewModel : ObservableObject
     private bool isBusy;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
@@ -56,19 +53,8 @@ public sealed partial class CategoriesViewModel : ObservableObject
             IsLoggedIn = await _authService.IsAuthenticatedAsync();
             if (IsLoggedIn)
             {
-                var userIdString = await SecureStorage.Default.GetAsync("userId");
-                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-                {
-                    UserId = parsedUserId;
-                    var userName = _authService.GetUserName();
-                    StatusMessage = $"Logged in as {userName ?? "user"}";
-                }
-                else
-                {
-                    IsLoggedIn = false;
-                    StatusMessage = "Unable to get user information";
-                    Categories.Clear();
-                }
+                var userName = await _authService.GetUserNameAsync();
+                StatusMessage = $"Logged in as {userName ?? "user"}";
             }
             else
             {
@@ -85,22 +71,22 @@ public sealed partial class CategoriesViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v4 Updated to use stored user ID and user-specific endpoint
+    // LLM-Dev:v4 Load categories for current authenticated user
     [RelayCommand]
     private async Task LoadCategoriesAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
-        
+        if (IsBusy || !IsLoggedIn) return;
+
         try
         {
             IsBusy = true;
             StatusMessage = "Loading categories...";
             Categories.Clear();
-            
-            var items = await _service.GetCategoriesForUserAsync(UserId);
+
+            var items = await _service.GetCategoriesForUserAsync();
             foreach (var c in items)
                 Categories.Add(new CategoryItem(c.Id, c.Name));
-                
+
             StatusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
         }
         catch (Exception ex)

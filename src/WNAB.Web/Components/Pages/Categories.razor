@@ -192,7 +192,8 @@ else if (!string.IsNullOrWhiteSpace(_statusMessage))
             StateHasChanged();
             
             // LLM-Dev:v5 Use user-specific method instead of getting all categories
-            _items = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            // userId now comes from authentication token on the API side
+            _items = await CategoriesService.GetCategoriesForUserAsync();
             _statusMessage = _items.Count == 0 ? "No categories found" : $"Loaded {_items.Count} categories";
         }
         catch (Exception ex)

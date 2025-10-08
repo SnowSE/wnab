@@ -44,7 +44,7 @@ public partial class MainPageViewModel : ObservableObject
             var isAuthenticated = await _authenticationService.IsAuthenticatedAsync();
             if (isAuthenticated)
             {
-                var userName = _authenticationService.GetUserName();
+                var userName = await _authenticationService.GetUserNameAsync();
                 UserDisplay = !string.IsNullOrWhiteSpace(userName) ? $"Signed in as: {userName}" : "Signed in";
                 IsSignedIn = true;
             }

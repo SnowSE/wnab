@@ -165,8 +165,9 @@
             _statusMessage = "Loading accounts...";
             StateHasChanged();
             
-            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI, with saved user ID
-            _items = await AccountsService.GetAccountsForUserAsync(_userId);
+            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI
+            // userId now comes from authentication token on the API side
+            _items = await AccountsService.GetAccountsForUserAsync();
             _statusMessage = _items.Count == 0 ? "No accounts found" : $"Loaded {_items.Count} accounts";
         }
         catch (Exception ex)

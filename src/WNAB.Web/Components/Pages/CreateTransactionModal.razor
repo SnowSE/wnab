@@ -238,11 +238,11 @@
     {
         try
         {
-            // Load user's accounts
-            _accounts = await AccountsService.GetAccountsForUserAsync(_userId);
-            
-            // Load all categories
-            _categories = await CategoriesService.GetCategoriesAsync();
+            // Load user's accounts (userId comes from authentication token)
+            _accounts = await AccountsService.GetAccountsForUserAsync();
+
+            // Load all categories (userId comes from authentication token)
+            _categories = await CategoriesService.GetCategoriesForUserAsync();
             
             StateHasChanged();
         }

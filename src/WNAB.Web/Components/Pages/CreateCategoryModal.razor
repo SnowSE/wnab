@@ -111,7 +111,8 @@
             StateHasChanged();
 
             // LLM-Dev:v5 Fix service calls to match CategoryManagementService method signatures
-            var record = CategoryManagementService.CreateCategoryRecord(_name, _userId);
+            // userId now comes from authentication token on the API side
+            var record = CategoryManagementService.CreateCategoryRecord(_name);
             var id = await CategoriesService.CreateCategoryAsync(record);
             _result = $"Category '{_name}' created successfully with ID {id}";
             

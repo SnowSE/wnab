@@ -39,20 +39,12 @@ public partial class AddCategoryViewModel : ObservableObject
             return;
         }
 
-        // Get userId from SecureStorage
-        var userIdString = await SecureStorage.Default.GetAsync("userId");
-        if (!int.TryParse(userIdString, out var userId) || userId <= 0)
-        {
-            // Handle error - unable to get user ID
-            return;
-        }
-
         // Basic validation
         if (string.IsNullOrWhiteSpace(Name))
             return;
 
-        // Build DTO and send via service
-        var record = CategoryManagementService.CreateCategoryRecord(Name, userId);
+        // Build DTO and send via service (userId comes from auth token)
+        var record = CategoryManagementService.CreateCategoryRecord(Name);
         await _categories.CreateCategoryAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

@@ -110,9 +110,9 @@
             _isCreating = true;
             StateHasChanged();
 
-            // LLM-Dev:v4 Use saved user ID instead of manual input, matching MAUI pattern
+            // LLM-Dev:v4 userId now comes from authentication token on the API side
             var record = AccountManagementService.CreateAccountRecord(_name);
-            var id = await AccountsService.CreateAccountAsync(_userId, record);
+            var id = await AccountsService.CreateAccountAsync(record);
             _result = $"Account '{_name}' created successfully with ID {id}";
             
             // Clear the name field for next use (matching MAUI pattern)
