@@ -61,7 +61,7 @@ public partial class StepDefinitions
             {
                 Id = nextTransactionId++,
                 Account = account,
-                Payee = "" // LLM-Dev: Set required property for basic transaction entries
+                Payee = "" 
             };
             transactions.Add(transaction);
         }
@@ -82,7 +82,6 @@ public partial class StepDefinitions
 
         // Actual: Compare against converted objects
         var actualTransactions = context.Get<List<Transaction>>("Transactions");
-
         // Assert
         actualTransactions.Count.ShouldBe(expectedTransactions.Count);
         

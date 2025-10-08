@@ -290,16 +290,16 @@ public partial class TransactionViewModel : ObservableObject
             {
                 // LLM-Dev:v3 Create transaction with multiple splits
                 var splitRecords = Splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, s.Notes)).ToList();
+                    new TransactionSplitRecord(s.CategoryId, s.TransactionId, s.Amount)).ToList();
                     
                 record = TransactionManagementService.CreateTransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
+                    AccountId, Payee, Amount, utcTransactionDate);
             }
             else
             {
                 // LLM-Dev:v3 Create simple single-category transaction
                 record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, CategoryId);
+                    AccountId, Payee, Amount, utcTransactionDate, CategoryId);
             }
             
             await _transactions.CreateTransactionAsync(record);

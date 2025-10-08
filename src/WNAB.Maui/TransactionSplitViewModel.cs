@@ -11,6 +11,9 @@ public partial class TransactionSplitViewModel : ObservableObject
     private Category? selectedCategory;
 
     [ObservableProperty]
+    private int transactionId;
+
+    [ObservableProperty]
     private decimal amount;
 
     [ObservableProperty]
