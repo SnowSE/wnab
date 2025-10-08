@@ -15,6 +15,17 @@
     <!-- LLM-Dev v2: Changed row definitions to ensure bottom toolbar is always visible -->
     <!-- LLM-Dev v3: Changed column definition from Auto to 250 to prevent content overflow when categories visible -->
     <Grid ColumnDefinitions="250,*" RowDefinitions="*,Auto">
+        <Button Text="Display Categories"
+                    Command="{Binding ToggleCategoriesVisibilityCommand}"
+                    HorizontalOptions="Start"
+                    VerticalOptions="Start"
+                    WidthRequest="150"
+                    HeightRequest="35"
+                    FontSize="12"
+                    Padding="8,4"
+                    Margin="30,20,0,10"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" 
+                    IsVisible="{Binding IsCategoriesVisible, Converter={StaticResource InvertedBoolConverter}}" />
         
         <!-- LLM-Dev: Left column - Categories list following MVVM pattern, visibility controlled by IsCategoriesVisible -->
         <!-- LLM-Dev v3: Removed WidthRequest since Grid column now defines width, prevents layout issues -->
@@ -25,10 +36,27 @@
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 StrokeThickness="0">
             <VerticalStackLayout Spacing="10">
-                <Label Text="Categories" 
-                       FontSize="20" 
-                       FontAttributes="Bold"
-                       Margin="0,0,0,5"/>
+                <!-- LLM-Dev v4: Header with title and close button in upper right corner -->
+                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,5">
+                    <Label Grid.Column="0"
+                           Text="Categories" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           VerticalOptions="Center"/>
+                    
+                    <!-- LLM-Dev v4: X button to close categories panel, bound to ToggleCategoriesVisibilityCommand following MVVM -->
+                    <Button Grid.Column="1"
+                            Text="✕"
+                            FontSize="18"
+                            WidthRequest="35"
+                            HeightRequest="35"
+                            Padding="0"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                            Command="{Binding ToggleCategoriesVisibilityCommand}"
+                            HorizontalOptions="End"
+                            VerticalOptions="Start"/>
+                </Grid>
                 
                 <!-- LLM-Dev: Button to create a new category -->
                 <Button Text="+ New Category"
@@ -68,23 +96,21 @@
         
         <!-- LLM-Dev: Center column - Budget planning content area with selected categories -->
         <!-- LLM-Dev v2: Explicitly set Grid.RowSpan to 1 to ensure ScrollView doesn't overlap bottom toolbar -->
-        <ScrollView Grid.Column="1"
-                    Grid.RowSpan="1"
-                    Padding="30,20">
-            <VerticalStackLayout Spacing="20">
-                
-                <!-- LLM-Dev: Button to toggle categories list visibility -->
-                <Button Text="Add Category to Plan"
-                        Command="{Binding ToggleCategoriesVisibilityCommand}"
-                        HorizontalOptions="Start"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
-                
-                <!-- LLM-Dev: Selected categories for budget planning -->
-                <VerticalStackLayout Spacing="10">
-                    <Label Text="Budget Categories" 
-                           FontSize="24" 
-                           FontAttributes="Bold"
-                           Margin="0,10,0,10"/>
+        <!-- LLM-Dev v3: Added button at top of main content area, smaller size and positioned upper left -->
+        <!-- LLM-Dev v5: Fixed Grid.Column to 1 (was incorrectly set to 0, causing overlap with categories panel) -->
+        <VerticalStackLayout Grid.Column="1"
+                             Grid.RowSpan="1"
+                             Spacing="0">
+            
+            <!-- LLM-Dev v3: Button to toggle categories list visibility - smaller and in upper left -->
+            
+            
+            <ScrollView Padding="30,0,30,20">
+                <VerticalStackLayout Spacing="20">
+                    
+                    <!-- LLM-Dev: Selected categories for budget planning -->
+                    <VerticalStackLayout Spacing="10">
+                    
                     
                     <CollectionView ItemsSource="{Binding SelectedCategories}"
                                     SelectionMode="None">
@@ -142,12 +168,11 @@
                            HorizontalTextAlignment="Center"
                            Margin="0,20,0,0"
                            IsVisible="{Binding SelectedCategories.Count, Converter={StaticResource IsNotNullOrEmptyConverter}}"/>
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
                     
-            </VerticalStackLayout>
-        </ScrollView>
-        
-        <!-- LLM-Dev: Bottom toolbar with Save and Cancel buttons -->
+                </VerticalStackLayout>
+            </ScrollView>
+        </VerticalStackLayout>        <!-- LLM-Dev: Bottom toolbar with Save and Cancel buttons -->
         <Border Grid.Row="1" 
                 Grid.ColumnSpan="2"
                 Padding="20,10"
