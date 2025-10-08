@@ -2,9 +2,18 @@
 
 **Completion Date:** October 8, 2025  
 **Branch:** transaction-flows  
-**Duration:** ~2 days planning + implementation
+**Duration:** ~2 days planning + impleme### Unit Tests
+```
+Test summary: total: 9, failed: 0, succeeded: 9, skipped: 0
+```
 
----
+**Test Scenarios Verified:**
+- ✅ Simple transaction with single category allocation (budget created first)
+- ✅ Split transaction with multiple category allocations (budgets created first)
+- ✅ Category → Allocation mapping during transaction creation
+- ✅ Budget-first enforcement: Transaction fails without allocation
+- ✅ Validation of split amounts and allocation IDs
+- ✅ **NEW:** Negative test - Cannot create transaction without budget allocation--
 
 ## Executive Summary
 
@@ -185,12 +194,13 @@ CategoryAllocations use `IsActive = true/false` instead of deletion:
 Test summary: total: 8, failed: 0, succeeded: 8, skipped: 0
 ```
 
-**Test Scenarios Verified:**
-- ✅ Simple transaction with single category allocation
-- ✅ Split transaction with multiple category allocations
+### **Test Scenarios Verified:**
+- ✅ Simple transaction with single category allocation (budget created first)
+- ✅ Split transaction with multiple category allocations (budgets created first)
 - ✅ Category → Allocation mapping during transaction creation
-- ✅ Auto-creation of allocations for test scenarios
+- ✅ Budget-first enforcement: Transaction fails without allocation
 - ✅ Validation of split amounts and allocation IDs
+- ✅ **NEW:** Negative test - Cannot create transaction without budget allocation
 
 ### Integration Testing Status
 - ⚠️ Not yet performed (remaining Phase 7 work)

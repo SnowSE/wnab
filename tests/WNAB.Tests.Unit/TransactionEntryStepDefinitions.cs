@@ -42,12 +42,10 @@ namespace WNAB.Tests.Unit
                 : context.Get<List<Account>>($"Accounts:{user.Email.ToLower()}");
             var account = accounts.First();
 
-            // LLM-Dev:v5 Create category allocations for the transaction month/year if they don't exist
+            // LLM-Dev:v6 Budget-first enforcement: Allocations MUST exist before creating transactions
             var allocations = context.ContainsKey("Allocations") 
                 ? context.Get<List<CategoryAllocation>>("Allocations") 
                 : new List<CategoryAllocation>();
-            
-            int nextAllocationId = allocations.Any() ? allocations.Max(a => a.Id) + 1 : 1;
 
             // Act: map inputs to DTOs and create the record
             var splitRecords = new List<TransactionSplitRecord>();
@@ -56,7 +54,7 @@ namespace WNAB.Tests.Unit
                 var category = categories.Single(c => c.Name == categoryName);
                 if (category.Id == 0) category.Id = categories.IndexOf(category) + 1;
                 
-                // LLM-Dev:v5 Find or create allocation for this category/month/year
+                // LLM-Dev:v6 ENFORCE budget-first: allocation MUST exist, do NOT auto-create
                 var allocation = allocations.FirstOrDefault(a => 
                     a.CategoryId == category.Id && 
                     a.Month == date.Month && 
@@ -64,21 +62,13 @@ namespace WNAB.Tests.Unit
                 
                 if (allocation == null)
                 {
-                    var allocationRecord = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
-                        category.Id, splitAmount, date.Month, date.Year);
-                    allocation = new CategoryAllocation(allocationRecord)
-                    {
-                        Id = nextAllocationId++,
-                        Category = category
-                    };
-                    allocations.Add(allocation);
+                    throw new InvalidOperationException(
+                        $"No budget allocation found for category '{categoryName}' in {date:MMMM yyyy}. " +
+                        "Budget allocations must be created before transactions (budget-first approach).");
                 }
                 
                 splitRecords.Add(new TransactionSplitRecord(allocation.Id, splitAmount, false, null));
             }
-
-            // Store allocations back to context
-            context["Allocations"] = allocations;
 
             var record = TransactionManagementService.CreateTransactionRecord(
                 account.Id,
@@ -91,6 +81,32 @@ namespace WNAB.Tests.Unit
 
             // Store
             context["TransactionRecord"] = record;
+        }
+
+        // LLM-Dev:v6 Negative test step: attempt to create transaction and expect it to fail
+        [When("I attempt to enter the transaction with split")]
+        public void WhenIAttemptToEnterTheTransactionWithSplit(DataTable dataTable)
+        {
+            try
+            {
+                // Try to create the transaction (should fail)
+                WhenIEnterTheTransactionWithSplit(dataTable);
+                // If we get here, the test should fail because we expected an exception
+                context["TransactionError"] = "No error occurred";
+            }
+            catch (Exception ex)
+            {
+                // Store the exception for verification
+                context["TransactionError"] = ex.Message;
+            }
+        }
+
+        [Then("the transaction creation should fail with message {string}")]
+        public void ThenTheTransactionCreationShouldFailWithMessage(string expectedMessagePart)
+        {
+            var errorMessage = context.Get<string>("TransactionError");
+            errorMessage.ShouldNotBe("No error occurred", "Expected an error but none occurred");
+            errorMessage.ShouldContain(expectedMessagePart);
         }
 
         [Then("I should have the following transaction entry")]

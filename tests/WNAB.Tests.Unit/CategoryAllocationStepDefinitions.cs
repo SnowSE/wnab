@@ -78,6 +78,45 @@ public partial class StepDefinitions
 		context["Allocations"] = allocations;
 	}
 
+	// LLM-Dev:v6 User-friendly step for creating budget allocations with month/year in step text
+	[Given(@"the following budget allocation for (.*) (\d+)")]
+	public void GivenTheFollowingBudgetAllocationForMonthYear(string monthName, int year, DataTable dataTable)
+	{
+		// Parse month name to month number
+		var month = DateTime.ParseExact(monthName, "MMMM", System.Globalization.CultureInfo.InvariantCulture).Month;
+
+		// Actual
+		var user = context.Get<User>("User");
+		var categories = user.Categories.ToList();
+		var allocations = context.ContainsKey("Allocations") ? context.Get<List<CategoryAllocation>>("Allocations") : new List<CategoryAllocation>();
+
+		// Act
+		int nextId = allocations.Any() ? allocations.Max(a => a.Id) + 1 : 1;
+		foreach (var row in dataTable.Rows)
+		{
+			var categoryName = row["CategoryName"].ToString();
+			var category = categories.Single(c => c.Name == categoryName);
+			if (category.Id == 0) category.Id = categories.IndexOf(category) + 1;
+
+			var record = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
+				category.Id,
+				decimal.Parse(row["BudgetedAmount"].ToString()!),
+				month,
+				year
+			);
+
+			var allocation = new CategoryAllocation(record)
+			{
+				Id = nextId++,
+				Category = category
+			};
+			allocations.Add(allocation);
+		}
+
+		// Store
+		context["Allocations"] = allocations;
+	}
+
 	[Then(@"I should have the following category allocations for user ""(.*)""")]
 	public void ThenIshouldhavethefollowingcategoryallocationsforuser(string email, DataTable dataTable)
 	{
