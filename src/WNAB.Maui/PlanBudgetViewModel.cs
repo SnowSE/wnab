@@ -1,0 +1,116 @@
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using WNAB.Logic;
+using Microsoft.Maui.Storage;
+
+namespace WNAB.Maui;
+
+// LLM-Dev: ViewModel for PlanBudget page. Follows MVVM pattern by keeping UI logic out of the view.
+// LLM-Dev: Loads user-specific categories from CategoryManagementService following the pattern established in CategoriesViewModel
+public sealed partial class PlanBudgetViewModel : ObservableObject
+{
+    private readonly CategoryManagementService _categoryService;
+
+    public ObservableCollection<CategoryItem> Categories { get; } = new();
+
+    [ObservableProperty]
+    private bool isBusy;
+
+    [ObservableProperty]
+    private int userId;
+
+    [ObservableProperty]
+    private bool isLoggedIn;
+
+    [ObservableProperty]
+    private string statusMessage = "Loading...";
+
+    public PlanBudgetViewModel(CategoryManagementService categoryService)
+    {
+        _categoryService = categoryService;
+    }
+
+    // LLM-Dev: Initialize the view model by checking user session and loading categories
+    public async Task InitializeAsync()
+    {
+        await CheckUserSessionAsync();
+        if (IsLoggedIn)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+
+    // LLM-Dev: Check if user is logged in and get user ID from secure storage (following CategoriesViewModel pattern)
+    [RelayCommand]
+    private async Task CheckUserSessionAsync()
+    {
+        try
+        {
+            var userIdString = await SecureStorage.Default.GetAsync("userId");
+            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            {
+                UserId = parsedUserId;
+                IsLoggedIn = true;
+                StatusMessage = $"Logged in as user {UserId}";
+            }
+            else
+            {
+                IsLoggedIn = false;
+                StatusMessage = "Please log in to view budget plan";
+                Categories.Clear();
+            }
+        }
+        catch
+        {
+            IsLoggedIn = false;
+            StatusMessage = "Error checking login status";
+            Categories.Clear();
+        }
+    }
+
+    // LLM-Dev: Load categories for the current user from the service
+    [RelayCommand]
+    private async Task LoadCategoriesAsync()
+    {
+        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Loading categories...";
+            Categories.Clear();
+
+            var items = await _categoryService.GetCategoriesForUserAsync(UserId);
+            foreach (var c in items)
+                Categories.Add(new CategoryItem(c.Id, c.Name));
+
+            StatusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading categories: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    // LLM-Dev: Refresh command for manual reload
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        await CheckUserSessionAsync();
+        if (IsLoggedIn)
+        {
+            await LoadCategoriesAsync();
+        }
+    }
+    
+    [RelayCommand]
+    private async Task NavigateToHome()
+    {
+        await Shell.Current.GoToAsync("//MainPage");
+    }
+}

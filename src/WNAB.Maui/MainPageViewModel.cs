@@ -99,6 +99,12 @@ public partial class MainPageViewModel : ObservableObject
         await Shell.Current.GoToAsync("Users");
     }
 
+    [RelayCommand]
+    private async Task NavigateToPlanBudget()
+    {
+        await Shell.Current.GoToAsync("PlanBudget");
+    }
+
     // LLM-Dev:v8 Updated to use popup service since LoginPage is now a popup
     [RelayCommand]
     private async Task NavigateToLogin()
