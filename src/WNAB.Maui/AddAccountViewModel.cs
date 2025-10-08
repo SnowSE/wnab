@@ -1,13 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Logic;
 using Microsoft.Maui.Storage;
+using WNAB.Logic;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
 public partial class AddAccountViewModel : ObservableObject
 {
     private readonly AccountManagementService _accounts;
+    private readonly IAuthenticationService _authService;
 
     public event EventHandler? RequestClose;
 
@@ -21,9 +23,10 @@ public partial class AddAccountViewModel : ObservableObject
     private int _userId;
     private bool _isLoggedIn;
 
-    public AddAccountViewModel(AccountManagementService accounts)
+    public AddAccountViewModel(AccountManagementService accounts, IAuthenticationService authService)
     {
         _accounts = accounts;
+        _authService = authService;
     }
 
     // LLM-Dev:v3 Simplified initialization - only load user ID internally, no UI updates about user ID
@@ -31,12 +34,20 @@ public partial class AddAccountViewModel : ObservableObject
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            _isLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (_isLoggedIn)
             {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                StatusMessage = "Ready to create account";
+                var userIdString = await SecureStorage.Default.GetAsync("userId");
+                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+                {
+                    _userId = parsedUserId;
+                    StatusMessage = "Ready to create account";
+                }
+                else
+                {
+                    _isLoggedIn = false;
+                    StatusMessage = "Unable to get user information";
+                }
             }
             else
             {

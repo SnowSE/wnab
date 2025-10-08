@@ -1,22 +1,25 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Logic; // LLM-Dev: Use shared Logic service for creating categories
 using Microsoft.Maui.Storage;
+using WNAB.Logic; // LLM-Dev: Use shared Logic service for creating categories
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
 public partial class AddCategoryViewModel : ObservableObject
 {
     private readonly CategoryManagementService _categories;
+    private readonly IAuthenticationService _authService;
 
     public event EventHandler? RequestClose;
 
     [ObservableProperty]
     private string name = string.Empty;
 
-    public AddCategoryViewModel(CategoryManagementService categories)
+    public AddCategoryViewModel(CategoryManagementService categories, IAuthenticationService authService)
     {
         _categories = categories;
+        _authService = authService;
     }
 
     [RelayCommand]
@@ -28,11 +31,19 @@ public partial class AddCategoryViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
-        // LLM-Dev:v4 Get userId from SecureStorage instead of manual input
+        // Get userId from AuthenticationService for authentication check
+        var isAuthenticated = await _authService.IsAuthenticatedAsync();
+        if (!isAuthenticated)
+        {
+            // Handle error - user not logged in
+            return;
+        }
+
+        // Get userId from SecureStorage
         var userIdString = await SecureStorage.Default.GetAsync("userId");
         if (!int.TryParse(userIdString, out var userId) || userId <= 0)
         {
-            // Handle error - user not logged in
+            // Handle error - unable to get user ID
             return;
         }
 

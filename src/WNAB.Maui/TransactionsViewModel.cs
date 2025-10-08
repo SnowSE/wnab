@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Storage;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -12,6 +13,7 @@ public partial class TransactionsViewModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authService;
 
     public ObservableCollection<TransactionItem> Items { get; } = new();
 
@@ -27,10 +29,11 @@ public partial class TransactionsViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public TransactionsViewModel(TransactionManagementService transactions, IPopupService popupService)
+    public TransactionsViewModel(TransactionManagementService transactions, IPopupService popupService, IAuthenticationService authService)
     {
         _transactions = transactions;
         _popupService = popupService;
+        _authService = authService;
     }
 
     // LLM-Dev: Initialize by checking user session and loading transactions
@@ -43,18 +46,28 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Check if user is logged in and get user ID from secure storage
+    // LLM-Dev: Check if user is logged in using AuthenticationService
     [RelayCommand]
     private async Task CheckUserSessionAsync()
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            IsLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (IsLoggedIn)
             {
-                UserId = parsedUserId;
-                IsLoggedIn = true;
-                StatusMessage = $"Logged in as user {UserId}";
+                var userIdString = await SecureStorage.Default.GetAsync("userId");
+                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+                {
+                    UserId = parsedUserId;
+                    var userName = _authService.GetUserName();
+                    StatusMessage = $"Logged in as {userName ?? "user"}";
+                }
+                else
+                {
+                    IsLoggedIn = false;
+                    StatusMessage = "Unable to get user information";
+                    Items.Clear();
+                }
             }
             else
             {

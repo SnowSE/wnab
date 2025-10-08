@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Storage;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -13,6 +14,7 @@ public partial class TransactionViewModel : ObservableObject
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
     private readonly CategoryManagementService _categories;
+    private readonly IAuthenticationService _authService;
 
     public event EventHandler? RequestClose; // Raised to close popup
 
@@ -57,13 +59,15 @@ public partial class TransactionViewModel : ObservableObject
     private bool _isLoggedIn;
 
     public TransactionViewModel(
-        TransactionManagementService transactions, 
+        TransactionManagementService transactions,
         AccountManagementService accounts,
-        CategoryManagementService categories)
+        CategoryManagementService categories,
+        IAuthenticationService authService)
     {
         _transactions = transactions;
         _accounts = accounts;
         _categories = categories;
+        _authService = authService;
     }
 
     // LLM-Dev:v2 Initialize by loading user session and available accounts/categories
@@ -71,12 +75,20 @@ public partial class TransactionViewModel : ObservableObject
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            _isLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (_isLoggedIn)
             {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                await LoadDataAsync();
+                var userIdString = await SecureStorage.Default.GetAsync("userId");
+                if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+                {
+                    _userId = parsedUserId;
+                    await LoadDataAsync();
+                }
+                else
+                {
+                    _isLoggedIn = false;
+                    StatusMessage = "Unable to get user information";
+                }
             }
             else
             {

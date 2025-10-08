@@ -72,7 +72,8 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0-rc.1.25451.107" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.0-rc.1.25452.6" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0-rc.1.25451.107" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />		
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0-rc.1.25451.107" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />		
 	</ItemGroup>
 
 	<ItemGroup>

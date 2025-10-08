@@ -2,6 +2,7 @@ using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace WNAB.Maui.Services;
@@ -183,7 +184,23 @@ public class AuthenticationService : IAuthenticationService
 
     public string? GetUserName()
     {
-        return _loginResult?.User?.Identity?.Name;
+        if (string.IsNullOrEmpty(_currentAccessToken))
+            return null;
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(_currentAccessToken);
+
+            // Try to get the 'name' claim
+            var nameClaim = token.Claims.FirstOrDefault(c => c.Type == "name");
+            return nameClaim?.Value;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading username from access token");
+            return null;
+        }
     }
 
     private class WebBrowserAuthenticator : IdentityModel.OidcClient.Browser.IBrowser
