@@ -7,7 +7,11 @@
                x:DataType="local:LoginViewModel"
                Color="#3b3434">
 
-    <VerticalStackLayout BackgroundColor="#3b3434"  Padding="24" Spacing="16" WidthRequest="320">
+        <!-- BackgroundColor="#3b3434"   -->
+
+    <VerticalStackLayout 
+        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+        Padding="24" Spacing="16" WidthRequest="320">
         <Label Text="Login" FontAttributes="Bold" HorizontalOptions="Center" />
         <Label Text="Enter your User ID" />
         <Entry Placeholder="User ID" Text="{Binding UserId}" />

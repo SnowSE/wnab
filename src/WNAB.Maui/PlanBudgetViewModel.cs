@@ -113,4 +113,21 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
     {
         await Shell.Current.GoToAsync("//MainPage");
     }
+    
+    // LLM-Dev v1: Cancel command with confirmation dialog following MVVM pattern
+    // LLM-Dev v1: Uses Shell.Current.DisplayAlert for confirmation, consistent with app patterns
+    [RelayCommand]
+    private async Task CancelAsync()
+    {
+        bool confirmed = await Shell.Current.DisplayAlert(
+            "Cancel Confirmation",
+            "Are you sure you want to cancel? Any unsaved changes will be lost.",
+            "Yes",
+            "No");
+            
+        if (confirmed)
+        {
+            await NavigateToHome();
+        }
+    }
 }

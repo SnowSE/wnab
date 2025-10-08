@@ -11,11 +11,12 @@
                      Order="Primary"
                      Command="{Binding NavigateToHomeCommand}" />
     </ContentPage.ToolbarItems>
-    <!-- LLM-Dev: Grid layout with categories column on left, content area on right -->
-    <Grid ColumnDefinitions="250,*" RowDefinitions="*">
+    <!-- LLM-Dev: Grid layout with categories column on left, content area on right, and bottom toolbar -->
+    <Grid ColumnDefinitions="250,*" RowDefinitions="*,Auto">
         
         <!-- LLM-Dev: Left column - Categories list following MVVM pattern -->
         <Border Grid.Column="0" 
+                Grid.Row="0"
                 Padding="10"
                 BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                 StrokeThickness="0">
@@ -50,6 +51,7 @@
         
         <!-- LLM-Dev: Right column - Budget planning content area -->
         <VerticalStackLayout Grid.Column="1"
+                            Grid.Row="0"
                             Padding="30,0"
                             Spacing="25"
                             VerticalOptions="Center"
@@ -60,5 +62,23 @@
                    HorizontalOptions="Center" />
                 
         </VerticalStackLayout>
+        
+        <!-- LLM-Dev: Bottom toolbar with Save and Cancel buttons -->
+        <Border Grid.Row="1" 
+                Grid.ColumnSpan="2"
+                Padding="20,10"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                StrokeThickness="0">
+            <HorizontalStackLayout Spacing="10" 
+                                   HorizontalOptions="End">
+                <Button Text="Cancel" 
+                        WidthRequest="100"
+                        Command="{Binding CancelCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}" />
+                <Button Text="Save" 
+                        WidthRequest="100"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}" />
+            </HorizontalStackLayout>
+        </Border>
     </Grid>
 </ContentPage>
