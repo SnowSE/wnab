@@ -368,23 +368,11 @@
             // LLM-Dev:v3 Create transaction with splits or single category
             TransactionRecord record;
             
-            if (_isSplitTransaction)
-            {
-                // Create transaction with multiple splits
-                var splitRecords = _splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
-                ).ToList();
-                    
-                record = TransactionManagementService.CreateTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, splitRecords);
-            }
-            else
-            {
-                // Create simple single-category transaction
-                record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId, 
-                    string.IsNullOrWhiteSpace(_notes) ? null : _notes);
-            }
+            
+            // Create simple single-category transaction
+            record = TransactionManagementService.CreateSimpleTransactionRecord(
+                    _accountId, _payee, _amount, _transactionDate, _categoryId);
+            
             
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
@@ -404,6 +392,8 @@
             _isCreating = false;
             StateHasChanged();
         }
+
+
     }
 
     private void ClearForm()

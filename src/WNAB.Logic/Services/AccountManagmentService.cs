@@ -7,9 +7,6 @@ public class AccountManagementService
 {
 	private readonly HttpClient _http;
 
-	/// <summary>
-	/// Create the service with an HttpClient already configured with BaseAddress of the API (e.g. https://localhost:7077/).
-	/// </summary>
 	public AccountManagementService(HttpClient http)
 	{
 		_http = http ?? throw new ArgumentNullException(nameof(http));
@@ -22,10 +19,7 @@ public class AccountManagementService
 		return new AccountRecord(name, userId);
 	}
 
-	/// <summary>
-	/// Create an account for a specific user by POSTing to the API.
-	/// Returns the newly created account Id on success.
-	/// </summary>
+
 	public async Task<int> CreateAccountAsync(int userId, AccountRecord record, CancellationToken ct = default)
 	{
 
@@ -40,7 +34,7 @@ public class AccountManagementService
 
 	private sealed record IdResponse(int Id);
 
-	// LLM-Dev:v2 Fetch accounts for a given user (UI should call this rather than creating HttpClient).
+
 	public async Task<List<Account>> GetAccountsForUserAsync(int userId, CancellationToken ct = default)
 	{
 		if (userId <= 0) return new();

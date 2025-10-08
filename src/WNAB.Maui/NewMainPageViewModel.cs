@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using WNAB.Logic;
+using WNAB.Logic.Data;
 
 namespace WNAB.Maui;
 
@@ -29,9 +30,10 @@ public partial class NewMainPageViewModel : ObservableObject
     [ObservableProperty]
     private int userId;
 
-    public bool IsUserNotLoggedIn => !isUserLoggedIn;
+    public bool IsUserNotLoggedIn => !IsUserLoggedIn;
 
-    public ObservableCollection<CategoryGoalItem> Goals { get; } = new();
+    public ObservableCollection<Category> Categories { get; } = new();
+    public ObservableCollection<CategoryAllocation> CategoryAllocations { get; } = new();
 
     public NewMainPageViewModel(IPopupService popupService, UserManagementService userService, CategoryManagementService categoryService, CategoryAllocationManagementService allocationService)
     {
@@ -53,7 +55,7 @@ public partial class NewMainPageViewModel : ObservableObject
     private async Task InitializeAsync()
     {
         await CheckUserSessionAsync();
-        if (isUserLoggedIn)
+        if (IsUserLoggedIn)
         {
             await LoadUserDataAsync();
             await LoadCategoriesWithGoalsAsync();
@@ -67,21 +69,21 @@ public partial class NewMainPageViewModel : ObservableObject
             var userIdString = await SecureStorage.Default.GetAsync("userId");
             if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
             {
-                this.userId = parsedUserId;
+                UserId = parsedUserId;
                 IsUserLoggedIn = true;
             }
             else
             {
                 IsUserLoggedIn = false;
                 UserDisplayName = string.Empty;
-                this.userId = 0;
+                UserId = 0;
             }
         }
         catch
         {
             IsUserLoggedIn = false;
             UserDisplayName = string.Empty;
-            this.userId = 0;
+            UserId = 0;
         }
     }
 
@@ -89,9 +91,9 @@ public partial class NewMainPageViewModel : ObservableObject
     {
         try
         {
-            if (this.userId > 0)
+            if (UserId > 0)
             {
-                var user = await _userService.GetUserByIdAsync(this.userId);
+                var user = await _userService.GetUserByIdAsync(UserId);
                 if (user != null)
                 {
                     UserDisplayName = $"{user.FirstName} {user.LastName}";
@@ -107,38 +109,28 @@ public partial class NewMainPageViewModel : ObservableObject
     // LLM-Dev:v3 Updated to load categories and calculate goal-like progress from allocations and transaction splits
     private async Task LoadCategoriesWithGoalsAsync()
     {
-        if (isBusy || !isUserLoggedIn || this.userId <= 0) return;
+        if (IsBusy || !IsUserLoggedIn || UserId <= 0) return;
 
         try
         {
             IsBusy = true;
-            Goals.Clear();
+            Categories.Clear();
 
-            var categories = await _categoryService.GetCategoriesForUserAsync(this.userId);
+            var categories = await _categoryService.GetCategoriesForUserAsync(UserId);
             var currentMonth = DateTime.Now.Month;
             var currentYear = DateTime.Now.Year;
 
             foreach (var category in categories)
             {
+                Categories.Add(category);
                 // Get allocations for this category for current month
                 var allocations = await _allocationService.GetAllocationsForCategoryAsync(category.Id);
-                var currentAllocation = allocations.FirstOrDefault(a => a.Month == currentMonth && a.Year == currentYear);
                 
-                // Calculate budgeted amount (goal)
-                decimal budgetedAmount = currentAllocation?.BudgetedAmount ?? 0m;
-                
-                // Calculate spent amount (so far) from transaction splits
-                decimal spentAmount = 0m;
-                if (category.TransactionSplits?.Any() == true)
+                foreach (var allocation in allocations)
                 {
-                    spentAmount = category.TransactionSplits
-                        .Where(ts => ts.Amount < 0) // Assuming negative amounts are expenses
-                        .Sum(ts => Math.Abs(ts.Amount));
+                    CategoryAllocations.Add(allocation);
                 }
 
-                // Create goal item from category data
-                var goalItem = new CategoryGoalItem(category.Name, budgetedAmount, spentAmount);
-                Goals.Add(goalItem);
             }
         }
         catch
@@ -148,6 +140,8 @@ public partial class NewMainPageViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+            OnPropertyChanged(nameof(Categories));
+            OnPropertyChanged(nameof(CategoryAllocations)); 
         }
     }
 

@@ -45,7 +45,8 @@ public class UserManagementService
 		return users ?? new();
 	}
 
-	public async Task<User?> GetUserByIdAsync(int userId, CancellationToken ct = default)
+    // to do, make an endpoint to get user by id, this works but is inefficient
+    public async Task<User?> GetUserByIdAsync(int userId, CancellationToken ct = default)
 	{
 		var users = await GetUsersAsync(ct);
 		return users.FirstOrDefault(u => u.Id == userId && u.IsActive);

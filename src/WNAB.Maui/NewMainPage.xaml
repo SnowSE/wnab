@@ -43,28 +43,19 @@
                     HorizontalOptions="Center" />
             
             <ScrollView HeightRequest="300">
-                <CollectionView ItemsSource="{Binding Goals}"
+                <CollectionView ItemsSource="{Binding Categories}"
                                BackgroundColor="Transparent">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Grid Padding="15,10" 
                                   RowDefinitions="Auto,Auto,Auto"
                                   ColumnDefinitions="*,Auto">
-                                
+
                                 <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
                                        Text="{Binding Name}"
                                        FontSize="16"
                                        FontAttributes="Bold" />
-                              
-                                <Label Grid.Row="1" Grid.Column="1"
-                                       Text="{Binding Goal, StringFormat='Budget: ${0:N2}'}"
-                                       FontSize="14"
-                                       HorizontalOptions="End" />
-                              
-                                <Label Grid.Row="1" Grid.Column="0"
-                                       Text="{Binding SoFar, StringFormat='Spent: ${0:N2}'}"
-                                       FontSize="14" />
-                                
+
                                 <ProgressBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                                             Progress="{Binding ProgressPercentage}"
                                             ProgressColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"

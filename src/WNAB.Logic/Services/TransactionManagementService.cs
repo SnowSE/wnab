@@ -28,7 +28,7 @@ public class TransactionManagementService
         return new TransactionRecord(accountId, payee, amount, transactionDate);
     }
 
-    public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount, string? notes = null)
+    public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount)
     {
         if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
         if (transactionId <= 0) throw new ArgumentOutOfRangeException(nameof(transactionId), "TransactionId must be positive.");

@@ -3,16 +3,12 @@ using WNAB.Logic.Data;
 
 namespace WNAB.Logic;
 
-/// <summary>
-/// Handles category allocation operations via the API, plus a static factory for DTO creation.
-/// </summary>
+
 public class CategoryAllocationManagementService
 {
     private readonly HttpClient _http;
 
-    /// <summary>
-    /// Construct with an HttpClient configured with API BaseAddress (e.g. https://localhost:7077/)
-    /// </summary>
+
     public CategoryAllocationManagementService(HttpClient http)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
@@ -28,9 +24,6 @@ public class CategoryAllocationManagementService
         return new CategoryAllocationRecord(categoryId, budgetedAmount, month, year);
     }
 
-    /// <summary>
-    /// Sends the provided CategoryAllocationRecord to the API via POST /allocations and returns the created allocation Id.
-    /// </summary>
     public async Task<int> CreateCategoryAllocationAsync(CategoryAllocationRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));
