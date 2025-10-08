@@ -29,7 +29,6 @@ public class Category
     // Navigation properties
     public User User { get; set; } = null!;
     public ICollection<CategoryAllocation> Allocations { get; set; } = new List<CategoryAllocation>();
-    public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
 
     // LLM-Dev:v1 Convenience ctor from record (userId must be set separately)
     public Category(CategoryRecord record, int userId)

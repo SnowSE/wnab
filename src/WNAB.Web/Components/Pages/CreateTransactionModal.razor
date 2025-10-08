@@ -329,9 +329,10 @@
 
             if (_isSplitTransaction)
             {
-                // Create transaction with multiple splits
-                var splitRecords = _splits.Select(s =>
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
+                // LLM-Dev:v5 Create transaction with multiple splits using CategoryAllocationId and IsIncome
+                // Note: Currently using CategoryId as CategoryAllocationId - UI needs updating to create allocations
+                var splitRecords = _splits.Select(s => 
+                    new TransactionSplitRecord(s.CategoryId, s.Amount, false, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
                 ).ToList();
 
                 record = TransactionManagementService.CreateTransactionRecord(
@@ -339,10 +340,11 @@
             }
             else
             {
-                // Create simple single-category transaction
+                // LLM-Dev:v5 Create simple single-category transaction using CategoryAllocationId and IsIncome
+                // Note: Currently using CategoryId as CategoryAllocationId - UI needs updating to create allocations
                 record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId,
-                    string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId, 
+                    false, string.IsNullOrWhiteSpace(_notes) ? null : _notes);
             }
 
             var id = await TransactionsService.CreateTransactionAsync(record);

@@ -44,13 +44,14 @@ public class TransactionManagementService
 
     /// <summary>
     /// Helper method to create a simple single-category transaction record.
+    /// LLM-Dev:v2 Updated to use CategoryAllocationId instead of CategoryId
     /// </summary>
     public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee, string description,
-        decimal amount, DateTime transactionDate, int categoryId, string? notes = null)
+        decimal amount, DateTime transactionDate, int categoryAllocationId, bool isIncome = false, string? notes = null)
     {
         var splits = new List<TransactionSplitRecord>
         {
-            new TransactionSplitRecord(categoryId, amount, notes)
+            new TransactionSplitRecord(categoryAllocationId, amount, isIncome, notes)
         };
         return CreateTransactionRecord(accountId, payee, description, amount, transactionDate, splits);
     }

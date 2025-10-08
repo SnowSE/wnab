@@ -15,6 +15,7 @@ public partial class TransactionViewModel : ObservableObject
     private readonly AccountManagementService _accounts;
     private readonly CategoryManagementService _categories;
     private readonly IAuthenticationService _authService;
+    private readonly CategoryAllocationManagementService _allocations;
 
     public event EventHandler? RequestClose; // Raised to close popup
 
@@ -61,12 +62,14 @@ public partial class TransactionViewModel : ObservableObject
         TransactionManagementService transactions,
         AccountManagementService accounts,
         CategoryManagementService categories,
-        IAuthenticationService authService)
+        IAuthenticationService authService,
+        CategoryAllocationManagementService allocations)
     {
         _transactions = transactions;
         _accounts = accounts;
         _categories = categories;
         _authService = authService;
+        _allocations = allocations;
     }
 
     // LLM-Dev:v2 Initialize by loading user session and available accounts/categories
@@ -136,10 +139,51 @@ public partial class TransactionViewModel : ObservableObject
         AccountId = value?.Id ?? 0;
     }
 
-    // LLM-Dev:v2 Update CategoryId when category is selected
+    // LLM-Dev:v5 Update CategoryId and find CategoryAllocation when category is selected
+    // Enforces budget-first approach: CategoryAllocation must exist for the transaction date
     partial void OnSelectedCategoryChanged(Category? value)
     {
         CategoryId = value?.Id ?? 0;
+        
+        // LLM-Dev:v5 When category changes, automatically find allocation for transaction date
+        if (value != null && !IsSplitTransaction)
+        {
+            _ = ValidateAndSetCategoryAllocationAsync(value.Id);
+        }
+    }
+    
+    // LLM-Dev:v5 Find and validate CategoryAllocation for the selected category and transaction date
+    private async Task ValidateAndSetCategoryAllocationAsync(int categoryId)
+    {
+        try
+        {
+            var allocation = await _allocations.FindAllocationAsync(
+                categoryId, 
+                TransactionDate.Month, 
+                TransactionDate.Year);
+            
+            if (allocation == null)
+            {
+                StatusMessage = $"No budget allocation found for {TransactionDate:MMMM yyyy}. Please create a budget first.";
+            }
+            else
+            {
+                StatusMessage = "Ready to create transaction";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error validating category allocation: {ex.Message}";
+        }
+    }
+    
+    // LLM-Dev:v5 Re-validate allocation when transaction date changes
+    partial void OnTransactionDateChanged(DateTime value)
+    {
+        if (SelectedCategory != null && !IsSplitTransaction)
+        {
+            _ = ValidateAndSetCategoryAllocationAsync(SelectedCategory.Id);
+        }
     }
 
     // LLM-Dev:v3 Calculate remaining amount to allocate across splits
@@ -180,25 +224,62 @@ public partial class TransactionViewModel : ObservableObject
     [RelayCommand]
     private void AddSplit()
     {
-        // LLM-Dev:v3 Create new split with remaining amount as default
+        // LLM-Dev:v5 Create new split with remaining amount as default
         var newSplit = new TransactionSplitViewModel
         {
             Amount = RemainingAmount > 0 ? RemainingAmount : 0
         };
         
-        // LLM-Dev:v3 Subscribe to property changes to update totals
-        newSplit.PropertyChanged += (s, e) =>
+        // LLM-Dev:v5 Subscribe to property changes to update totals and validate allocations
+        newSplit.PropertyChanged += async (s, e) =>
         {
             if (e.PropertyName == nameof(TransactionSplitViewModel.Amount))
             {
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(AreSplitsBalanced));
             }
+            else if (e.PropertyName == nameof(TransactionSplitViewModel.SelectedCategory))
+            {
+                // LLM-Dev:v5 When category is selected in a split, find and set the allocation
+                if (newSplit.SelectedCategory != null)
+                {
+                    await FindAndSetAllocationForSplitAsync(newSplit);
+                }
+            }
         };
         
         Splits.Add(newSplit);
         OnPropertyChanged(nameof(RemainingAmount));
         OnPropertyChanged(nameof(AreSplitsBalanced));
+    }
+    
+    // LLM-Dev:v5 Find CategoryAllocation for a split based on transaction date
+    private async Task FindAndSetAllocationForSplitAsync(TransactionSplitViewModel split)
+    {
+        if (split.SelectedCategory == null) return;
+        
+        try
+        {
+            var allocation = await _allocations.FindAllocationAsync(
+                split.SelectedCategory.Id, 
+                TransactionDate.Month, 
+                TransactionDate.Year);
+            
+            split.SelectedCategoryAllocation = allocation;
+            
+            if (allocation == null)
+            {
+                StatusMessage = $"Missing budget allocation for {split.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
+            }
+            else if (Splits.All(s => s.CategoryAllocationId > 0))
+            {
+                StatusMessage = "Ready to create transaction";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error finding allocation: {ex.Message}";
+        }
     }
 
     [RelayCommand]
@@ -247,7 +328,8 @@ public partial class TransactionViewModel : ObservableObject
             return;
         }
 
-        if (CategoryId <= 0)
+        // LLM-Dev:v5 Validate category selection (allocation will be checked during save)
+        if (!IsSplitTransaction && SelectedCategory == null)
         {
             StatusMessage = "Please select a category";
             return;
@@ -268,8 +350,8 @@ public partial class TransactionViewModel : ObservableObject
                 return;
             }
 
-            // LLM-Dev:v3 Validate each split has a category
-            if (Splits.Any(s => s.CategoryId <= 0))
+            // LLM-Dev:v4 Validate each split has a category allocation
+            if (Splits.Any(s => s.CategoryAllocationId <= 0))
             {
                 StatusMessage = "Please select a category for all splits";
                 return;
@@ -288,18 +370,35 @@ public partial class TransactionViewModel : ObservableObject
             
             if (IsSplitTransaction)
             {
-                // LLM-Dev:v3 Create transaction with multiple splits
+                // LLM-Dev:v4 Create transaction with multiple splits using CategoryAllocation
                 var splitRecords = Splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, s.Notes)).ToList();
+                    new TransactionSplitRecord(s.CategoryAllocationId, s.Amount, s.IsIncome, s.Notes)).ToList();
                     
                 record = TransactionManagementService.CreateTransactionRecord(
                     AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
             }
             else
             {
-                // LLM-Dev:v3 Create simple single-category transaction
+                // LLM-Dev:v5 For simple transactions, find the CategoryAllocation for the selected category and date
+                if (SelectedCategory == null)
+                {
+                    StatusMessage = "Please select a category";
+                    return;
+                }
+                
+                var allocation = await _allocations.FindAllocationAsync(
+                    SelectedCategory.Id, 
+                    TransactionDate.Month, 
+                    TransactionDate.Year);
+                
+                if (allocation == null)
+                {
+                    StatusMessage = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                    return;
+                }
+                
                 record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, CategoryId);
+                    AccountId, Payee, Memo, Amount, utcTransactionDate, allocation.Id, SelectedCategory.IsIncome);
             }
             
             await _transactions.CreateTransactionAsync(record);

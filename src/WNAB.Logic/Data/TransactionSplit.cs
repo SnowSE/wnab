@@ -9,9 +9,11 @@ public class TransactionSplit
 
     public int TransactionId { get; set; }
 
-    public int CategoryId { get; set; }
+    public int CategoryAllocationId { get; set; }
 
     public decimal Amount { get; set; }
+
+    public bool IsIncome { get; set; }
 
     [MaxLength(1000)]
     public string? Notes { get; set; }
@@ -22,18 +24,19 @@ public class TransactionSplit
 
     // Navigation properties
     public Transaction Transaction { get; set; } = null!;
-    public Category Category { get; set; } = null!;
+    public CategoryAllocation CategoryAllocation { get; set; } = null!;
     
     // LLM-Dev: Non-mapped property for test scenarios to handle category by name
     [NotMapped]
     public string CategoryName { get; set; } = string.Empty;
 
-    // LLM-Dev:v1 Convenience ctor from record
+    // LLM-Dev:v2 Convenience ctor from record - updated to use CategoryAllocation
     public TransactionSplit(TransactionSplitRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
-        CategoryId = record.CategoryId;
+        CategoryAllocationId = record.CategoryAllocationId;
         Amount = record.Amount;
+        IsIncome = record.IsIncome;
         Notes = record.Notes;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;

@@ -18,14 +18,22 @@ public class CategoryAllocationManagementService
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-    // LLM-Dev: Static factory for allocation record to unify test creation without HttpClient/service instances.
-    public static CategoryAllocationRecord CreateCategoryAllocationRecord(int categoryId, decimal budgetedAmount, int month, int year)
+    // LLM-Dev:v2 Static factory for allocation record - updated with new tracking fields
+    public static CategoryAllocationRecord CreateCategoryAllocationRecord(
+        int categoryId, 
+        decimal budgetedAmount, 
+        int month, 
+        int year,
+        string? editorName = null,
+        decimal? percentageAllocation = null,
+        decimal? oldAmount = null,
+        string? editedMemo = null)
     {
         if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
         if (month < 1 || month > 12) throw new ArgumentOutOfRangeException(nameof(month), "Month must be 1-12.");
         if (year < 1) throw new ArgumentOutOfRangeException(nameof(year), "Year must be positive.");
         if (budgetedAmount < 0) throw new ArgumentOutOfRangeException(nameof(budgetedAmount), "BudgetedAmount cannot be negative.");
-        return new CategoryAllocationRecord(categoryId, budgetedAmount, month, year);
+        return new CategoryAllocationRecord(categoryId, budgetedAmount, month, year, editorName, percentageAllocation, oldAmount, editedMemo);
     }
 
     /// <summary>
@@ -42,6 +50,27 @@ public class CategoryAllocationManagementService
         var created = await response.Content.ReadFromJsonAsync<IdResponse>(cancellationToken: ct);
         if (created is null) throw new InvalidOperationException("API returned no content when creating allocation.");
         return created.Id;
+    }
+
+    // LLM-Dev:v2 Get allocations for a specific category
+    /// <summary>
+    /// Gets all CategoryAllocations for a specific category.
+    /// </summary>
+    public async Task<List<CategoryAllocation>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken ct = default)
+    {
+        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"categories/allocation?categoryId={categoryId}", ct);
+        return allocations ?? new();
+    }
+
+    // LLM-Dev:v2 Find specific allocation by category, month, and year
+    /// <summary>
+    /// Finds a specific CategoryAllocation for a category in a given month/year.
+    /// Returns null if no allocation exists.
+    /// </summary>
+    public async Task<CategoryAllocation?> FindAllocationAsync(int categoryId, int month, int year, CancellationToken ct = default)
+    {
+        var allocations = await GetAllocationsForCategoryAsync(categoryId, ct);
+        return allocations.FirstOrDefault(a => a.Month == month && a.Year == year && a.IsActive);
     }
 
     private sealed record IdResponse(int Id);

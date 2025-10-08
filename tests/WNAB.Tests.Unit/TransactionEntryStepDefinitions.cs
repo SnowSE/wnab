@@ -42,13 +42,43 @@ namespace WNAB.Tests.Unit
                 : context.Get<List<Account>>($"Accounts:{user.Email.ToLower()}");
             var account = accounts.First();
 
+            // LLM-Dev:v5 Create category allocations for the transaction month/year if they don't exist
+            var allocations = context.ContainsKey("Allocations") 
+                ? context.Get<List<CategoryAllocation>>("Allocations") 
+                : new List<CategoryAllocation>();
+            
+            int nextAllocationId = allocations.Any() ? allocations.Max(a => a.Id) + 1 : 1;
+
             // Act: map inputs to DTOs and create the record
             var splitRecords = new List<TransactionSplitRecord>();
             foreach (var (categoryName, splitAmount) in splitItems)
             {
                 var category = categories.Single(c => c.Name == categoryName);
-                splitRecords.Add(new TransactionSplitRecord(category.Id, splitAmount, null));
+                if (category.Id == 0) category.Id = categories.IndexOf(category) + 1;
+                
+                // LLM-Dev:v5 Find or create allocation for this category/month/year
+                var allocation = allocations.FirstOrDefault(a => 
+                    a.CategoryId == category.Id && 
+                    a.Month == date.Month && 
+                    a.Year == date.Year);
+                
+                if (allocation == null)
+                {
+                    var allocationRecord = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
+                        category.Id, splitAmount, date.Month, date.Year);
+                    allocation = new CategoryAllocation(allocationRecord)
+                    {
+                        Id = nextAllocationId++,
+                        Category = category
+                    };
+                    allocations.Add(allocation);
+                }
+                
+                splitRecords.Add(new TransactionSplitRecord(allocation.Id, splitAmount, false, null));
             }
+
+            // Store allocations back to context
+            context["Allocations"] = allocations;
 
             var record = TransactionManagementService.CreateTransactionRecord(
                 account.Id,
@@ -95,6 +125,7 @@ namespace WNAB.Tests.Unit
             var actualRecord = context.Get<TransactionRecord>("TransactionRecord");
             var user = context.Get<User>("User");
             var categories = user.Categories.ToList();
+            var allocations = context.Get<List<CategoryAllocation>>("Allocations");
 
             // Assert
             actualRecord.Splits.Count.ShouldBe(expectedSplits.Count);
@@ -103,9 +134,10 @@ namespace WNAB.Tests.Unit
                 var expectedSplit = expectedSplits[i];
                 var actualSplit = actualRecord.Splits[i];
                 var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
+                var expectedAllocation = allocations.Single(a => a.CategoryId == expectedCategory.Id);
 
                 actualSplit.Amount.ShouldBe(expectedSplit.Amount);
-                actualSplit.CategoryId.ShouldBe(expectedCategory.Id);
+                actualSplit.CategoryAllocationId.ShouldBe(expectedAllocation.Id);
             }
         }
     }

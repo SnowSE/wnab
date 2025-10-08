@@ -288,8 +288,9 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
         var split = new TransactionSplit
         {
             TransactionId = transaction.Id,
-            CategoryId = splitRecord.CategoryId,
+            CategoryAllocationId = splitRecord.CategoryAllocationId,
             Amount = splitRecord.Amount,
+            IsIncome = splitRecord.IsIncome,
             Notes = splitRecord.Notes,
             Transaction = transaction,
             CreatedAt = utcNow,
@@ -332,9 +333,10 @@ app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabCont
             t.UpdatedAt,
             t.TransactionSplits.Select(ts => new TransactionSplitDto(
                 ts.Id,
-                ts.CategoryId,
-                ts.Category.Name,
+                ts.CategoryAllocationId,
+                ts.CategoryAllocation.Category.Name,
                 ts.Amount,
+                ts.IsIncome,
                 ts.Notes
             )).ToList()
         ))

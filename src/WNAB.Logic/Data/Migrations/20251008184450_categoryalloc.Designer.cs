@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WNAB.Logic.Data;
@@ -11,9 +12,11 @@ using WNAB.Logic.Data;
 namespace WNAB.Logic.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
-    partial class WnabContextModelSnapshot : ModelSnapshot
+    [Migration("20251008184450_categoryalloc")]
+    partial class categoryalloc
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -298,10 +301,6 @@ namespace WNAB.Logic.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("KeycloakSubjectId")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -315,9 +314,6 @@ namespace WNAB.Logic.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("KeycloakSubjectId")
                         .IsUnique();
 
                     b.ToTable("Users");

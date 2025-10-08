@@ -59,6 +59,11 @@ erDiagram
         decimal BudgetedAmount
         int Month
         int Year
+        string EditorName
+        decimal PercentageAllocation
+        decimal OldAmount
+        string EditedMemo
+        bool IsActive
         datetime CreatedAt
         datetime UpdatedAt
     }
@@ -66,8 +71,9 @@ erDiagram
     TransactionSplit {
         int Id PK
         int TransactionId FK
-        int CategoryId FK
+        int CategoryAllocationId FK
         decimal Amount
+        bool IsIncome
         string Notes
         datetime CreatedAt
         datetime UpdatedAt
@@ -79,7 +85,7 @@ erDiagram
     
     Account ||--o{ Transaction : "contains"
     Transaction ||--o{ TransactionSplit : "is split into"
-    Category ||--o{ TransactionSplit : "categorizes"
+    CategoryAllocation ||--o{ TransactionSplit : "allocates"
     Category ||--o{ CategoryAllocation : "budgets"
 ```
 
@@ -104,9 +110,11 @@ erDiagram
 - Can be imported from Plaid or manually entered
 
 **TransactionSplit**
-- Links transaction to category
-- If the transactions is not split (e.g. the entire transaction amount is for a single category, the system creates a single TransactionSplit behind the scenes for the entire amount).  
-- Every transaction has at least 1 TransactionSplit record.
+- Links transaction to a budget allocation (CategoryAllocation)
+- If the transaction is not split (e.g. the entire transaction amount is for a single category), the system creates a single TransactionSplit behind the scenes for the entire amount
+- Every transaction has at least 1 TransactionSplit record
+- Enforces budget-first approach: must reference an existing CategoryAllocation
+- `IsIncome` flag allows splits to be marked as income separately from expense
 
 ### Supporting Entities
 
@@ -114,11 +122,18 @@ erDiagram
 - Monthly budget allocations per category
 - Allows tracking spending vs. budgeted amounts
 - Unique constraint: (CategoryId, Year, Month)
+- `EditorName`: Tracks who last modified the allocation (for audit trail)
+- `PercentageAllocation`: Optional field for percentage-based budgeting
+- `OldAmount`: Tracks previous budget amount when changed
+- `EditedMemo`: Notes about why allocation was changed
+- `IsActive`: Soft delete flag - preserves historical data integrity
 
 ## Key Design Features
 
 1. **User Isolation**: All entities are scoped to users for multi-tenant support
 2. **Plaid Integration**: Fields for storing Plaid IDs for automatic syncing
-3. **Soft Deletes**: IsActive flags instead of hard deletes for Account and Category
+3. **Soft Deletes**: IsActive flags instead of hard deletes for Account, Category, and CategoryAllocation
 4. **Audit Trail**: CreatedAt/UpdatedAt timestamps on all entities
-6. **Budget Tracking**: Monthly budget allocations with comparison to actual spending
+5. **Budget Tracking**: Monthly budget allocations with comparison to actual spending
+6. **Budget-First Approach**: TransactionSplits reference CategoryAllocations (not Categories directly), ensuring budget allocations exist before transactions can be created
+7. **Allocation History**: CategoryAllocation tracks changes with EditorName, OldAmount, and EditedMemo fields for audit purposes
