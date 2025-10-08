@@ -32,6 +32,8 @@ public static class MauiProgram
 		builder.Services.AddTransient<AddAccountViewModel>();
 		builder.Services.AddTransient<AddAccountPopup>();
 		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddTransient<NewMainPageViewModel>();
+		builder.Services.AddTransient<NewMainPage>();
 
 		// LLM-Dev:v2 Centralize base root for MAUI API calls. Using a single named HttpClient helps keep base consistent.
 		builder.Services.AddHttpClient("wnab-api", client =>

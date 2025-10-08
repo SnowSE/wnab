@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WNAB.Maui"
+             x:Class="WNAB.Maui.NewMainPage"
+             x:DataType="local:NewMainPageViewModel"
+             Title="{Binding Title}">
+
+    <VerticalStackLayout Spacing="25" Padding="30,0" VerticalOptions="Center">
+        
+        <Label x:Name="WelcomeLabel"
+               Text="Welcome to New Main Page"
+               FontSize="32"
+               HorizontalOptions="Center" />
+
+        <!-- Login Section - Visible when user is NOT logged in -->
+        <VerticalStackLayout Spacing="15" IsVisible="{Binding IsUserNotLoggedIn}">
+          
+            <Button Text="Login"
+                    Command="{Binding LoginCommand}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    TextColor="White"
+                    WidthRequest="200"
+                    HorizontalOptions="Center" />
+        </VerticalStackLayout>
+
+        <!-- Logged In User Section - Visible when user IS logged in -->
+        <VerticalStackLayout Spacing="15" IsVisible="{Binding IsUserLoggedIn}">
+            <Label Text="Welcome back!"
+                   FontSize="18"
+                   HorizontalOptions="Center" />
+            
+            <Label Text="{Binding UserDisplayName}"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+            
+            <Button Text="Go to Transactions"
+                    Command="{Binding NavigateToTransactionsCommand}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                    TextColor="White"
+                    WidthRequest="200"
+                    HorizontalOptions="Center" />
+            
+            <ScrollView HeightRequest="300">
+                <CollectionView ItemsSource="{Binding Goals}"
+                               BackgroundColor="Transparent">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Padding="15,10" 
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto">
+                                
+                                <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Name}"
+                                       FontSize="16"
+                                       FontAttributes="Bold" />
+                              
+                                <Label Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding Goal, StringFormat='Budget: ${0:N2}'}"
+                                       FontSize="14"
+                                       HorizontalOptions="End" />
+                              
+                                <Label Grid.Row="1" Grid.Column="0"
+                                       Text="{Binding SoFar, StringFormat='Spent: ${0:N2}'}"
+                                       FontSize="14" />
+                                
+                                <ProgressBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                            Progress="{Binding ProgressPercentage}"
+                                            ProgressColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                            Margin="0,5,0,0" />
+                                
+                                <BoxView Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2"
+                                        HeightRequest="1"
+                                        BackgroundColor="LightGray"
+                                        Margin="0,10,0,0" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </ScrollView>
+          
+        </VerticalStackLayout>
+
+    </VerticalStackLayout>
+
+</ContentPage>
