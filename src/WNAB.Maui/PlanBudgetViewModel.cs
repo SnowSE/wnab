@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WNAB.Logic;
 using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -12,6 +13,8 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
 {
     private readonly CategoryManagementService _categoryService;
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authenticationService;
+
 
     // LLM-Dev: Available categories (left column)
     public ObservableCollection<CategoryItem> Categories { get; } = new();
@@ -38,10 +41,11 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
     [ObservableProperty]
     private bool isCategoriesVisible = false;
 
-    public PlanBudgetViewModel(CategoryManagementService categoryService, IPopupService popupService)
+    public PlanBudgetViewModel(CategoryManagementService categoryService, IPopupService popupService, IAuthenticationService authenticationService)
     {
         _categoryService = categoryService;
         _popupService = popupService;
+        _authenticationService = authenticationService;
     }
 
     // LLM-Dev: Initialize the view model by checking user session and loading categories
@@ -60,33 +64,53 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            var isAuthenticated = await _authenticationService.IsAuthenticatedAsync();
+            if (isAuthenticated)
             {
-                UserId = parsedUserId;
                 IsLoggedIn = true;
-                StatusMessage = $"Logged in as user {UserId}";
+
             }
             else
             {
                 IsLoggedIn = false;
-                StatusMessage = "Please log in to view budget plan";
                 Categories.Clear();
             }
         }
         catch
         {
             IsLoggedIn = false;
-            StatusMessage = "Error checking login status";
             Categories.Clear();
+            
         }
+        // try
+        // {
+        //     var userIdString = await SecureStorage.Default.GetAsync("userId");
+        //     if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+        //     {
+        //         UserId = parsedUserId;
+        //         IsLoggedIn = true;
+        //         StatusMessage = $"Logged in as user {UserId}";
+        //     }
+        //     else
+        //     {
+        //         IsLoggedIn = false;
+        //         StatusMessage = "Please log in to view budget plan";
+        //         Categories.Clear();
+        //     }
+        // }
+        // catch
+        // {
+        //     IsLoggedIn = false;
+        //     StatusMessage = "Error checking login status";
+        //     Categories.Clear();
+        // }
     }
 
     // LLM-Dev: Load categories for the current user from the service, filtering out already selected ones
     [RelayCommand]
     private async Task LoadCategoriesAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
+        if (IsBusy || !IsLoggedIn) return;
 
         try
         {
@@ -94,7 +118,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
             StatusMessage = "Loading categories...";
             Categories.Clear();
 
-            var items = await _categoryService.GetCategoriesForUserAsync(UserId);
+            var items = await _categoryService.GetCategoriesForUserAsync();
             // LLM-Dev: Only add categories that haven't been selected yet
             foreach (var c in items)
             {
@@ -170,7 +194,7 @@ public sealed partial class PlanBudgetViewModel : ObservableObject
         // LLM-Dev v2: After popup closes, find the newly created category and add to selected list as BudgetCategoryItem
         try
         {
-            var allCategories = await _categoryService.GetCategoriesForUserAsync(UserId);
+            var allCategories = await _categoryService.GetCategoriesForUserAsync();
             var newCategory = allCategories.FirstOrDefault(c => !existingIds.Contains(c.Id));
             
             if (newCategory != null)

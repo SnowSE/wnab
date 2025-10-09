@@ -181,7 +181,7 @@
     // LLM-Dev: Load categories for the current user from the service, filtering out already selected ones
     private async Task LoadCategoriesAsync()
     {
-        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
+        if (_isLoading || !_isLoggedIn) return;
 
         try
         {
@@ -191,7 +191,7 @@
             StateHasChanged();
 
             _categories.Clear();
-            var items = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            var items = await CategoriesService.GetCategoriesForUserAsync();
             
             // LLM-Dev: Only add categories that haven't been selected yet
             foreach (var c in items)
@@ -230,7 +230,7 @@
         
         try
         {
-            var allCategories = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            var allCategories = await CategoriesService.GetCategoriesForUserAsync();
             var newCategory = allCategories.FirstOrDefault(c => !existingIds.Contains(c.Id));
             
             if (newCategory != null)
