@@ -1,5 +1,3 @@
-using CommunityToolkit.Maui.Views;
-
 namespace WNAB.Maui;
 
 internal class PopupService : IPopupService

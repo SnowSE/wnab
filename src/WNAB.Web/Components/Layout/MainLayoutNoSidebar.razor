@@ -1,5 +1,4 @@
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject ProtectedLocalStorage ProtectedLocalStorage
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inherits LayoutComponentBase
 
@@ -13,32 +12,34 @@
                 </a>
             </div>
             <div class="d-flex align-items-center gap-3">
-                @if (_isLoggedIn)
-                {
-                    <div class="user-info">
-                        <span class="badge bg-success">
-                            <i class="bi bi-person-check me-1"></i>
-                            User @_userDisplay
-                        </span>
-                        <button class="btn btn-outline-secondary btn-sm ms-2" @onclick="SignOut">
-                            <i class="bi bi-box-arrow-right me-1"></i>
-                            Sign Out
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <div class="user-info">
-                        <span class="badge bg-secondary">
-                            <i class="bi bi-person me-1"></i>
-                            Not signed in
-                        </span>
-                        <a href="/login" class="btn btn-primary btn-sm ms-2">
-                            <i class="bi bi-box-arrow-in-right me-1"></i>
-                            Login
-                        </a>
-                    </div>
-                }
+                <AuthorizeView>
+                    <Authorized>
+                        <div class="user-info">
+                            <span class="badge bg-success">
+                                <i class="bi bi-person-check me-1"></i>
+                                @context.User.Identity?.Name
+                            </span>
+                            <form action="/logout" method="post">
+                                <button type="submit" class="btn btn-outline-secondary btn-sm ms-2">
+                                    <i class="bi bi-box-arrow-right me-1"></i>
+                                    Sign Out
+                                </button>
+                            </form>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <div class="user-info">
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-person me-1"></i>
+                                Not signed in
+                            </span>
+                            <a href="/login" class="btn btn-primary btn-sm ms-2">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>
+                                Login
+                            </a>
+                        </div>
+                    </NotAuthorized>
+                </AuthorizeView>
                 <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
             </div>
         </div>
@@ -56,66 +57,5 @@
 </div>
 
 @code {
-    // LLM-Dev:v7 Enhanced MainLayoutNoSidebar to show user status and sign-out functionality with proper navigation, matching MAUI pattern. Fixed character encoding issue in error UI.
-    private string _userDisplay = "";
-    private bool _isLoggedIn = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await RefreshUser();
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        await RefreshUser();
-    }
-
-    private async Task RefreshUser()
-    {
-        try
-        {
-            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
-            var id = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
-            
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                _userDisplay = "";
-                _isLoggedIn = false;
-            }
-            else
-            {
-                _userDisplay = id;
-                _isLoggedIn = true;
-            }
-        }
-        catch
-        {
-            _userDisplay = "";
-            _isLoggedIn = false;
-        }
-    }
-
-    private async Task SignOut()
-    {
-        try
-        {
-            // Clear the user session
-            await ProtectedLocalStorage.DeleteAsync("userId");
-            _userDisplay = "";
-            _isLoggedIn = false;
-            StateHasChanged();
-            
-            // LLM-Dev:v7 Navigate to home page after logout to clear any cached page state and force re-authentication checks
-            Navigation.NavigateTo("/", forceLoad: true);
-        }
-        catch
-        {
-            _userDisplay = "";
-            _isLoggedIn = false;
-            StateHasChanged();
-            
-            // Navigate to home even if there was an error clearing storage
-            Navigation.NavigateTo("/", forceLoad: true);
-        }
-    }
+    // LLM-Dev:v7 Enhanced MainLayoutNoSidebar to show user status using AuthorizeView
 }

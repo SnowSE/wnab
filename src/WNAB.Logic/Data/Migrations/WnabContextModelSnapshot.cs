@@ -279,6 +279,10 @@ namespace WNAB.Logic.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("KeycloakSubjectId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -292,6 +296,9 @@ namespace WNAB.Logic.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("KeycloakSubjectId")
                         .IsUnique();
 
                     b.ToTable("Users");

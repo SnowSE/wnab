@@ -8,6 +8,6 @@ public partial class AddUserPopup : Popup
     {
         InitializeComponent();
         BindingContext = vm;
-        vm.RequestClose += (_, _) => Close();
+        vm.RequestClose += async (_, _) => await CloseAsync();
     }
 }

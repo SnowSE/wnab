@@ -31,12 +31,12 @@ public class Category
     public ICollection<CategoryAllocation> Allocations { get; set; } = new List<CategoryAllocation>();
     public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
 
-    // LLM-Dev:v1 Convenience ctor from record
-    public Category(CategoryRecord record)
+    // LLM-Dev:v1 Convenience ctor from record (userId must be set separately)
+    public Category(CategoryRecord record, int userId)
     {
         ArgumentNullException.ThrowIfNull(record);
         Name = record.Name;
-        UserId = record.UserId;
+        UserId = userId;
         IsActive = true;
         CreatedAt = DateTime.UtcNow;
         UpdatedAt = DateTime.UtcNow;

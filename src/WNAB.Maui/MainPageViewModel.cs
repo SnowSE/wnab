@@ -1,16 +1,20 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Storage;
+using Microsoft.Extensions.Logging;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
 public partial class MainPageViewModel : ObservableObject
 {
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authenticationService;
 
-    public MainPageViewModel(IPopupService popupService)
+    public MainPageViewModel(IPopupService popupService, IAuthenticationService authenticationService, ILogger<MainPageViewModel> logger)
     {
         _popupService = popupService;
+        _authenticationService = authenticationService;
         // LLM-Dev:v6 Initialize sign-in state on construction (fire and forget)
         _ = RefreshUserId();
     }
@@ -37,28 +41,36 @@ public partial class MainPageViewModel : ObservableObject
     {
         try
         {
-            var id = await SecureStorage.Default.GetAsync("userId");
-            var hasId = !string.IsNullOrWhiteSpace(id);
-            UserDisplay = hasId ? $"Signed in as: {id}" : "Not signed in";
-            IsSignedIn = hasId; // LLM-Dev:v6 Keep boolean in sync
+            var isAuthenticated = await _authenticationService.IsAuthenticatedAsync();
+            if (isAuthenticated)
+            {
+                var userName = await _authenticationService.GetUserNameAsync();
+                UserDisplay = !string.IsNullOrWhiteSpace(userName) ? $"Signed in as: {userName}" : "Signed in";
+                IsSignedIn = true;
+            }
+            else
+            {
+                UserDisplay = "Not signed in";
+                IsSignedIn = false;
+            }
         }
         catch
         {
-            // If SecureStorage is unavailable or throws, degrade gracefully
+            // If authentication check fails, degrade gracefully
             UserDisplay = "Not signed in";
-            IsSignedIn = false; // LLM-Dev:v6 Ensure consistent state on failure
+            IsSignedIn = false;
         }
     }
 
-    // LLM-Dev:v3 Updated to use SecureStorage directly for sign-out
     [RelayCommand]
     private async Task SignOut()
     {
         try
         {
+            await _authenticationService.LogoutAsync();
             SecureStorage.Default.Remove("userId");
             UserDisplay = "Not signed in";
-            IsSignedIn = false; // LLM-Dev:v6 Explicitly reflect sign-out
+            IsSignedIn = false;
 
             if (Shell.Current is not null)
             {
@@ -70,7 +82,7 @@ public partial class MainPageViewModel : ObservableObject
         {
             // Swallow any storage-related errors; UI stays in a safe 'not signed in' state
             UserDisplay = "Not signed in";
-            IsSignedIn = false; // LLM-Dev:v6 Maintain consistent state
+            IsSignedIn = false;
         }
     }
 
@@ -99,13 +111,22 @@ public partial class MainPageViewModel : ObservableObject
         await Shell.Current.GoToAsync("Users");
     }
 
-    // LLM-Dev:v8 Updated to use popup service since LoginPage is now a popup
     [RelayCommand]
     private async Task NavigateToLogin()
     {
-        await _popupService.ShowLoginAsync();
-        // LLM-Dev:v8 Refresh user display after login popup closes
-        await RefreshUserId();
+        var success = await _authenticationService.LoginAsync();
+        if (success)
+        {
+            // Refresh user display after successful login
+            await RefreshUserId();
+        }
+        else
+        {
+            if (Shell.Current is not null)
+            {
+                await Shell.Current.DisplayAlert("Login Failed", "Unable to authenticate. Please try again.", "OK");
+            }
+        }
     }
 
     // LLM-Dev:v7 Added unified auth toolbar command routing to sign-in / sign-out logic

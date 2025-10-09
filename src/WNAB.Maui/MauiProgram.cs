@@ -1,8 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using CommunityToolkit.Maui;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System.Reflection;
 using WNAB.Logic; // LLM-Dev: Use shared Logic services in MAUI too
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -20,6 +22,23 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
+		builder.AddServiceDefaults();
+
+		// Add configuration from appsettings.json
+		var assembly = Assembly.GetExecutingAssembly();
+		using var stream = assembly.GetManifestResourceStream("WNAB.Maui.appsettings.json");
+		if (stream != null)
+		{
+			var config = new ConfigurationBuilder()
+				.AddJsonStream(stream)
+				.Build();
+			builder.Configuration.AddConfiguration(config);
+		}
+
+		// Authentication services
+		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+		builder.Services.AddTransient<AuthenticationDelegatingHandler>();
+
 		// DI registrations for MVVM
 		builder.Services.AddSingleton<IPopupService, PopupService>();
 		builder.Services.AddTransient<MainPageViewModel>();
@@ -35,12 +54,13 @@ public static class MauiProgram
 		builder.Services.AddTransient<NewMainPageViewModel>();
 		builder.Services.AddTransient<NewMainPage>();
 
-		// LLM-Dev:v2 Centralize base root for MAUI API calls. Using a single named HttpClient helps keep base consistent.
+		// LLM-Dev:v2 Centralize base root for MAUI API calls with authentication
+		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
 		builder.Services.AddHttpClient("wnab-api", client =>
 		{
-			// You can switch this to Aspire discovery in AppHost or read from config.
-			client.BaseAddress = new Uri("https://localhost:7077/");
-		});
+			client.BaseAddress = new Uri(apiBaseUrl);
+		})
+		.AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
 		// Use the shared Logic services with the same named client
 		builder.Services.AddSingleton(sp => new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
@@ -65,7 +85,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<TransactionsPage>();
 
 #if DEBUG
-		builder.Logging.AddDebug();
+	builder.Logging.AddDebug();
 #endif
 
 		var app = builder.Build();

@@ -1,13 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Logic;
 using Microsoft.Maui.Storage;
+using WNAB.Logic;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
 public partial class AddAccountViewModel : ObservableObject
 {
     private readonly AccountManagementService _accounts;
+    private readonly IAuthenticationService _authService;
 
     public event EventHandler? RequestClose;
 
@@ -17,32 +19,22 @@ public partial class AddAccountViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Ready to create account";
 
-    // LLM-Dev:v3 Removed userId, isLoggedIn properties - internal only, user doesn't need to see
-    private int _userId;
+    // LLM-Dev:v3 Track login status internally
     private bool _isLoggedIn;
 
-    public AddAccountViewModel(AccountManagementService accounts)
+    public AddAccountViewModel(AccountManagementService accounts, IAuthenticationService authService)
     {
         _accounts = accounts;
+        _authService = authService;
     }
 
-    // LLM-Dev:v3 Simplified initialization - only load user ID internally, no UI updates about user ID
+    // LLM-Dev:v3 Simplified initialization - check login status
     public async Task InitializeAsync()
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                StatusMessage = "Ready to create account";
-            }
-            else
-            {
-                _isLoggedIn = false;
-                StatusMessage = "Please log in first";
-            }
+            _isLoggedIn = await _authService.IsAuthenticatedAsync();
+            StatusMessage = _isLoggedIn ? "Ready to create account" : "Please log in first";
         }
         catch
         {
@@ -60,7 +52,7 @@ public partial class AddAccountViewModel : ObservableObject
     [RelayCommand]
     private async Task CreateAsync()
     {
-        if (!_isLoggedIn || _userId <= 0)
+        if (!_isLoggedIn)
         {
             StatusMessage = "Please log in first to create an account";
             return;
@@ -75,8 +67,8 @@ public partial class AddAccountViewModel : ObservableObject
         try
         {
             StatusMessage = "Creating account...";
-            var record = AccountManagementService.CreateAccountRecord(Name, _userId);
-            await _accounts.CreateAccountAsync(_userId, record);
+            var record = AccountManagementService.CreateAccountRecord(Name);
+            await _accounts.CreateAccountAsync(record);
             StatusMessage = "Account created successfully!";
 
             // LLM-Dev:v3 Clear the name field for next use

@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Storage;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -13,6 +14,7 @@ public partial class TransactionViewModel : ObservableObject
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
     private readonly CategoryManagementService _categories;
+    private readonly IAuthenticationService _authService;
 
     public event EventHandler? RequestClose; // Raised to close popup
 
@@ -49,21 +51,22 @@ public partial class TransactionViewModel : ObservableObject
     // LLM-Dev:v2 Observable collections for pickers
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
-    
+
     // LLM-Dev:v3 Collection for managing transaction splits
     public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
 
-    private int _userId;
     private bool _isLoggedIn;
 
     public TransactionViewModel(
-        TransactionManagementService transactions, 
+        TransactionManagementService transactions,
         AccountManagementService accounts,
-        CategoryManagementService categories)
+        CategoryManagementService categories,
+        IAuthenticationService authService)
     {
         _transactions = transactions;
         _accounts = accounts;
         _categories = categories;
+        _authService = authService;
     }
 
     // LLM-Dev:v2 Initialize by loading user session and available accounts/categories
@@ -71,16 +74,13 @@ public partial class TransactionViewModel : ObservableObject
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            _isLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (_isLoggedIn)
             {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
                 await LoadDataAsync();
             }
             else
             {
-                _isLoggedIn = false;
                 StatusMessage = "Please log in first";
             }
         }
@@ -97,9 +97,9 @@ public partial class TransactionViewModel : ObservableObject
         try
         {
             StatusMessage = "Loading...";
-            
-            var accountsTask = _accounts.GetAccountsForUserAsync(_userId);
-            var categoriesTask = _categories.GetCategoriesForUserAsync(_userId);
+
+            var accountsTask = _accounts.GetAccountsForUserAsync();
+            var categoriesTask = _categories.GetCategoriesForUserAsync();
 
             await Task.WhenAll(accountsTask, categoriesTask);
 
@@ -223,7 +223,7 @@ public partial class TransactionViewModel : ObservableObject
     private async Task Save()
     {
         // LLM-Dev:v2 Enhanced validation with user feedback
-        if (!_isLoggedIn || _userId <= 0)
+        if (!_isLoggedIn)
         {
             StatusMessage = "Please log in first";
             return;

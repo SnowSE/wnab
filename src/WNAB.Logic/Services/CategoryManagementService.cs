@@ -22,11 +22,10 @@ public class CategoryManagementService
     /// <summary>
     /// Creates a <see cref="CategoryRecord"/> DTO from inputs.
     /// </summary>
-    public static CategoryRecord CreateCategoryRecord(string name, int userId)
+    public static CategoryRecord CreateCategoryRecord(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required", nameof(name));
-        if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId), "UserId must be positive.");
-        return new CategoryRecord(name, userId);
+        return new CategoryRecord(name);
     }
 
     /// <summary>
@@ -51,11 +50,10 @@ public class CategoryManagementService
         return items ?? new();
     }
 
-    // LLM-Dev:v4 Add method to get categories for a specific user (following AccountManagementService pattern)
-    public async Task<List<Category>> GetCategoriesForUserAsync(int userId, CancellationToken ct = default)
+    // LLM-Dev:v4 Get categories for the current authenticated user
+    public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
     {
-        if (userId <= 0) return new();
-        var list = await _http.GetFromJsonAsync<List<Category>>($"categories?userId={userId}", ct);
+        var list = await _http.GetFromJsonAsync<List<Category>>("categories", ct);
         return list ?? new();
     }
 }

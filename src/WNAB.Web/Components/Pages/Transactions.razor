@@ -1,7 +1,5 @@
 @page "/transactions"
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject TransactionManagementService TransactionsService
-@inject ProtectedLocalStorage ProtectedLocalStorage
 @layout MainLayoutNoSidebar
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -122,8 +120,6 @@
 
 @code {
     // LLM-Dev:v1 Updated to use popup modals instead of navigation pages, matching MAUI pattern
-    private int _userId;
-    private bool _isLoggedIn;
     private bool _isLoading;
     private List<TransactionDto>? _items;
     private string? _error;
@@ -131,62 +127,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await InitializeAsync();
-    }
-
-    // LLM-Dev:v1 Added initialization method to automatically load user session and transactions (matching MAUI pattern)
-    private async Task InitializeAsync()
-    {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await LoadTransactionsAsync();
-        }
-    }
-
-    // LLM-Dev:v1 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
-    private async Task CheckUserSessionAsync()
-    {
-        try
-        {
-            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
-            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
-            
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                _statusMessage = $"Logged in as user {_userId}";
-            }
-            else
-            {
-                _isLoggedIn = false;
-                _statusMessage = "Please log in to view transactions";
-                _items = new List<TransactionDto>();
-            }
-        }
-        catch
-        {
-            _isLoggedIn = false;
-            _statusMessage = "Error checking login status";
-            _items = new List<TransactionDto>();
-        }
+        await LoadTransactionsAsync();
     }
 
     // LLM-Dev:v1 Load transactions for the current user (matching MAUI pattern)
     private async Task LoadTransactionsAsync()
     {
-        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
-        
+        if (_isLoading) return;
+
         try
         {
             _isLoading = true;
             _error = null;
             _statusMessage = "Loading transactions...";
             StateHasChanged();
-            
+
             // LLM-Dev:v1 Use service list method to load all transactions for user
-            _items = await TransactionsService.GetTransactionsForUserAsync(_userId);
+            // userId now comes from authentication token on the API side
+            _items = await TransactionsService.GetTransactionsForUserAsync();
             _statusMessage = _items.Count == 0 ? "No transactions found" : $"Loaded {_items.Count} transactions";
         }
         catch (Exception ex)
@@ -194,8 +152,8 @@
             _error = $"Error loading transactions: {ex.Message}";
             _statusMessage = null;
         }
-        finally 
-        { 
+        finally
+        {
             _isLoading = false;
             StateHasChanged();
         }
@@ -204,11 +162,7 @@
     // LLM-Dev:v1 Add refresh command for manual reload (matching MAUI pattern)
     private async Task RefreshAsync()
     {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await LoadTransactionsAsync();
-        }
+        await LoadTransactionsAsync();
     }
 
     // LLM-Dev:v1 Handler for when transaction is created in modal to refresh list

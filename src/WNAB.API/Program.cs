@@ -2,11 +2,70 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 using WNAB.API;
+using WNAB.API.Extensions;
 using WNAB.Logic.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddOpenApi();
+
+// Configure JWT Bearer authentication with Keycloak
+var keycloakConfig = builder.Configuration.GetSection("Keycloak");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = keycloakConfig["Authority"];
+        options.RequireHttpsMetadata = keycloakConfig.GetValue<bool>("RequireHttpsMetadata");
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // Accept both "account" (default Keycloak audience) and "wnab-api" (if configured)
+            ValidAudiences = new[] { "account", "wnab-api" },
+            ValidateAudience = keycloakConfig.GetValue<bool>("ValidateAudience"),
+            ValidateIssuer = keycloakConfig.GetValue<bool>("ValidateIssuer"),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError(context.Exception, "Authentication failed: {Message}", context.Exception?.Message);
+                context.Response.Headers.Append("Authentication-Failed", "true");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+                return Task.CompletedTask;
+            },
+            OnMessageReceived = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                var hasAuth = context.Request.Headers.ContainsKey("Authorization");
+                logger.LogInformation("Message received. Has Authorization header: {HasAuth}", hasAuth);
+                if (hasAuth)
+                {
+                    var authHeader = context.Request.Headers["Authorization"].ToString();
+                    var headerLength = authHeader?.Length ?? 0;
+                    logger.LogInformation("Authorization header present: {Header}", authHeader?.Substring(0, Math.Min(50, headerLength)));
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Register user provisioning service
+builder.Services.AddScoped<WNAB.API.Services.UserProvisioningService>();
 
 // Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
 var connectionString = builder.Configuration.GetConnectionString("wnabdb")
@@ -34,54 +93,79 @@ var app = builder.Build();
 
 app.MapDefaultEndpoints();
 
-// "/"
+app.MapOpenApi();
+
+// Enable authentication and authorization middleware
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGet("/", () => "Hello World!");
 
-// =========================================================================
-// these are unsafe and need to be secured or removed.
-// get all categories
-app.MapGet("/all/categories", async (WnabContext db) =>
+// User info and provisioning endpoint
+app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, WnabContext db) =>
 {
+    var subjectId = context.User.FindFirst("sub")?.Value;
+    if (string.IsNullOrEmpty(subjectId))
+    {
+        return Results.Unauthorized();
+    }
+
+    var email = context.User.FindFirst("email")?.Value ?? context.User.FindFirst("preferred_username")?.Value ?? "unknown@example.com";
+    var firstName = context.User.FindFirst("given_name")?.Value;
+    var lastName = context.User.FindFirst("family_name")?.Value;
+
+    var user = await provisioningService.GetOrCreateUserAsync(subjectId, email, firstName, lastName);
+
+    return Results.Ok(new
+    {
+        user.Id,
+        user.Email,
+        user.FirstName,
+        user.LastName,
+        user.KeycloakSubjectId,
+        user.IsActive
+    });
+}).RequireAuthorization();
+
+// Query endpoints - secured with authorization
+app.MapGet("/categories", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
     var categories = await db.Categories
+        .Where(c => c.UserId == user.Id && c.IsActive)
         .AsNoTracking()
         .ToListAsync();
     return Results.Ok(categories);
-});
+}).RequireAuthorization();
 
-// get all users
-app.MapGet("/all/users", async (WnabContext db) => {
+app.MapGet("/users", async (WnabContext db) => {
 	var users = await db.Users.Include(u => u.Accounts).ToListAsync();
     return Results.Ok(users.Select(u => new {
 		u.Id, u.FirstName, u.LastName, Accounts = u.Accounts.Select(a => new {a.AccountName,a.AccountType,a.CachedBalance})
 	}));
-});
+}).RequireAuthorization();
 
-// ===========================================================================
-
-
-// get categories by user id.
-app.MapGet("/categories", (int userId, WnabContext db) =>
+app.MapGet("/accounts", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
-    var categories = db.Categories.Where(c => c.UserId == userId && c.IsActive);
-    return Results.Ok(categories);
-});
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
 
+    var accounts = await db.Accounts
+        .Where(a => a.UserId == user.Id)
+        .AsNoTracking()
+        .ToListAsync();
+    return Results.Ok(accounts);
+}).RequireAuthorization();
 
-// get accounts by user id
-app.MapGet("/accounts", (int userId, WnabContext db) =>
-{
-    var Accounts = db.Accounts.Where((p) => p.UserId == userId);
-    return Results.Ok(Accounts);
-});
-
-// get allocations by category id...?
-app.MapGet("/allocations", async (int categoryId, WnabContext db) =>
+app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 {
     var allocations = await db.Allocations
         .Where(a => a.CategoryId == categoryId)
-        .ToListAsync(); 
+        .ToListAsync();
         return Results.Ok(allocations);
-});
+}).RequireAuthorization();
 
 // get transactions by account id.
 app.MapGet("/transactions/account", async (int accountId, WnabContext db) =>
@@ -125,35 +209,36 @@ app.MapGet("/transactionsplits", async (int CategoryId, WnabContext db) => {
     return Results.Ok(transactionSplits);
 });
 
-// create user
+// New RESTful create endpoints (POST) - secured with authorization
 app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
 {
     var user = new User { Email = rec.Email, FirstName = rec.FirstName, LastName = rec.LastName };
     db.Users.Add(user);
     await db.SaveChangesAsync();
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });
-});
+}).RequireAuthorization();
 
-// create category
-app.MapPost("/categories", async (CategoryRecord rec, WnabContext db) =>
+app.MapPost("/categories", async (HttpContext context, CategoryRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
-    var category = new Category { Name = rec.Name, UserId = rec.UserId };
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var category = new Category { Name = rec.Name, UserId = user.Id };
     db.Categories.Add(category);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{category.Id}", category);
-});
+}).RequireAuthorization();
 
-// create account
-app.MapPost("/accounts", async (int userId, AccountRecord rec, WnabContext db) =>
+app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
-    var user = await db.Users.FindAsync(userId);
-    if (user is null) return Results.NotFound();
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
 
-    var account = new Account { UserId = userId, AccountName = rec.Name, AccountType = "bank", User = user };
+    var account = new Account { UserId = user.Id, AccountName = rec.Name, AccountType = "bank", User = user };
     db.Accounts.Add(account);
     await db.SaveChangesAsync();
-    return Results.Created($"/users/{userId}/accounts/{account.Id}", new { account.Id });
-});
+    return Results.Created($"/accounts/{account.Id}", new { account.Id });
+}).RequireAuthorization();
 
 
 // create allocation
@@ -170,7 +255,7 @@ app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db)
     db.Allocations.Add(allocation);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
-});
+}).RequireAuthorization();
 
 // create transaction
 app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
@@ -205,32 +290,64 @@ app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
     // LLM-Dev:v5 Reload transaction without navigation properties to avoid circular reference
     var result = await db.Transactions.AsNoTracking().FirstOrDefaultAsync(t => t.Id == transaction.Id);
     return Results.Created($"/transactions/{transaction.Id}", result);
-});
+}).RequireAuthorization();
 
-// create a split
-app.MapPost("/transactionsplits", async (TransactionSplitRecord rec, WnabContext db) => {
-    // Validate transaction exists
-    var transaction = await db.Transactions.FindAsync(rec.TransactionId);
-    if (transaction is null) return Results.NotFound($"Transaction {rec.TransactionId} not found");
+app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
 
-    // Validate category exists
-    var category = await db.Categories.FindAsync(rec.CategoryId);
-    if (category is null) return Results.NotFound($"Category {rec.CategoryId} not found");
+    // LLM-Dev:v8 Use DTO to include Account/Category names without circular reference
+    var query = db.Transactions
+        .Where(t => t.Account.UserId == user.Id);
 
-    // Create the transaction split
-    var transactionSplit = new TransactionSplit
-    {
-        TransactionId = rec.TransactionId,
-        CategoryId = rec.CategoryId,
-        Amount = rec.Amount,
-        Transaction = transaction,
-        Category = category
-    };
+    if (accountId.HasValue)
+        query = query.Where(t => t.AccountId == accountId.Value);
 
-    db.TransactionSplits.Add(transactionSplit);
-    await db.SaveChangesAsync();
-    return Results.Created($"/transactionsplits/{transactionSplit.Id}", transactionSplit);
-});
+    var transactions = await query
+        .OrderByDescending(t => t.TransactionDate)
+        .Select(t => new TransactionDto(
+            t.Id,
+            t.AccountId,
+            t.Account.AccountName,
+            t.Payee,
+            t.Description,
+            t.Amount,
+            t.TransactionDate,
+            t.IsReconciled,
+            t.CreatedAt,
+            t.UpdatedAt,
+            t.TransactionSplits.Select(ts => new TransactionSplitDto(
+                ts.Id,
+                ts.CategoryId,
+                ts.Category.Name,
+                ts.Amount,
+                ts.Notes
+            )).ToList()
+        ))
+        .AsNoTracking()
+        .ToListAsync();
+
+    return Results.Ok(transactions);
+}).RequireAuthorization();
+
+app.MapGet("/accounts/{accountId}/transactions", async (HttpContext context, int accountId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    // Verify the account belongs to the user
+    var accountBelongsToUser = await db.Accounts.AnyAsync(a => a.Id == accountId && a.UserId == user.Id);
+    if (!accountBelongsToUser) return Results.NotFound();
+
+    // LLM-Dev:v6 No Include() to avoid circular references
+    var transactions = await db.Transactions
+        .Where(t => t.AccountId == accountId)
+        .AsNoTracking()
+        .ToListAsync();
+
+    return Results.Ok(transactions);
+}).RequireAuthorization();
 
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
