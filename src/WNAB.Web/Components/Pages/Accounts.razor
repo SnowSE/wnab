@@ -1,7 +1,5 @@
 @page "/accounts"
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject AccountManagementService AccountsService
-@inject ProtectedLocalStorage ProtectedLocalStorage
 @layout MainLayoutNoSidebar
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -102,8 +100,6 @@
 
 @code {
     // LLM-Dev:v4 Updated to use popup modals instead of navigation pages, matching MAUI pattern
-    private int _userId;
-    private bool _isLoggedIn;
     private bool _isLoading;
     private List<Account>? _items;
     private string? _error;
@@ -111,62 +107,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await InitializeAsync();
-    }
-
-    // LLM-Dev:v4 Added initialization method to automatically load user session and accounts (matching MAUI pattern)
-    private async Task InitializeAsync()
-    {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await LoadAccountsAsync();
-        }
-    }
-
-    // LLM-Dev:v4 Check if user is logged in and get user ID from protected storage (matching MAUI pattern)
-    private async Task CheckUserSessionAsync()
-    {
-        try
-        {
-            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
-            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
-            
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                _statusMessage = $"Logged in as user {_userId}";
-            }
-            else
-            {
-                _isLoggedIn = false;
-                _statusMessage = "Please log in to view accounts";
-                _items = new List<Account>();
-            }
-        }
-        catch
-        {
-            _isLoggedIn = false;
-            _statusMessage = "Error checking login status";
-            _items = new List<Account>();
-        }
+        await LoadAccountsAsync();
     }
 
     // LLM-Dev:v4 Renamed from Load and updated to use stored user ID (matching MAUI pattern)
     private async Task LoadAccountsAsync()
     {
-        if (_isLoading || !_isLoggedIn || _userId <= 0) return;
-        
+        if (_isLoading) return;
+
         try
         {
             _isLoading = true;
             _error = null;
             _statusMessage = "Loading accounts...";
             StateHasChanged();
-            
-            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI, with saved user ID
-            _items = await AccountsService.GetAccountsForUserAsync(_userId);
+
+            // LLM-Dev:v4 Use service list method to avoid HttpClient in UI
+            // userId now comes from authentication token on the API side
+            _items = await AccountsService.GetAccountsForUserAsync();
             _statusMessage = _items.Count == 0 ? "No accounts found" : $"Loaded {_items.Count} accounts";
         }
         catch (Exception ex)
@@ -174,8 +132,8 @@
             _error = $"Error loading accounts: {ex.Message}";
             _statusMessage = null;
         }
-        finally 
-        { 
+        finally
+        {
             _isLoading = false;
             StateHasChanged();
         }
@@ -184,11 +142,7 @@
     // LLM-Dev:v4 Add refresh command for manual reload (matching MAUI pattern)
     private async Task RefreshAsync()
     {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await LoadAccountsAsync();
-        }
+        await LoadAccountsAsync();
     }
 
     // LLM-Dev:v4 Handler for when account is created in modal to refresh list

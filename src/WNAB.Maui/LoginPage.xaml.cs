@@ -9,6 +9,6 @@ public partial class LoginPage : Popup
     {
         InitializeComponent();
         BindingContext = vm;
-        vm.RequestClose += (_, _) => Close();
+        vm.RequestClose += (_, _) => CloseAsync();
     }
 }

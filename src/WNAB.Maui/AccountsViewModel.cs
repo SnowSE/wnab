@@ -1,9 +1,10 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Storage;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using Microsoft.Maui.Storage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -12,6 +13,7 @@ public partial class AccountsViewModel : ObservableObject
 {
     private readonly AccountManagementService _accounts;
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authService;
 
     public ObservableCollection<AccountItem> Items { get; } = new();
 
@@ -19,18 +21,16 @@ public partial class AccountsViewModel : ObservableObject
     private bool isBusy;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public AccountsViewModel(AccountManagementService accounts, IPopupService popupService)
+    public AccountsViewModel(AccountManagementService accounts, IPopupService popupService, IAuthenticationService authService)
     {
         _accounts = accounts;
         _popupService = popupService;
+        _authService = authService;
     }
 
     // LLM-Dev: v1 Added initialization method to automatically load user session and accounts
@@ -43,18 +43,17 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Check if user is logged in and get user ID from secure storage (opposite of login save)
+    // LLM-Dev: v1 Check if user is logged in using AuthenticationService
     [RelayCommand]
     private async Task CheckUserSessionAsync()
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            IsLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (IsLoggedIn)
             {
-                UserId = parsedUserId;
-                IsLoggedIn = true;
-                StatusMessage = $"Logged in as user {UserId}";
+                var userName = await _authService.GetUserNameAsync();
+                StatusMessage = $"Logged in as {userName ?? "user"}";
             }
             else
             {
@@ -71,31 +70,31 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Renamed from LoadAsync and updated to use stored user ID
+    // LLM-Dev: v1 Load accounts for current authenticated user
     [RelayCommand]
     private async Task LoadAccountsAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
-        
+        if (IsBusy || !IsLoggedIn) return;
+
         try
         {
             IsBusy = true;
             StatusMessage = "Loading accounts...";
             Items.Clear();
-            
-            var list = await _accounts.GetAccountsForUserAsync(UserId);
+
+            var list = await _accounts.GetAccountsForUserAsync();
             foreach (var a in list)
                 Items.Add(new AccountItem(a.Id, a.AccountName, a.AccountType, a.CachedBalance));
-                
+
             StatusMessage = list.Count == 0 ? "No accounts found" : $"Loaded {list.Count} accounts";
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading accounts: {ex.Message}";
         }
-        finally 
-        { 
-            IsBusy = false; 
+        finally
+        {
+            IsBusy = false;
         }
     }
 

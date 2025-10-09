@@ -1,7 +1,5 @@
 @page "/categories"
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject CategoryManagementService CategoriesService
-@inject ProtectedLocalStorage ProtectedLocalStorage
 @inject NavigationManager Navigation
 @layout MainLayoutNoSidebar
 
@@ -10,7 +8,7 @@
         <h1>Categories</h1>
     </div>
     <div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal" disabled="@(!_isLoggedIn)">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal">
             <i class="bi bi-plus-circle me-1"></i>
             Create Category
         </button>
@@ -28,14 +26,7 @@
     </div>
 </div>
 
-@if (!_isLoggedIn)
-{
-    <div class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle me-1"></i>
-        Please <a href="/login" class="alert-link">log in</a> to view your categories.
-    </div>
-}
-else if (!string.IsNullOrWhiteSpace(_statusMessage))
+@if (!string.IsNullOrWhiteSpace(_statusMessage))
 {
     <div class="alert alert-info">@_statusMessage</div>
 }
@@ -46,18 +37,7 @@ else if (!string.IsNullOrWhiteSpace(_statusMessage))
 }
 
 <div class="responsive-panel">
-    @if (!_isLoggedIn)
-    {
-        <div class="text-center p-4">
-            <i class="bi bi-person-x fs-1 text-muted"></i>
-            <p class="mt-2">Please log in to view your categories.</p>
-            <a href="/login" class="btn btn-primary">
-                <i class="bi bi-box-arrow-in-right me-1"></i>
-                Login
-            </a>
-        </div>
-    }
-    else if (_items is null)
+    @if (_items is null)
     {
         <div class="text-center p-4">
             <div class="spinner-border text-primary" role="status">
@@ -127,72 +107,23 @@ else if (!string.IsNullOrWhiteSpace(_statusMessage))
     private List<Category>? _items;
     private string? _error;
     private string? _statusMessage;
-    private int _userId;
-    private bool _isLoggedIn;
 
-    protected override async Task OnInitializedAsync() => await InitializeAsync();
-
-    private async Task InitializeAsync()
-    {
-        await CheckUserSessionAsync();
-        if (_isLoggedIn)
-        {
-            await RefreshAsync();
-        }
-    }
-
-    // LLM-Dev:v5 Check if user is logged in and get user ID from protected storage (following MAUI pattern)
-    private async Task CheckUserSessionAsync()
-    {
-        try
-        {
-            var result = await ProtectedLocalStorage.GetAsync<string>("userId");
-            var userIdString = result.Success ? (result.Value ?? string.Empty).Trim() : string.Empty;
-            
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
-            {
-                _userId = parsedUserId;
-                _isLoggedIn = true;
-                _statusMessage = $"Logged in as user {_userId}";
-            }
-            else
-            {
-                _isLoggedIn = false;
-                _statusMessage = "Please log in to view categories";
-                _items = null; // Clear any existing data
-            }
-        }
-        catch
-        {
-            _isLoggedIn = false;
-            _statusMessage = "Error checking login status";
-            _items = null; // Clear any existing data
-        }
-        
-        StateHasChanged();
-    }
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
 
     private async Task RefreshAsync()
     {
         if (_isLoading) return;
-        
-        // Always check session first
-        await CheckUserSessionAsync();
-        
-        if (!_isLoggedIn || _userId <= 0)
-        {
-            return; // Don't try to load data if not logged in
-        }
-        
+
         try
         {
             _isLoading = true;
             _error = null;
             _statusMessage = "Loading categories...";
             StateHasChanged();
-            
+
             // LLM-Dev:v5 Use user-specific method instead of getting all categories
-            _items = await CategoriesService.GetCategoriesForUserAsync(_userId);
+            // userId now comes from authentication token on the API side
+            _items = await CategoriesService.GetCategoriesForUserAsync();
             _statusMessage = _items.Count == 0 ? "No categories found" : $"Loaded {_items.Count} categories";
         }
         catch (Exception ex)
@@ -200,8 +131,8 @@ else if (!string.IsNullOrWhiteSpace(_statusMessage))
             _error = $"Error loading categories: {ex.Message}";
             _statusMessage = null;
         }
-        finally 
-        { 
+        finally
+        {
             _isLoading = false;
             StateHasChanged();
         }

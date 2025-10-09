@@ -21,14 +21,14 @@ public class AccountManagementService
 	}
 
 	/// <summary>
-	/// Create an account for a specific user by POSTing to the API.
+	/// Create an account for the current authenticated user by POSTing to the API.
 	/// Returns the newly created account Id on success.
 	/// </summary>
-	public async Task<int> CreateAccountAsync(int userId, AccountRecord record, CancellationToken ct = default)
+	public async Task<int> CreateAccountAsync(AccountRecord record, CancellationToken ct = default)
 	{
 
-		// LLM-Dev: Use POST to the REST endpoint that accepts AccountRecord for a user.
-		var response = await _http.PostAsJsonAsync($"users/{userId}/accounts", record, ct);
+		// LLM-Dev: Use POST to the REST endpoint that accepts AccountRecord for current user.
+		var response = await _http.PostAsJsonAsync("accounts", record, ct);
 		response.EnsureSuccessStatusCode();
 
 		var created = await response.Content.ReadFromJsonAsync<IdResponse>(cancellationToken: ct);
@@ -38,11 +38,10 @@ public class AccountManagementService
 
 	private sealed record IdResponse(int Id);
 
-	// LLM-Dev:v2 Fetch accounts for a given user (UI should call this rather than creating HttpClient).
-	public async Task<List<Account>> GetAccountsForUserAsync(int userId, CancellationToken ct = default)
+	// LLM-Dev:v2 Fetch accounts for the current authenticated user (UI should call this rather than creating HttpClient).
+	public async Task<List<Account>> GetAccountsForUserAsync(CancellationToken ct = default)
 	{
-		if (userId <= 0) return new();
-		var list = await _http.GetFromJsonAsync<List<Account>>($"users/accounts?userId={userId}", ct);
+		var list = await _http.GetFromJsonAsync<List<Account>>("accounts", ct);
 		return list ?? new();
 	}
 }

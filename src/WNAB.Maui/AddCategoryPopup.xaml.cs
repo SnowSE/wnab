@@ -8,6 +8,6 @@ public partial class AddCategoryPopup : Popup
     {
         InitializeComponent();
         BindingContext = vm;
-        vm.RequestClose += (_, _) => Close();
+        vm.RequestClose += async (_, _) => await CloseAsync();
     }
 }

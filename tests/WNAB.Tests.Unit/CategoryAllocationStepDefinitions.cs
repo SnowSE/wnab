@@ -16,8 +16,9 @@ public partial class StepDefinitions
 			var name = row["CategoryName"].ToString();
 			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
 
-			var record = CategoryManagementService.CreateCategoryRecord(name!, user.Id == 0 ? 1 : user.Id);
-			var category = new Category(record);
+			var userId = user.Id == 0 ? 1 : user.Id;
+			var record = CategoryManagementService.CreateCategoryRecord(name!);
+			var category = new Category(record, userId);
 			user.Categories.Add(category);
 		}
 		// Store: user already in context; collection updated by reference
@@ -34,8 +35,9 @@ public partial class StepDefinitions
 			var name = row["CategoryName"].ToString();
 			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
 
-			var record = CategoryManagementService.CreateCategoryRecord(name!, user.Id == 0 ? 1 : user.Id);
-			var category = new Category(record);
+			var userId = user.Id == 0 ? 1 : user.Id;
+			var record = CategoryManagementService.CreateCategoryRecord(name!);
+			var category = new Category(record, userId);
 			user.Categories.Add(category);
 		}
 		// Store: user already in context; collection updated by reference

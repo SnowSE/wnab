@@ -1,8 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Logic; // LLM-Dev: Use shared CategoryManagementService
 using Microsoft.Maui.Storage;
+using WNAB.Logic; // LLM-Dev: Use shared CategoryManagementService
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -13,6 +14,7 @@ public sealed partial class CategoriesViewModel : ObservableObject
 {
     private readonly CategoryManagementService _service;
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authService;
 
     public ObservableCollection<CategoryItem> Categories { get; } = new();
 
@@ -20,18 +22,16 @@ public sealed partial class CategoriesViewModel : ObservableObject
     private bool isBusy;
 
     [ObservableProperty]
-    private int userId;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public CategoriesViewModel(CategoryManagementService service, IPopupService popupService)
+    public CategoriesViewModel(CategoryManagementService service, IPopupService popupService, IAuthenticationService authService)
     {
         _service = service;
         _popupService = popupService;
+        _authService = authService;
     }
 
     // LLM-Dev:v4 Added initialization method following AccountsViewModel pattern
@@ -44,18 +44,17 @@ public sealed partial class CategoriesViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v4 Check if user is logged in and get user ID from secure storage (following AccountsViewModel pattern)
+    // LLM-Dev:v4 Check if user is logged in using AuthenticationService
     [RelayCommand]
     private async Task CheckUserSessionAsync()
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            IsLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (IsLoggedIn)
             {
-                UserId = parsedUserId;
-                IsLoggedIn = true;
-                StatusMessage = $"Logged in as user {UserId}";
+                var userName = await _authService.GetUserNameAsync();
+                StatusMessage = $"Logged in as {userName ?? "user"}";
             }
             else
             {
@@ -72,22 +71,22 @@ public sealed partial class CategoriesViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v4 Updated to use stored user ID and user-specific endpoint
+    // LLM-Dev:v4 Load categories for current authenticated user
     [RelayCommand]
     private async Task LoadCategoriesAsync()
     {
-        if (IsBusy || !IsLoggedIn || UserId <= 0) return;
-        
+        if (IsBusy || !IsLoggedIn) return;
+
         try
         {
             IsBusy = true;
             StatusMessage = "Loading categories...";
             Categories.Clear();
-            
-            var items = await _service.GetCategoriesForUserAsync(UserId);
+
+            var items = await _service.GetCategoriesForUserAsync();
             foreach (var c in items)
                 Categories.Add(new CategoryItem(c.Id, c.Name));
-                
+
             StatusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
         }
         catch (Exception ex)
