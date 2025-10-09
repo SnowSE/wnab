@@ -67,7 +67,9 @@ public partial class AddAccountViewModel : ObservableObject
         try
         {
             StatusMessage = "Creating account...";
-            var record = AccountManagementService.CreateAccountRecord(Name);
+            int userId;
+            int.TryParse(await SecureStorage.GetAsync("UserId"), out userId);
+            var record = AccountManagementService.CreateAccountRecord(Name, userId);
             await _accounts.CreateAccountAsync(record);
             StatusMessage = "Account created successfully!";
 

@@ -44,7 +44,9 @@ public partial class AddCategoryViewModel : ObservableObject
             return;
 
         // Build DTO and send via service (userId comes from auth token)
-        var record = CategoryManagementService.CreateCategoryRecord(Name);
+        int userId;
+        int.TryParse(await SecureStorage.GetAsync("UserId"), out userId);
+        var record = CategoryManagementService.CreateCategoryRecord(Name,userId);
         await _categories.CreateCategoryAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

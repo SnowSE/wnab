@@ -329,24 +329,26 @@
 
             if (_isSplitTransaction)
             {
-                // Create transaction with multiple splits
-                var splitRecords = _splits.Select(s =>
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
-                ).ToList();
-
                 record = TransactionManagementService.CreateTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, splitRecords);
+                    _accountId, _payee, _amount, _transactionDate);
             }
             else
             {
                 // Create simple single-category transaction
                 record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId,
+                    _accountId, _payee, _amount, _transactionDate, _categoryId,
                     string.IsNullOrWhiteSpace(_notes) ? null : _notes);
             }
 
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
+
+            // create all the splits with the new id
+
+            // Create transaction with multiple splits
+            var splitRecords = _splits.Select(s =>
+                new TransactionSplitRecord(s.CategoryId, id, s.Amount)
+            ).ToList();
 
             // Clear the form for next use (matching MAUI pattern)
             ClearForm();

@@ -4,6 +4,8 @@ using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using WNAB.Logic;
 using WNAB.Logic.Data;
+using WNAB.Maui.NewMainPage;
+using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
 
@@ -11,12 +13,11 @@ namespace WNAB.Maui;
 public partial class NewMainPageViewModel : ObservableObject
 {
     private readonly IPopupService _popupService;
+    private readonly IAuthenticationService _authenticationService;
     private readonly UserManagementService _userService;
     private readonly CategoryManagementService _categoryService;
     private readonly CategoryAllocationManagementService _allocationService;
-
-    [ObservableProperty]
-    private string title = "New Main Page";
+    public CategoryAllocListViewModel categoryList;
 
     [ObservableProperty]
     private bool isUserLoggedIn;
@@ -32,16 +33,16 @@ public partial class NewMainPageViewModel : ObservableObject
 
     public bool IsUserNotLoggedIn => !IsUserLoggedIn;
 
-    public ObservableCollection<Category> Categories { get; } = new();
     public ObservableCollection<CategoryAllocation> CategoryAllocations { get; } = new();
 
-    public NewMainPageViewModel(IPopupService popupService, UserManagementService userService, CategoryManagementService categoryService, CategoryAllocationManagementService allocationService)
+    public NewMainPageViewModel(IPopupService popupService, IAuthenticationService authservice, UserManagementService userService, CategoryManagementService categoryService, CategoryAllocationManagementService allocationService)
     {
         _popupService = popupService;
         _userService = userService;
         _categoryService = categoryService;
         _allocationService = allocationService;
-        
+        _authenticationService = authservice;
+
         // Initialize user session on construction
         _ = InitializeAsync();
     }
@@ -54,84 +55,63 @@ public partial class NewMainPageViewModel : ObservableObject
 
     private async Task InitializeAsync()
     {
-        await CheckUserSessionAsync();
+        await RefreshUserId();
         if (IsUserLoggedIn)
         {
-            await LoadUserDataAsync();
-            await LoadCategoriesWithGoalsAsync();
+            await LoadBudgetData();
         }
     }
 
-    private async Task CheckUserSessionAsync()
+    [RelayCommand]
+    private async Task RefreshUserId()
     {
         try
         {
-            var userIdString = await SecureStorage.Default.GetAsync("userId");
-            if (!string.IsNullOrWhiteSpace(userIdString) && int.TryParse(userIdString, out var parsedUserId))
+            var isAuthenticated = await _authenticationService.IsAuthenticatedAsync();
+            if (isAuthenticated)
             {
-                UserId = parsedUserId;
+                var userName = await _authenticationService.GetUserNameAsync();
                 IsUserLoggedIn = true;
             }
             else
             {
                 IsUserLoggedIn = false;
-                UserDisplayName = string.Empty;
-                UserId = 0;
             }
         }
         catch
         {
+            // If authentication check fails, degrade gracefully
             IsUserLoggedIn = false;
-            UserDisplayName = string.Empty;
-            UserId = 0;
         }
     }
 
-    private async Task LoadUserDataAsync()
-    {
-        try
-        {
-            if (UserId > 0)
-            {
-                var user = await _userService.GetUserByIdAsync(UserId);
-                if (user != null)
-                {
-                    UserDisplayName = $"{user.FirstName} {user.LastName}";
-                }
-            }
-        }
-        catch
-        {
-            UserDisplayName = "Unknown User";
-        }
-    }
 
     // LLM-Dev:v3 Updated to load categories and calculate goal-like progress from allocations and transaction splits
-    private async Task LoadCategoriesWithGoalsAsync()
+    private async Task LoadBudgetData()
     {
-        if (IsBusy || !IsUserLoggedIn || UserId <= 0) return;
+        if (IsBusy || !IsUserLoggedIn) return;
 
         try
         {
             IsBusy = true;
-            Categories.Clear();
+            CategoryAllocations.Clear();
 
-            var categories = await _categoryService.GetCategoriesForUserAsync(UserId);
-            var currentMonth = DateTime.Now.Month;
-            var currentYear = DateTime.Now.Year;
-
-            foreach (var category in categories)
+            var categories = await _categoryService.GetCategoriesForUserAsync();
+            // for each category, get the allocations
+            foreach (var cat in categories)
             {
-                Categories.Add(category);
-                // Get allocations for this category for current month
-                var allocations = await _allocationService.GetAllocationsForCategoryAsync(category.Id);
-                
-                foreach (var allocation in allocations)
-                {
-                    CategoryAllocations.Add(allocation);
-                }
+                // either use the returned transfer objects or create new ones and pass.
+                var allocations = await _categoryService.GetAllocationsAsync(cat.Id);
+                // validate
 
+                //
+                foreach (var alloc in allocations)
+                {
+                    CategoryAllocations.Add(alloc);
+                }
             }
+
+
         }
         catch
         {
@@ -140,7 +120,6 @@ public partial class NewMainPageViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            OnPropertyChanged(nameof(Categories));
             OnPropertyChanged(nameof(CategoryAllocations)); 
         }
     }
@@ -154,21 +133,16 @@ public partial class NewMainPageViewModel : ObservableObject
         await InitializeAsync();
     }
 
-    [RelayCommand]
-    private async Task NavigateToTransactions()
-    {
-        await Shell.Current.GoToAsync("Transactions");
-    }
+    // navigate to the transactions page (not implemented yet)
+    //[RelayCommand]
+    //private async Task NavigateToTransactions()
+    //{
+    //    await Shell.Current.GoToAsync("Transactions");
+    //}
 
     [RelayCommand]
     private async Task Refresh()
     {
         await InitializeAsync();
     }
-}
-
-// LLM-Dev:v3 Created CategoryGoalItem model to represent categories as goal-like items with progress
-public sealed record CategoryGoalItem(string Name, decimal Goal, decimal SoFar)
-{
-    public double ProgressPercentage => Goal > 0 ? Math.Min((double)(SoFar / Goal), 1.0) : 0.0;
 }

@@ -3,9 +3,7 @@ using WNAB.Logic.Data;
 
 namespace WNAB.Logic;
 
-/// <summary>
-/// Handles user-related operations via the API.
-/// </summary>
+
 public class UserManagementService
 {
 	private readonly HttpClient _http;

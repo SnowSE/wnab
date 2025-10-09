@@ -73,7 +73,7 @@ public partial class StepDefinitions
             var record = CategoryManagementService.CreateCategoryRecord(name, user.Id == 0 ? 1 : user.Id);
             
             // Convert to category object immediately
-            var category = new Category(record)
+            var category = new Category(record, user.Id)
             {
                 Id = nextCategoryId++
             };
@@ -93,7 +93,7 @@ public partial class StepDefinitions
         
         foreach (var record in categoryRecords)
         {
-            var category = new Category(record)
+            var category = new Category(record, user.Id)
             {
                 Id = categoryId++
             };
@@ -121,7 +121,7 @@ public partial class StepDefinitions
         
         foreach (var record in categoryRecords)
         {
-            var category = new Category(record)
+            var category = new Category(record, user.Id)
             // the only thing that should ever be set here is an ID, nothing else.
             {
                 Id = categoryId++
