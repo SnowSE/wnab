@@ -145,11 +145,11 @@ public partial class NewMainPageViewModel : ObservableObject
     }
 
     // navigate to the transactions page (not implemented yet)
-    //[RelayCommand]
-    //private async Task NavigateToTransactions()
-    //{
-    //    await Shell.Current.GoToAsync("Transactions");
-    //}
+    [RelayCommand]
+    private async Task NavigateToTransactions()
+    {
+        await Shell.Current.GoToAsync("Transactions");
+    }
 
     [RelayCommand]
     private async Task Refresh()
