@@ -173,7 +173,7 @@ app.MapGet("/transactions/account", async (int accountId, WnabContext db) =>
     var transactions = await db.Transactions
         .Where(t => t.AccountId == accountId)
         .Include(t => t.TransactionSplits)
-        .ThenInclude(ts => ts.Category)
+        .ThenInclude(ts => ts.CategoryAllocation)
         .AsNoTracking()
         .ToListAsync();
     
@@ -186,7 +186,7 @@ app.MapGet("/transactions", async (int userId, WnabContext db) =>
     var transactions = await db.Transactions
         .Where(t => t.Account.UserId == userId)
         .Include(t => t.TransactionSplits)
-        .ThenInclude(ts => ts.Category)
+        .ThenInclude(ts => ts.CategoryAllocation)
         .Include(t => t.Account)
         .AsNoTracking()
         .OrderByDescending(t => t.TransactionDate)
@@ -196,12 +196,12 @@ app.MapGet("/transactions", async (int userId, WnabContext db) =>
 });
 
 // get transactionsplits by category id
-app.MapGet("/transactionsplits", async (int CategoryId, WnabContext db) => {
+app.MapGet("/transactionsplits", async (int AllocationId, WnabContext db) => {
     var transactionSplits = await db.TransactionSplits
-        .Where(ts => ts.CategoryId == CategoryId)
+        .Where(ts => ts.CategoryAllocationId == AllocationId)
         .Include(ts => ts.Transaction)
         .ThenInclude(t => t.Account)
-        .Include(ts => ts.Category)
+        .Include(ts => ts.CategoryAllocation)
         .AsNoTracking()
         .OrderByDescending(ts => ts.Transaction.TransactionDate)
         .ToListAsync();
@@ -337,6 +337,7 @@ app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabCont
             t.TransactionSplits.Select(ts => new TransactionSplitDto(
                 ts.Id,
                 ts.CategoryAllocationId,
+                ts.TransactionId,
                 ts.CategoryAllocation.Category.Name,
                 ts.Amount,
                 ts.IsIncome,

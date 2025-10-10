@@ -221,13 +221,13 @@
     private void ToggleSplitTransaction()
     {
         _isSplitTransaction = !_isSplitTransaction;
-        
+
         // LLM-Dev:v4 Ensure splits list is initialized
         if (_splits == null)
         {
             _splits = new List<TransactionSplitModel>();
         }
-        
+
         if (_isSplitTransaction && _splits.Count == 0)
         {
             // Initialize with one split containing the full amount
@@ -243,7 +243,7 @@
         {
             _splits = new List<TransactionSplitModel>();
         }
-        
+
         _splits.Add(new TransactionSplitModel
         {
             Amount = RemainingAmount > 0 ? RemainingAmount : 0,
@@ -324,38 +324,24 @@
             _isCreating = true;
             StateHasChanged();
 
+			//TODO: Pull this code into a service method to avoid duplication with MAUI
             // LLM-Dev:v3 Create transaction with splits or single category
-            TransactionRecord record;
+            var record = new TransactionRecord(_accountId, _payee, _description, _amount, _transactionDate, []);
 
             if (_isSplitTransaction)
             {
                 // LLM-Dev:v5 Create transaction with multiple splits using CategoryAllocationId and IsIncome
                 // Note: Currently using CategoryId as CategoryAllocationId - UI needs updating to create allocations
                 var splitRecords = _splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryId, s.Amount, false, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
+                    new TransactionSplitRecord(s.CategoryId, -1, s.Amount, false, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
                 ).ToList();
 
-                record = TransactionManagementService.CreateTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, splitRecords);
-            }
-            else
-            {
-                // LLM-Dev:v5 Create simple single-category transaction using CategoryAllocationId and IsIncome
-                // Note: Currently using CategoryId as CategoryAllocationId - UI needs updating to create allocations
-                record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _description, _amount, _transactionDate, _categoryId, 
-                    false, string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+                record = record with { Splits = splitRecords };
             }
 
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
-
-            // create all the splits with the new id
-
-            // Create transaction with multiple splits
-            var splitRecords = _splits.Select(s =>
-                new TransactionSplitRecord(s.CategoryId, id, s.Amount)
-            ).ToList();
+            
 
             // Clear the form for next use (matching MAUI pattern)
             ClearForm();

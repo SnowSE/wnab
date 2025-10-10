@@ -27,16 +27,6 @@ public class CategoryAllocationManagementService
         return created.Id;
     }
 
-    // LLM-Dev:v2 Get allocations for a specific category
-    /// <summary>
-    /// Gets all CategoryAllocations for a specific category.
-    /// </summary>
-    public async Task<List<CategoryAllocation>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken ct = default)
-    {
-        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"categories/allocation?categoryId={categoryId}", ct);
-        return allocations ?? new();
-    }
-
     // LLM-Dev:v2 Find specific allocation by category, month, and year
     /// <summary>
     /// Finds a specific CategoryAllocation for a category in a given month/year.
