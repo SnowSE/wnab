@@ -81,6 +81,9 @@ public static class MauiProgram
 		// LLM-Dev: Register Transactions page and view model
 		builder.Services.AddTransient<TransactionsViewModel>();
 		builder.Services.AddTransient<TransactionsPage>();
+		// LLM-Dev: Register PlanBudget page and view model
+		builder.Services.AddTransient<PlanBudgetViewModel>();
+		builder.Services.AddTransient<PlanBudgetPage>();
 
 #if DEBUG
 	builder.Logging.AddDebug();

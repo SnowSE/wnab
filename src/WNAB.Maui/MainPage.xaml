@@ -62,6 +62,12 @@
                     Text="Manage Transactions"
                     Command="{Binding NavigateToTransactionsCommand}"
                     HorizontalOptions="Fill" />
+
+                <!-- LLM-Dev:v1 Added Create Plan button for PlanBudget navigation -->
+                <Button
+                    Text="Create Plan"
+                    Command="{Binding NavigateToPlanBudgetCommand}"
+                    HorizontalOptions="Fill" />
             </VerticalStackLayout>
         </ScrollView>
     </ContentPage.Content>
