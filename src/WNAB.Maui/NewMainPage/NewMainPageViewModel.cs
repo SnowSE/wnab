@@ -1,23 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using WNAB.Logic;
 using WNAB.Logic.Data;
 using WNAB.Maui.Services;
-using WNAB.Maui.NewMainPage;
+using WNAB.Maui.NewMainPageModels;
 
 namespace WNAB.Maui;
 
-// LLM-Dev:v3 Updated ViewModel to use CategoryManagementService and create goal-like display from category data
+// LLM-Dev:v4 Refactor to use AllocationProgressModel and compute progress from transaction splits
 public partial class NewMainPageViewModel : ObservableObject
 {
     private readonly IPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
-    private readonly UserManagementService _userService;
     private readonly CategoryManagementService _categoryService;
     private readonly CategoryAllocationManagementService _allocationService;
-    public CategoryAllocListViewModel _categoryList;
+    private readonly TransactionManagementService _transactionService;
 
     [ObservableProperty]
     private bool isUserLoggedIn;
@@ -28,26 +26,27 @@ public partial class NewMainPageViewModel : ObservableObject
     [ObservableProperty]
     private bool isBusy;
 
-    [ObservableProperty]
-    private int userId;
-
     public bool IsUserNotLoggedIn => !IsUserLoggedIn;
 
-    public ObservableCollection<CategoryAllocation> CategoryAllocations { get; } = new();
+    // UI collection of allocation progress rows
+    public ObservableCollection<AllocationProgressModel> Allocations { get; } = new();
 
-    public NewMainPageViewModel(IPopupService popupService, IAuthenticationService authservice, UserManagementService userService, CategoryManagementService categoryService, CategoryAllocationManagementService allocationService)
+    public NewMainPageViewModel(
+        IPopupService popupService,
+        IAuthenticationService authservice,
+        CategoryManagementService categoryService,
+        CategoryAllocationManagementService allocationService,
+        TransactionManagementService transactionService)
     {
         _popupService = popupService;
-        _userService = userService;
         _categoryService = categoryService;
         _allocationService = allocationService;
+        _transactionService = transactionService;
         _authenticationService = authservice;
 
-        // Initialize user session on construction
         _ = InitializeAsync();
     }
 
-    // LLM-Dev:v1 Added property change notification for IsUserNotLoggedIn when IsUserLoggedIn changes
     partial void OnIsUserLoggedInChanged(bool value)
     {
         OnPropertyChanged(nameof(IsUserNotLoggedIn));
@@ -71,22 +70,25 @@ public partial class NewMainPageViewModel : ObservableObject
             if (isAuthenticated)
             {
                 var userName = await _authenticationService.GetUserNameAsync();
+                UserDisplayName = userName ?? string.Empty;
                 IsUserLoggedIn = true;
             }
             else
             {
+                UserDisplayName = string.Empty;
                 IsUserLoggedIn = false;
+                await _authenticationService.LoginAsync();
+                RefreshUserId();
             }
         }
         catch
         {
-            // If authentication check fails, degrade gracefully
             IsUserLoggedIn = false;
+            UserDisplayName = string.Empty;
         }
     }
 
-
-    // LLM-Dev:v3 Updated to load categories and calculate goal-like progress from allocations and transaction splits
+    // Load all categories and their allocations and compute progress from transaction splits
     private async Task LoadBudgetData()
     {
         if (IsBusy || !IsUserLoggedIn) return;
@@ -94,42 +96,48 @@ public partial class NewMainPageViewModel : ObservableObject
         try
         {
             IsBusy = true;
-            CategoryAllocations.Clear();
+            Allocations.Clear();
 
             var categories = await _categoryService.GetCategoriesForUserAsync();
-            // for each category, get the allocations
+
+            // For each category, fetch allocations and spent from splits
             foreach (var cat in categories)
             {
-                // either use the returned transfer objects or create new ones and pass.
-                var allocations = await _categoryService.GetAllocationsAsync(cat.Id);
-                // validate
+                var allocations = await _allocationService.GetAllocationsForCategoryAsync(cat.Id);
 
-                //
+                // Get spent per category from transaction splits
+                var splits = await _transactionService.GetTransactionSplitsForCategoryAsync(cat.Id);
+                var spentTotal = splits.Sum(s => s.Amount);
+
                 foreach (var alloc in allocations)
                 {
-                    CategoryAllocations.Add(alloc);
+                    var model = new AllocationProgressModel(
+                        alloc.Id,
+                        cat.Id,
+                        cat.Name,
+                        alloc.Month,
+                        alloc.Year,
+                        alloc.BudgetedAmount,
+                        spentTotal // for now, no month/year filter yet per instructions
+                    );
+                    Allocations.Add(model);
                 }
             }
-
-
         }
         catch
         {
-            // Handle error silently for now
+            // swallow for now
         }
         finally
         {
             IsBusy = false;
-            OnPropertyChanged(nameof(CategoryAllocations)); 
+            OnPropertyChanged(nameof(Allocations));
         }
     }
 
     [RelayCommand]
     private async Task Login()
     {
-        await _popupService.ShowLoginAsync();
-        
-        // Refresh after login popup closes
         await InitializeAsync();
     }
 

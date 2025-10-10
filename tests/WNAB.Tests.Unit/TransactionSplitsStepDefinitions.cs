@@ -29,7 +29,7 @@ public partial class StepDefinitions
             var category = categories.Single(c => c.Name == categoryName);
             
             // Create split record using service method
-            var splitRecord = TransactionManagementService.CreateTransactionSplitRecord(
+            var splitRecord = new TransactionSplitRecord(
                 category.Id, 
                 transaction.Id, 
                 amount

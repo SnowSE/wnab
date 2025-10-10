@@ -24,7 +24,7 @@ public partial class StepDefinitions
         {
             var name = row["CategoryName"].ToString()!;
             // Act: Create category record using service
-            var record = CategoryManagementService.CreateCategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
             categoryRecords.Add(record);
         }
         
@@ -45,7 +45,7 @@ public partial class StepDefinitions
         {
             var name = row["CategoryName"].ToString()!;
             // Act: Create category record using service
-            var record = CategoryManagementService.CreateCategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
             categoryRecords.Add(record);
         }
         
@@ -70,7 +70,7 @@ public partial class StepDefinitions
         {
             var name = row["CategoryName"].ToString()!;
             // Act: Create category record using service
-            var record = CategoryManagementService.CreateCategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
             
             // Convert to category object immediately
             var category = new Category(record, user.Id)

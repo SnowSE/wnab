@@ -28,7 +28,7 @@ public partial class StepDefinitions
 		var user = context.Get<User>("User");
 		
 		// Act: Create account record using service
-		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
+		var accountRecord = new AccountRecord(accountName, user.Id);
 		// Note: OpeningBalance and AccountType aren't in the service method, so we'll set them after creation
 		
 		// Store the account record
@@ -47,7 +47,7 @@ public partial class StepDefinitions
 		var user = context.Get<User>("User");
 		
 		// Act: Create account record using service
-		var accountRecord = AccountManagementService.CreateAccountRecord(accountName, user.Id);
+		var accountRecord = new AccountRecord(accountName, user.Id);
 		
 		// LLM-Dev:v3 Store record and temporarily store account data table for When step to access
 		context["AccountRecord"] = accountRecord;
@@ -147,7 +147,7 @@ public partial class StepDefinitions
 		{
 			var name = row["AccountName"].ToString()!;
 			// Act: Create account record using service
-			var record = AccountManagementService.CreateAccountRecord(name, user.Id == 0 ? 1 : user.Id);
+			var record = new AccountRecord(name, user.Id == 0 ? 1 : user.Id);
 			
 			// Convert to account object immediately
 			var account = new Account(record)

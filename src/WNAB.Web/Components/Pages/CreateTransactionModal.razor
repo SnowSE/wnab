@@ -327,18 +327,10 @@
             // LLM-Dev:v3 Create transaction with splits or single category
             TransactionRecord record;
 
-            if (_isSplitTransaction)
-            {
-                record = TransactionManagementService.CreateTransactionRecord(
-                    _accountId, _payee, _amount, _transactionDate);
-            }
-            else
-            {
-                // Create simple single-category transaction
-                record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    _accountId, _payee, _amount, _transactionDate, _categoryId,
-                    string.IsNullOrWhiteSpace(_notes) ? null : _notes);
-            }
+            
+            record = new TransactionRecord(
+                _accountId, _payee, _amount, _transactionDate);
+            
 
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";

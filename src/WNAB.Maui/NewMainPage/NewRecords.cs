@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace WNAB.Maui.NewMainPage;
+namespace WNAB.Maui.NewMainPageViewModels;
 
 // give me all the allocations!
 public record CategoryAllocationsRequest(int CategoryId);
