@@ -35,6 +35,7 @@ public class TransactionSplit
     {
         ArgumentNullException.ThrowIfNull(record);
         CategoryAllocationId = record.CategoryAllocationId;
+		TransactionId = record.TransactionId;
         Amount = record.Amount;
         IsIncome = record.IsIncome;
         Notes = record.Notes;

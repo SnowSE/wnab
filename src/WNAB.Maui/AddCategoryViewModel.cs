@@ -1,7 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
 using WNAB.Logic; // LLM-Dev: Use shared Logic service for creating categories
+using WNAB.Logic.Data;
 using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
@@ -44,7 +44,7 @@ public partial class AddCategoryViewModel : ObservableObject
             return;
 
         // Build DTO and send via service (userId comes from auth token)
-        var record = CategoryManagementService.CreateCategoryRecord(Name);
+        var record = new CategoryRecord(Name, 0);
         await _categories.CreateCategoryAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

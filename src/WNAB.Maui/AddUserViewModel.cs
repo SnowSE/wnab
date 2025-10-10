@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WNAB.Logic;
+using WNAB.Logic.Data;
 
 namespace WNAB.Maui;
 
@@ -36,7 +37,7 @@ public partial class AddUserViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(FirstName) || string.IsNullOrWhiteSpace(LastName) || string.IsNullOrWhiteSpace(Email))
             return;
 
-        var record = UserManagementService.CreateUserRecord(FirstName, LastName, Email);
+        var record = new UserRecord(FirstName, LastName, Email);
         await _users.CreateUserAsync(record);
         RequestClose?.Invoke(this, EventArgs.Empty);
     }

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic; // LLM-Dev:v4.1 Readability pass: Inputs -> Actual -> Act/Store or Assert
+using WNAB.Logic;
 using WNAB.Logic.Data;
 using Shouldly;
 
@@ -10,6 +10,9 @@ namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
+
+	// prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+	// Rule: Use the services where possible
 	[Given(@"the created user")]
 	public void Giventhecreateduser(DataTable dataTable)
 	{
@@ -19,8 +22,15 @@ public partial class StepDefinitions
 		var firstname = row["FirstName"];
 		var lastname = row["LastName"];
 		var email = row["Email"];
-		// Act
-		User user = new() { FirstName = firstname, LastName = lastname, Email = email};
+		var userId = int.Parse(row["Id"]); // LLM-Dev v6.4: Get user ID from feature data instead of hardcoding
+		
+		// Act - create user with ID from feature data
+		User user = new() { 
+			Id = userId,
+			FirstName = firstname, 
+			LastName = lastname, 
+			Email = email
+		};
 		// Store
 		context["User"] = user;
 	}
@@ -40,7 +50,7 @@ public partial class StepDefinitions
 		var firstName = row["FirstName"];
 		var lastName = row["LastName"];
 		// Act
-		var userRecord = UserManagementService.CreateUserRecord(firstName, lastName, row["Email"]);
+		var userRecord = new UserRecord(firstName, lastName, row["Email"]);
 		// Store
 		context["UserRecord"] = userRecord;
 	}
@@ -52,6 +62,7 @@ public partial class StepDefinitions
 		var record = context.Get<UserRecord>("UserRecord");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
 		// Act
+		// TODO: Need UserManagementService.CreateUserFromRecord() method
 		var user = new User(record);
 		// Store
 		user.Id = users.Count + 1;

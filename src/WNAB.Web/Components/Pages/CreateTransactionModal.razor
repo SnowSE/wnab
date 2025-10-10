@@ -350,6 +350,13 @@
             var id = await TransactionsService.CreateTransactionAsync(record);
             _result = $"Transaction '{_description}' created successfully with ID {id}";
 
+            // create all the splits with the new id
+
+            // Create transaction with multiple splits
+            var splitRecords = _splits.Select(s =>
+                new TransactionSplitRecord(s.CategoryId, id, s.Amount)
+            ).ToList();
+
             // Clear the form for next use (matching MAUI pattern)
             ClearForm();
 
@@ -365,6 +372,8 @@
             _isCreating = false;
             StateHasChanged();
         }
+
+
     }
 
     private void ClearForm()

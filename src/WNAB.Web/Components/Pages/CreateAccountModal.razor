@@ -1,3 +1,4 @@
+@using WNAB.Logic.Data
 @inject AccountManagementService AccountsService
 
 <!-- Create Account Modal -->
@@ -68,8 +69,8 @@
             _isCreating = true;
             StateHasChanged();
 
-            // LLM-Dev:v4 userId now comes from authentication token on the API side
-            var record = AccountManagementService.CreateAccountRecord(_name);
+            // userId now comes from authentication token on the API side; pass 0 in DTO
+            var record = new AccountRecord(_name!, 0);
             var id = await AccountsService.CreateAccountAsync(record);
             _result = $"Account '{_name}' created successfully with ID {id}";
 

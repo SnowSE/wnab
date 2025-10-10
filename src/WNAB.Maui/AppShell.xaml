@@ -4,12 +4,24 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:WNAB.Maui"
-    Shell.FlyoutBehavior="Disabled"
-    Title="WNAB.Maui">
+    Shell.FlyoutBehavior="Flyout"
+    Title="WNAB">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!-- LLM-Dev:v1 Updated to add NewMainPage to shell dropdown navigation -->
+    <FlyoutItem Title="New Main Page" Icon="home.png">
+        <ShellContent
+            Title="New Main Page"
+            ContentTemplate="{DataTemplate local:NewMainPage}"
+            Route="NewMainPage" />
+    </FlyoutItem>
+
+    <FlyoutItem Title="Original Home" Icon="home.png">
+        <ShellContent
+            Title="Home"
+            ContentTemplate="{DataTemplate local:MainPage}"
+            Route="MainPage" />
+    </FlyoutItem>
+
+    
 
 </Shell>

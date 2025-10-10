@@ -8,7 +8,7 @@ namespace WNAB.Maui;
 public partial class TransactionSplitViewModel : ObservableObject
 {
     [ObservableProperty]
-    private Category? selectedCategory;
+    private int transactionId;
 
     [ObservableProperty]
     private CategoryAllocation? selectedCategoryAllocation;

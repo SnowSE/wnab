@@ -7,7 +7,7 @@ public class Transaction
     public int Id { get; set; }
     
     public int AccountId { get; set; }
-    public required string Payee { get; set; }
+    public string Payee { get; set; } = string.Empty;
         
     [Required]
     [MaxLength(255)]
@@ -36,7 +36,7 @@ public class Transaction
         ArgumentNullException.ThrowIfNull(record);
         AccountId = record.AccountId;
         Payee = record.Payee;
-        Description = record.Description;
+        Description = string.Empty;
         Amount = record.Amount;
         TransactionDate = record.TransactionDate;
         CreatedAt = DateTime.UtcNow;

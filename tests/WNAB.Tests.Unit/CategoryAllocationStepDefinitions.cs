@@ -1,80 +1,57 @@
-using WNAB.Logic; // LLM-Dev:v4.3 Refactor: store categories on User instead of per-user catKey
+using WNAB.Logic; 
 using WNAB.Logic.Data;
+using Shouldly;
+using Reqnroll;
 
 namespace WNAB.Tests.Unit;
 
 public partial class StepDefinitions
 {
-	[Given(@"the following category for user ""(.*)""")]
-	public void Giventhefollowingcategoryforuser(string email, DataTable dataTable)
-	{
-		// Actual
-		var user = context.Get<User>("User");
-		// Act: add categories directly to the user's collection
-		foreach (var row in dataTable.Rows)
-		{
-			var name = row["CategoryName"].ToString();
-			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
-
-			var userId = user.Id == 0 ? 1 : user.Id;
-			var record = CategoryManagementService.CreateCategoryRecord(name!);
-			var category = new Category(record, userId);
-			user.Categories.Add(category);
-		}
-		// Store: user already in context; collection updated by reference
-	}
-
-	[Given(@"the following categories for user ""(.*)""")]
-	public void Giventhefollowingcategoriesforuser(string email, DataTable dataTable)
-	{
-		// Actual
-		var user = context.Get<User>("User");
-		// Act: add categories directly to the user's collection
-		foreach (var row in dataTable.Rows)
-		{
-			var name = row["CategoryName"].ToString();
-			if (user.Categories.Any(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
-
-			var userId = user.Id == 0 ? 1 : user.Id;
-			var record = CategoryManagementService.CreateCategoryRecord(name!);
-			var category = new Category(record, userId);
-			user.Categories.Add(category);
-		}
-		// Store: user already in context; collection updated by reference
-	}
+	// prescribed pattern: (Given) creates and stores records, (When) uses services to create objects, (Then) compares objects
+	// Rule: Use the services where possible.
+	// Rule: functions may only have datatable as a parameter or no parameter.
 
 	[When(@"I allocate the following amounts")]
 	public void WhenIallocatethefollowingamounts(DataTable dataTable)
 	{
-		// Actual
+		// Get user and categories from context
 		var user = context.Get<User>("User");
 		var categories = user.Categories.ToList();
-		var allocations = context.ContainsKey("Allocations") ? context.Get<List<CategoryAllocation>>("Allocations") : new List<CategoryAllocation>();
-
-		// Act
-		int nextId = allocations.Any() ? allocations.Max(a => a.Id) + 1 : 1;
+		
+		// Create allocation records first
+		var allocationRecords = new List<CategoryAllocationRecord>();
 		foreach (var row in dataTable.Rows)
 		{
-			var categoryName = row["Category"].ToString();
+			var categoryName = row["Category"].ToString()!;
 			var category = categories.Single(c => c.Name == categoryName);
-			if (category.Id == 0) category.Id = categories.IndexOf(category) + 1;
-
-			var record = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
+			
+			var record = new CategoryAllocationRecord(
 				category.Id,
 				decimal.Parse(row["BudgetedAmount"].ToString()!),
 				int.Parse(row["Month"].ToString()!),
 				int.Parse(row["Year"].ToString()!)
 			);
+			allocationRecords.Add(record);
+		}
+
+		// Act: Convert records to objects
+		var allocations = context.ContainsKey("Allocations") ? context.Get<List<CategoryAllocation>>("Allocations") : new List<CategoryAllocation>();
+		int nextId = allocations.Any() ? allocations.Max(a => a.Id) + 1 : 1;
+		
+		foreach (var record in allocationRecords)
+		{
+			var category = categories.Single(c => c.Id == record.CategoryId);
 
 			var allocation = new CategoryAllocation(record)
+			// the only thing that should ever be set here is an ID, nothing else.
 			{
 				Id = nextId++,
-				Category = category
+				Category = category // Set the navigation property for test validation
 			};
 			allocations.Add(allocation);
 		}
 
-		// Store
+		// Store: Store converted objects
 		context["Allocations"] = allocations;
 	}
 

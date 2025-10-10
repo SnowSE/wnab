@@ -1,76 +1,114 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic; // LLM-Dev:v4.1 Readability pass: Inputs -> Actual -> Assert/Store
 using WNAB.Logic.Data;
+using WNAB.Logic;
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
 
+
 public partial class StepDefinitions
 {
-	[Given(@"the following account for user ""(.*)""")]
-	public void Giventhefollowingaccountforuser(string email, DataTable dataTable)
+
+    // prescribed pattern: (Given) creates and stores records, (When) create objects using constructors, (Then) compares objects
+	// Rule: Use the services where possible
+	
+	[Given(@"the following account")]
+	public void GivenTheFollowingAccount(DataTable dataTable)
 	{
-		// Inputs: stage minimal row data
-		var row = dataTable.Rows.Single();
-		var rowsKey = $"StagedAccountRows:{email.ToLower()}";
-		var stagedRows = context.ContainsKey(rowsKey)
-			? context.Get<List<Dictionary<string, string>>>(rowsKey)
-			: new List<Dictionary<string, string>>();
-		stagedRows.Add(new Dictionary<string, string>
-		{
-			["AccountName"] = row["AccountName"],
-			["AccountType"] = row["AccountType"],
-			["OpeningBalance"] = row["OpeningBalance"],
-		});
-		// Store
-		context[rowsKey] = stagedRows;
+		// Inputs: parse account data from table
+		var row = dataTable.Rows[0];
+		var accountName = row["AccountName"];
+		var accountType = row["AccountType"];
+		var openingBalance = decimal.Parse(row["OpeningBalance"]);
+		
+		// Get user from context
+		var user = context.Get<User>("User");
+		
+		// Act: Create account record using service
+		var accountRecord = new AccountRecord(accountName, user.Id);
+		// Note: OpeningBalance and AccountType aren't in the service method, so we'll set them after creation
+		
+		// Store the account record
+		context["AccountRecord"] = accountRecord;
 	}
 
-	// Alias for readability in features
+	[Given(@"the following account for user")]
+	public void Giventhefollowingaccountforuser(DataTable dataTable)
+	{
+		// Inputs (expected)
+		var row = dataTable.Rows.Single();
+		var accountName = row["AccountName"];
+		var accountType = dataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
+		
+		// Actual
+		var user = context.Get<User>("User");
+		
+		// Act: Create account record using service
+		var accountRecord = new AccountRecord(accountName, user.Id);
+		
+		// LLM-Dev:v3 Store record and temporarily store account data table for When step to access
+		context["AccountRecord"] = accountRecord;
+		context["AccountDataTable"] = dataTable;
+	}
+
 	[Given(@"I create the accounts")]
+	public void GivenICreateTheAccounts()
+	{
+		// Actual - get required context
+		var user = context.Get<User>("User");
+		var accountRecord = context.Get<AccountRecord>("AccountRecord");
+
+		//act
+		var account = new Account(accountRecord)
+		// the only thing that should ever be set here is an ID!
+		{
+			Id = 1 // Set test ID
+		};
+		
+		// Initialize user accounts if not already done
+		if (user.Accounts == null)
+			user.Accounts = new List<Account>();
+		
+		user.Accounts.Add(account);
+		
+		// Store: Store the accounts list for context
+		context["Accounts"] = user.Accounts.ToList();
+	}
+
+	
+
 	[When(@"I create the accounts")]
 	public void WhenICreateTheAccounts()
 	{
-		// Actual: get staged rows and current user
-		if (!context.ContainsKey("User"))
-		{
-			WhenICreateTheUser();
-		}
+		// Actual - get required context (user and record should already exist from Given steps)
 		var user = context.Get<User>("User");
-		var emailKey = user.Email.ToLower();
-		var rowsKey = $"StagedAccountRows:{emailKey}";
-		var stagedRows = context.ContainsKey(rowsKey)
-			? context.Get<List<Dictionary<string, string>>>(rowsKey)
-			: new List<Dictionary<string, string>>();
-
-		// Act: create accounts
+		var record = context.Get<AccountRecord>("AccountRecord");
+		var accountDataTable = context.Get<DataTable>("AccountDataTable");
 		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
-		int nextAccountId = accounts.Any() ? accounts.Max(a => a.Id) + 1 : 1;
 
-		for (int i = 0; i < stagedRows.Count; i++)
+		// LLM-Dev:v4 Extract AccountType from the original data table to properly set it on the Account
+		var row = accountDataTable.Rows.Single();
+		var accountType = accountDataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
+
+		// Act
+		var account = new Account(record)
+		// LLM-Dev:v4 Set ID and AccountType from the test data
 		{
-			var r = stagedRows[i];
-			var rec = AccountManagementService.CreateAccountRecord(r["AccountName"]);
-			var acct = new Account(rec)
-			{
-				Id = nextAccountId++,
-				AccountType = r["AccountType"],
-				CachedBalance = decimal.Parse(r["OpeningBalance"]),
-				CachedBalanceDate = DateTime.UtcNow,
-				UserId = user.Id,
-				User = user
-			};
-			accounts.Add(acct);
-		}
-		// Store
-		context["Accounts"] = accounts;
+			Id = accounts.Count + 1,
+			AccountType = accountType
+		};
+		accounts.Add(account);
+		
+		// Store objects only - update user.Accounts to maintain object relationships needed for Then steps
 		user.Accounts = accounts;
+		context["Accounts"] = accounts;
 	}
 
-	[Then(@"the user ""(.*)"" should have the following accounts")]
-	public void Thentheusershouldhavethefollowingaccounts(string email, DataTable dataTable)
+	[Then(@"the user should have the following accounts")]
+	public void Thentheusershouldhavethefollowingaccounts(DataTable dataTable)
 	{
 		// Inputs (expected)
 		var expectedRows = dataTable.Rows.ToList();
@@ -84,11 +122,40 @@ public partial class StepDefinitions
 			var row = expectedRows[i];
 			var match = accounts.FirstOrDefault(a => a.AccountName == row["AccountName"]);
 			match.ShouldNotBeNull();
-			match!.AccountType.ShouldBe(row["AccountType"]);
+			match!.AccountType.ShouldBe(row["AccountType"]); // this is a dumb way to test this.
 			if (dataTable.Header.Contains("CachedBalance"))
 			{
 				match.CachedBalance.ShouldBe(decimal.Parse(row["CachedBalance"]));
 			}
+		}
+	}
+
+	[Given(@"the created accounts")]
+	public void GivenTheCreatedAccounts(DataTable dataTable)
+	{
+		// Inputs: parse account data and create accounts directly
+		var user = context.Get<User>("User");
+		
+		// Initialize user accounts if not already done
+		if (user.Accounts == null)
+			user.Accounts = new List<Account>();
+
+		var existingAccounts = user.Accounts.ToList();
+		int nextAccountId = existingAccounts.Any() ? existingAccounts.Max(a => a.Id) + 1 : 1;
+		
+		foreach (var row in dataTable.Rows)
+		{
+			var name = row["AccountName"].ToString()!;
+			// Act: Create account record using service
+			var record = new AccountRecord(name, user.Id == 0 ? 1 : user.Id);
+			
+			// Convert to account object immediately
+			var account = new Account(record)
+			{
+				Id = nextAccountId++
+			};
+			
+			user.Accounts.Add(account);
 		}
 	}
 }

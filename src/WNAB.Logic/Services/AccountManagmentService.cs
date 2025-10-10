@@ -7,17 +7,9 @@ public class AccountManagementService
 {
 	private readonly HttpClient _http;
 
-	/// <summary>
-	/// Create the service with an HttpClient already configured with BaseAddress of the API (e.g. https://localhost:7077/).
 	public AccountManagementService(HttpClient http)
 	{
 		_http = http ?? throw new ArgumentNullException(nameof(http));
-	}
-
-	public static AccountRecord CreateAccountRecord(string name)
-	{
-		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name required", nameof(name));
-		return new AccountRecord(name);
 	}
 
 	/// <summary>

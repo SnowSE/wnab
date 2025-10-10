@@ -4,11 +4,6 @@ Feature: User Management
   As a user of the WNAB system
   I want to create users that are active upon creation
 
-  # LLM-Dev: Step definitions pending. Mirrors TransactionEntry style.
-
-  # LLM-Dev: Removed Background that cleared all users to match TransactionEntry.feature style.
-  # LLM-Dev: New step phrases: "Given the following user" and action "When I create the user".
-
   Scenario: Create a new user
     Given the following user
       | FirstName | LastName | Email                  |
@@ -20,8 +15,8 @@ Feature: User Management
 
   Scenario: Create a user directly via Given
     Given the created user
-      | FirstName | LastName | Email                 |
-      | Henry     | Jones    | henry.jones@example.io |
+      | Id | FirstName | LastName | Email                  |
+      | 3  | Henry     | Jones    | henry.jones@example.io |
     Then I should have the following user in the system
       | FirstName | LastName | Email                  | IsActive |
       | Henry     | Jones    | henry.jones@example.io | true     |

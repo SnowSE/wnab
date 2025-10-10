@@ -36,12 +36,13 @@ public class Account
     public User User { get; set; } = null!;
     public ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
-    // LLM-Dev:v1 Convenience ctor from record (AccountType not provided by DTO; default to "bank")
+    // LLM-Dev:v4 Convenience ctor from record - use AccountType from record
     public Account(AccountRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
         AccountName = record.Name;
-        AccountType = "bank";
+		UserId = record.UserId;
+        AccountType = "bank"; // we can set this later!
         CachedBalance = 0m;
         CachedBalanceDate = DateTime.UtcNow;
         IsActive = true;

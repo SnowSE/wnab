@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WNAB.Maui"
+             x:Class="WNAB.Maui.NewMainPage"
+             x:DataType="local:NewMainPageViewModel"
+             Title="Home">
+
+    <VerticalStackLayout Spacing="16" Padding="16" VerticalOptions="FillAndExpand">
+        <Label Text="Budget Overview" FontSize="24" HorizontalOptions="Center"/>
+
+        <!-- Login Section -->
+        <VerticalStackLayout Spacing="12" IsVisible="{Binding IsUserNotLoggedIn}">
+            <Label Text="Please log in to view your budget" HorizontalOptions="Center"/>
+            <Button Text="Login"
+                    Command="{Binding LoginCommand}"
+                    HorizontalOptions="Center"
+                    WidthRequest="200"/>
+        </VerticalStackLayout>
+
+        <!-- Allocations + Progress 
+        -->
+        <HorizontalStackLayout>
+            <VerticalStackLayout>
+                <Button Text="Transactions" Command="{Binding NavigateToTransactionsCommand}" WidthRequest="150"/>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="12" IsVisible="{Binding IsUserLoggedIn}" VerticalOptions="FillAndExpand">
+                <Label Text="All Allocations" FontAttributes="Bold"/>
+
+                <RefreshView Command="{Binding RefreshCommand}">
+                    <CollectionView ItemsSource="{Binding Allocations}" VerticalOptions="FillAndExpand">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                    <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding CategoryName}"
+                                       FontAttributes="Bold"/>
+
+                                    <Label Grid.Row="1" Grid.Column="0"
+                                       Text="{Binding BudgetedAmount, StringFormat='Budgeted: {0:C}'}"/>
+                                    <Label Grid.Row="1" Grid.Column="1"
+                                       Text="{Binding SpentAmount, StringFormat='Spent: {0:C}'}"
+                                       HorizontalTextAlignment="End"/>
+
+                                    <ProgressBar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                             Progress="{Binding Progress}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </RefreshView>
+            </VerticalStackLayout>
+
+        <!-- 
+            -->
+        </HorizontalStackLayout>
+
+    </VerticalStackLayout>
+</ContentPage>

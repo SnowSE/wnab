@@ -167,47 +167,47 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
         return Results.Ok(allocations);
 }).RequireAuthorization();
 
-// Legacy create endpoints (GET) - kept for compatibility
-// app.MapGet("/users/create", async (string name, string email, WnabContext db) =>
-// {
-//     var user = new User { Email = email, FirstName = name, LastName = name };
-//     db.Users.Add(user);
-//     await db.SaveChangesAsync();
-//     return Results.Ok(user);
-// });
-
-// app.MapGet("/categories/create", async (string name, int userId, WnabContext db) =>
-// {
-//     var category = new Category { Name = name, UserId = userId };
-//     db.Categories.Add(category);
-//     await db.SaveChangesAsync();
-//     return Results.Ok(category);
-// });
-
-
-// Depreciated.
-// app.MapGet("/users/accounts/create", async (string name, int userId, WnabContext db) =>
-// {
-//     var account = new Account { UserId = userId, AccountName = name, AccountType = "bank", User = db.Users.First((p) => p.Id == userId) };
-//     db.Accounts.Add(account);
-//     await db.SaveChangesAsync();
-//     return Results.Ok(account.Id);
-// });
-
-// app.MapGet("/categories/allocation/create", async (int categoryId, decimal budgetedAmount, int month, int year, WnabContext db) =>
-// {
-//     var allocation = new CategoryAllocation
-//     {
-//         CategoryId = categoryId,
-//         BudgetedAmount = budgetedAmount,
-//         Month = month,
-//         Year = year
-//     };
+// get transactions by account id.
+app.MapGet("/transactions/account", async (int accountId, WnabContext db) =>
+{
+    var transactions = await db.Transactions
+        .Where(t => t.AccountId == accountId)
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .AsNoTracking()
+        .ToListAsync();
     
-//     db.Allocations.Add(allocation);
-//     await db.SaveChangesAsync();
-//     return Results.Ok(allocation.Id);
-// });
+    return Results.Ok(transactions);
+});
+
+// get transactions by user id
+app.MapGet("/transactions", async (int userId, WnabContext db) =>
+{
+    var transactions = await db.Transactions
+        .Where(t => t.Account.UserId == userId)
+        .Include(t => t.TransactionSplits)
+        .ThenInclude(ts => ts.Category)
+        .Include(t => t.Account)
+        .AsNoTracking()
+        .OrderByDescending(t => t.TransactionDate)
+        .ToListAsync();
+    
+    return Results.Ok(transactions);
+});
+
+// get transactionsplits by category id
+app.MapGet("/transactionsplits", async (int CategoryId, WnabContext db) => {
+    var transactionSplits = await db.TransactionSplits
+        .Where(ts => ts.CategoryId == CategoryId)
+        .Include(ts => ts.Transaction)
+        .ThenInclude(t => t.Account)
+        .Include(ts => ts.Category)
+        .AsNoTracking()
+        .OrderByDescending(ts => ts.Transaction.TransactionDate)
+        .ToListAsync();
+    
+    return Results.Ok(transactionSplits);
+});
 
 // New RESTful create endpoints (POST) - secured with authorization
 app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
@@ -240,7 +240,9 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
     return Results.Created($"/accounts/{account.Id}", new { account.Id });
 }).RequireAuthorization();
 
-app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabContext db) =>
+
+// create allocation
+app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db) =>
 {
     var allocation = new CategoryAllocation
     {
@@ -255,6 +257,7 @@ app.MapPost("/categories/allocation", async (CategoryAllocationRecord rec, WnabC
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
 }).RequireAuthorization();
 
+// create transaction
 app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
 {
     // Validate account exists
