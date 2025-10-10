@@ -72,13 +72,8 @@ public partial class NewMainPageViewModel : ObservableObject
                 var userName = await _authenticationService.GetUserNameAsync();
                 UserDisplayName = userName ?? string.Empty;
                 IsUserLoggedIn = true;
-            }
-            else
-            {
-                UserDisplayName = string.Empty;
-                IsUserLoggedIn = false;
-                await _authenticationService.LoginAsync();
-                RefreshUserId();
+                await LoadBudgetData();
+
             }
         }
         catch
@@ -138,7 +133,15 @@ public partial class NewMainPageViewModel : ObservableObject
     [RelayCommand]
     private async Task Login()
     {
-        await InitializeAsync();
+        try
+        {
+            await _authenticationService.LoginAsync();
+            RefreshUserId();
+        }
+        catch
+        {
+
+        }
     }
 
     // navigate to the transactions page (not implemented yet)

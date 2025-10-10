@@ -34,7 +34,6 @@ public class CategoryManagementService
         return items ?? new();
     }
 
-   
     public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
     {
         var list = await _http.GetFromJsonAsync<List<Category>>("categories", ct);
