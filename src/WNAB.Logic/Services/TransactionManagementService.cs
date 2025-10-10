@@ -18,31 +18,6 @@ public class TransactionManagementService
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-	public static TransactionRecord CreateTransactionRecord(int accountId, string payee,
-        decimal amount, DateTime transactionDate)
-    {
-        if (accountId <= 0) throw new ArgumentOutOfRangeException(nameof(accountId), "AccountId must be positive.");
-        if (string.IsNullOrWhiteSpace(payee)) throw new ArgumentException("Payee required", nameof(payee));
-        if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
-        
-        return new TransactionRecord(accountId, payee, amount, transactionDate);
-    }
-
-    public static TransactionSplitRecord CreateTransactionSplitRecord(int categoryId, int transactionId, decimal amount)
-    {
-        if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
-        if (transactionId <= 0) throw new ArgumentOutOfRangeException(nameof(transactionId), "TransactionId must be positive.");
-        if (amount == 0) throw new ArgumentOutOfRangeException(nameof(amount), "Amount cannot be zero.");
-        return new TransactionSplitRecord(categoryId, transactionId, amount);
-    }
-
-    public static TransactionRecord CreateSimpleTransactionRecord(int accountId, string payee,
-        decimal amount, DateTime transactionDate, int categoryId, string? notes = null)
-    {
-        return CreateTransactionRecord(accountId, payee, amount, transactionDate);
-    }
-
-
     public async Task<int> CreateTransactionAsync(TransactionRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));

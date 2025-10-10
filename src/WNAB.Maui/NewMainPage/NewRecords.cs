@@ -5,25 +5,25 @@ using System.Text;
 namespace WNAB.Maui.NewMainPage;
 
 // give me all the allocations!
-record CategoryAllocationRequest(int CategoryId);
+public record CategoryAllocationsRequest(int CategoryId);
 
 // here are the allocations:
-record CategoryAllocationResponse(List<Allocation> allocations);
-record Allocation(int Id, decimal amount);
+public record CategoryAllocationResponse(List<Allocation> allocations);
+public record Allocation(int Id, decimal amount);
 
 // give me all the transactions!
-record AllocationTransactionsRequest(int Id);
+public record AllocationTransactionsRequest(int Id);
 
 // here are the transactions:
-record AllocationTransactionsResponse(List<TransactionSplits> transactionsplits);
-record TransactionSplits(int Id, int CategoryAllocationId, int TransactionId, decimal amount);
+public record AllocationTransactionsResponse(List<TransactionSplits> transactionsplits);
+public record TransactionSplits(int Id, int CategoryAllocationId, int TransactionId, decimal amount);
 
 
-record AllocationChangeRequest(int Id, decimal amount);
+public record AllocationChangeRequest(int Id, decimal amount);
 
 // return a bool?
-record CategoryAllocChangeResponse();
+public record CategoryAllocChangeResponse();
 
-record CategoryAllocDeleteRequest(int Id);
+public record CategoryAllocDeleteRequest(int Id);
 
-record CategoryAllocDeleteResponse();
+public record CategoryAllocDeleteResponse();

@@ -1,18 +1,20 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using WNAB.Logic;
 
 namespace WNAB.Maui.NewMainPage;
 
-public class CategoryAllocComponentViewModel
+public class CategoryAllocComponentViewModel : ObservableObject
 {
-    public CategoryAllocComponentViewModel(CategoryAllocationResponse car)
+    public CategoryAllocComponentViewModel(AllocationTransactionsResponse car)
     {
         // get transaction splits from car.Id => into the field
-
+        transactionSplits = car.transactionsplits;
         // onproperty changed everything.
+        OnPropertyChanged(nameof(transactionSplits));
     }
-
 
 
     // a list that holds transactionsplits

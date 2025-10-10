@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Storage;
 using WNAB.Logic;
+using WNAB.Logic.Data;
 using WNAB.Maui.Services;
 
 namespace WNAB.Maui;
@@ -67,9 +68,8 @@ public partial class AddAccountViewModel : ObservableObject
         try
         {
             StatusMessage = "Creating account...";
-            int userId;
-            int.TryParse(await SecureStorage.GetAsync("UserId"), out userId);
-            var record = AccountManagementService.CreateAccountRecord(Name, userId);
+            // API derives user from token; pass 0 for UserId
+            var record = new AccountRecord(Name, 0);
             await _accounts.CreateAccountAsync(record);
             StatusMessage = "Account created successfully!";
 

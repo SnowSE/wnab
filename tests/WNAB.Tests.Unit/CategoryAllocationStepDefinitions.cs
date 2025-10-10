@@ -25,7 +25,7 @@ public partial class StepDefinitions
 			var categoryName = row["Category"].ToString()!;
 			var category = categories.Single(c => c.Name == categoryName);
 			
-			var record = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
+			var record = new CategoryAllocationRecord(
 				category.Id,
 				decimal.Parse(row["BudgetedAmount"].ToString()!),
 				int.Parse(row["Month"].ToString()!),

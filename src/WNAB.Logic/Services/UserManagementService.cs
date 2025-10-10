@@ -15,14 +15,6 @@ public class UserManagementService
 	}
 
 
-	public static UserRecord CreateUserRecord(string firstName, string lastName, string email)
-	{
-		if (string.IsNullOrWhiteSpace(firstName)) throw new ArgumentException("First name required", nameof(firstName));
-		if (string.IsNullOrWhiteSpace(lastName)) throw new ArgumentException("Last name required", nameof(lastName));
-		if (string.IsNullOrWhiteSpace(email)) throw new ArgumentException("Email required", nameof(email));
-		return new UserRecord(firstName, lastName, email);
-	}
-
 	public async Task<int> CreateUserAsync(UserRecord record, CancellationToken ct = default)
 	{
 		if (record is null) throw new ArgumentNullException(nameof(record));

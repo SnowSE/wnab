@@ -12,13 +12,6 @@ public class AccountManagementService
 		_http = http ?? throw new ArgumentNullException(nameof(http));
 	}
 
-	public static AccountRecord CreateAccountRecord(string name, int userId)
-	{
-		if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name required", nameof(name));
-		if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId), "UserId must be positive.");
-		return new AccountRecord(name, userId);
-	}
-
 	/// <summary>
 	/// Create an account for the current authenticated user by POSTing to the API.
 	/// Returns the newly created account Id on success.

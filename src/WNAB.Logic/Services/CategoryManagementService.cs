@@ -16,14 +16,6 @@ public class CategoryManagementService
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-
-    public static CategoryRecord CreateCategoryRecord(string name, int userId)
-    {
-        if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Name required", nameof(name));
-        return new CategoryRecord(name,userId);
-    }
-
-
     public async Task<int> CreateCategoryAsync(CategoryRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));

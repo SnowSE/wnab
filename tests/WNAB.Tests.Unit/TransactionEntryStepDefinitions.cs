@@ -28,8 +28,8 @@ public partial class StepDefinitions
             var amount = decimal.Parse(row["Amount"].ToString()!);
 			var payee = row["Payee"];
             
-            // Act: Create transaction record using service
-            var transactionRecord = TransactionManagementService.CreateTransactionRecord(
+            // Act: Create transaction record directly
+            var transactionRecord = new TransactionRecord(
                 account.Id,
 				payee,
                 amount,
@@ -114,8 +114,8 @@ public partial class StepDefinitions
             var payee = row["Payee"].ToString()!;
             var amount = decimal.Parse(row["Amount"].ToString()!);
             
-            // Act: Create transaction record using service
-            var record = TransactionManagementService.CreateTransactionRecord(
+            // Act: Create transaction record directly
+            var record = new TransactionRecord(
                 account.Id,
                 payee,
                 amount,

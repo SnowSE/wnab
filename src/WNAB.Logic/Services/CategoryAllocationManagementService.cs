@@ -14,16 +14,6 @@ public class CategoryAllocationManagementService
         _http = http ?? throw new ArgumentNullException(nameof(http));
     }
 
-    // LLM-Dev: Static factory for allocation record to unify test creation without HttpClient/service instances.
-    public static CategoryAllocationRecord CreateCategoryAllocationRecord(int categoryId, decimal budgetedAmount, int month, int year)
-    {
-        if (categoryId <= 0) throw new ArgumentOutOfRangeException(nameof(categoryId), "CategoryId must be positive.");
-        if (month < 1 || month > 12) throw new ArgumentOutOfRangeException(nameof(month), "Month must be 1-12.");
-        if (year < 1) throw new ArgumentOutOfRangeException(nameof(year), "Year must be positive.");
-        if (budgetedAmount < 0) throw new ArgumentOutOfRangeException(nameof(budgetedAmount), "BudgetedAmount cannot be negative.");
-        return new CategoryAllocationRecord(categoryId, budgetedAmount, month, year);
-    }
-
     public async Task<int> CreateCategoryAllocationAsync(CategoryAllocationRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));

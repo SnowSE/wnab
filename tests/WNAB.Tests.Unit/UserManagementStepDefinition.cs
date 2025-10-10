@@ -50,7 +50,7 @@ public partial class StepDefinitions
 		var firstName = row["FirstName"];
 		var lastName = row["LastName"];
 		// Act
-		var userRecord = UserManagementService.CreateUserRecord(firstName, lastName, row["Email"]);
+		var userRecord = new UserRecord(firstName, lastName, row["Email"]);
 		// Store
 		context["UserRecord"] = userRecord;
 	}
