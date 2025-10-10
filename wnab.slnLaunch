@@ -4,7 +4,8 @@
     "Projects": [
       {
         "Path": "src\\WNAB.Maui\\WNAB.Maui.csproj",
-        "Action": "Start"
+        "Action": "Start",
+        "DebugTarget": "Windows Machine"
       },
       {
         "Path": "src\\WNAB.AppHost\\WNAB.AppHost.csproj",
