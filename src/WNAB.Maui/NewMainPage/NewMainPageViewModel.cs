@@ -4,8 +4,8 @@ using Microsoft.Maui.Storage;
 using System.Collections.ObjectModel;
 using WNAB.Logic;
 using WNAB.Logic.Data;
-using WNAB.Maui.NewMainPage;
 using WNAB.Maui.Services;
+using WNAB.Maui.NewMainPage;
 
 namespace WNAB.Maui;
 
@@ -17,7 +17,7 @@ public partial class NewMainPageViewModel : ObservableObject
     private readonly UserManagementService _userService;
     private readonly CategoryManagementService _categoryService;
     private readonly CategoryAllocationManagementService _allocationService;
-    public CategoryAllocListViewModel categoryList;
+    public CategoryAllocListViewModel _categoryList;
 
     [ObservableProperty]
     private bool isUserLoggedIn;

@@ -9,13 +9,15 @@ public class CategoryAllocComponentViewModel
     public CategoryAllocComponentViewModel(CategoryAllocationResponse car)
     {
         // get transaction splits from car.Id => into the field
+
         // onproperty changed everything.
     }
 
 
 
-    // a list that holds transactionsplits 
-
+    // a list that holds transactionsplits
+    
+    List<TransactionSplits> transactionSplits;
     // a field that holds a goal amount
 
     // a field calculated from transactionsplits (total)

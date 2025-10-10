@@ -13,4 +13,6 @@ public class CategoryAllocListViewModel
         list.Add(new CategoryAllocComponentViewModel(car));
     }
 
+
+
 }
