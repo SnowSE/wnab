@@ -3,7 +3,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 using WNAB.API;
 using WNAB.API.Extensions;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 

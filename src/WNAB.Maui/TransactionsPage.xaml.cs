@@ -1,4 +1,4 @@
-using WNAB.Maui.Behaviors;
+using WNAB.MVM.Behaviors;
 
 namespace WNAB.Maui;
 

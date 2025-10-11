@@ -2,12 +2,11 @@
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
-               xmlns:local="clr-namespace:WNAB.Maui"
+               xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                x:Class="WNAB.Maui.LoginPage"
-               x:DataType="local:LoginViewModel"
-               Color="#3b3434">
+               x:DataType="local:LoginViewModel">
 
-        <!-- BackgroundColor="#3b3434"   -->
+    <!-- BackgroundColor="#3b3434"   -->
 
     <VerticalStackLayout 
         BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"

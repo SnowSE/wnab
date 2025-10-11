@@ -70,7 +70,7 @@
             StateHasChanged();
 
             // userId now comes from authentication token on the API side; pass 0 in DTO
-            var record = new CategoryRecord(_name!, 0);
+            var record = new CategoryRecord(_name!);
             var id = await CategoriesService.CreateCategoryAsync(record);
             _result = $"Category '{_name}' created successfully with ID {id}";
 

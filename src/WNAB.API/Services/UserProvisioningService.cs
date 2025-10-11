@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using WNAB.Logic.Data;
+using WNAB.Data;
 
 namespace WNAB.API.Services;
 

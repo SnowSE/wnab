@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using WNAB.Logic; // LLM-Dev: Use shared Logic services in MAUI too
-using WNAB.Maui.Services;
+using WNAB.Services;
+using WNAB.MVM;
 
 namespace WNAB.Maui;
 

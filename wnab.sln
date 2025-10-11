@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11104.47
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.API", "src\WNAB.API\WNAB.API.csproj", "{C02423C7-290B-48D2-8974-638B600668CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Logic", "src\WNAB.Logic\WNAB.Logic.csproj", "{B80D7325-1A99-4C86-9775-4C7FB89607D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Services", "src\WNAB.Services\WNAB.Services.csproj", "{B80D7325-1A99-4C86-9775-4C7FB89607D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Maui", "src\WNAB.Maui\WNAB.Maui.csproj", "{560F0564-72F0-4470-B555-5016C1DE19D9}"
 EndProject
@@ -34,6 +34,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Tests.Integration", "tests\WNAB.Tests.Integration\WNAB.Tests.Integration.csproj", "{3974335C-7C62-4C92-874B-F1B775A3A99E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Data", "src\WNAB.Data\WNAB.Data.csproj", "{D169035F-6613-C0B3-9643-0AAC66F943A0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.MVM", "src\WNAB.MVM\WNAB.MVM.csproj", "{2D55D355-402C-4556-8810-68ED5D62E863}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -166,6 +170,30 @@ Global
 		{3974335C-7C62-4C92-874B-F1B775A3A99E}.Release|x64.Build.0 = Release|Any CPU
 		{3974335C-7C62-4C92-874B-F1B775A3A99E}.Release|x86.ActiveCfg = Release|Any CPU
 		{3974335C-7C62-4C92-874B-F1B775A3A99E}.Release|x86.Build.0 = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|x64.Build.0 = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Debug|x86.Build.0 = Debug|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|x64.ActiveCfg = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|x64.Build.0 = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|x86.ActiveCfg = Release|Any CPU
+		{D169035F-6613-C0B3-9643-0AAC66F943A0}.Release|x86.Build.0 = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|x64.Build.0 = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Debug|x86.Build.0 = Debug|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x64.ActiveCfg = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x64.Build.0 = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x86.ActiveCfg = Release|Any CPU
+		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
