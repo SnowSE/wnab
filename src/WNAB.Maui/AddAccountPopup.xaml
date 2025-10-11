@@ -4,8 +4,8 @@
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                x:Class="WNAB.Maui.AddAccountPopup"
-               x:DataType="local:AddAccountViewModel"
-               Color="MidnightBlue">
+               x:DataType="local:AddAccountViewModel">
+               
     <!-- LLM-Dev:v3 Improved styling with better contrast and removed User ID field -->
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
         <Label Text="Add Account" 
@@ -15,7 +15,7 @@
                FontSize="18" />
         
         <!-- LLM-Dev:v3 Added status message with better styling -->
-        <Label Text="{Binding StatusMessage}" 
+        <Label Text="{Binding Model.StatusMessage}" 
                HorizontalOptions="Center" 
                TextColor="DarkSlateGray" 
                FontSize="14" />
@@ -23,7 +23,7 @@
         <!-- LLM-Dev:v3 Simplified to just account name - removed User ID field -->
         <StackLayout Spacing="8">
             <Label Text="Account Name" TextColor="Black" FontSize="16" />
-            <Entry Text="{Binding Name}" 
+            <Entry Text="{Binding Model.Name}" 
                    Placeholder="Enter account name" 
                    BackgroundColor="LightGray"
                    TextColor="Black"
