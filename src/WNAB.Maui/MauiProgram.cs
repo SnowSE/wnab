@@ -40,7 +40,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<AuthenticationDelegatingHandler>();
 
 		// DI registrations for MVVM
-		builder.Services.AddSingleton<IPopupService, PopupService>();
+		builder.Services.AddSingleton<IMVMPopupService, PopupService>();
 		builder.Services.AddTransient<MainPageViewModel>();
 		builder.Services.AddTransient<TransactionViewModel>();
 		builder.Services.AddTransient<TransactionPopup>();
@@ -75,7 +75,8 @@ public static class MauiProgram
 		builder.Services.AddTransient<UsersViewModel>();
 		builder.Services.AddTransient<UsersPage>();
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
-        builder.Services.AddTransient<AccountsViewModel>();
+        builder.Services.AddTransient<AccountsModel>();
+        builder.Services.AddTransient<WNAB.MVM.AccountsViewModel>();
         builder.Services.AddTransient<AccountsPage>();
 		// LLM-Dev:v5 Re-add Login page & VM registrations (ensures Shell can resolve via DI)
 		builder.Services.AddTransient<LoginViewModel>();

@@ -1,20 +1,20 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
 using WNAB.Data;
 using WNAB.Services;
 
 namespace WNAB.MVM;
 
-// LLM-Dev:v2 Added AddAccount command and IPopupService injection
-public partial class AccountsViewModel : ObservableObject
+/// <summary>
+/// Business logic and state management for Accounts feature.
+/// Handles data fetching, authentication state, and account list management.
+/// </summary>
+public partial class AccountsModel : ObservableObject
 {
     private readonly AccountManagementService _accounts;
-    private readonly IPopupService _popupService;
     private readonly IAuthenticationService _authService;
 
-    public ObservableCollection<AccountItem> Items { get; } = new();
+    public ObservableCollection<Account> Items { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -25,14 +25,15 @@ public partial class AccountsViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public AccountsViewModel(AccountManagementService accounts, IPopupService popupService, IAuthenticationService authService)
+    public AccountsModel(AccountManagementService accounts, IAuthenticationService authService)
     {
         _accounts = accounts;
-        _popupService = popupService;
         _authService = authService;
     }
 
-    // LLM-Dev: v1 Added initialization method to automatically load user session and accounts
+    /// <summary>
+    /// Initialize the model by checking user session and loading accounts if authenticated.
+    /// </summary>
     public async Task InitializeAsync()
     {
         await CheckUserSessionAsync();
@@ -42,9 +43,10 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Check if user is logged in using AuthenticationService
-    [RelayCommand]
-    private async Task CheckUserSessionAsync()
+    /// <summary>
+    /// Check if user is logged in and update authentication state.
+    /// </summary>
+    public async Task CheckUserSessionAsync()
     {
         try
         {
@@ -69,9 +71,10 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Load accounts for current authenticated user
-    [RelayCommand]
-    private async Task LoadAccountsAsync()
+    /// <summary>
+    /// Load accounts for the current authenticated user.
+    /// </summary>
+    public async Task LoadAccountsAsync()
     {
         if (IsBusy || !IsLoggedIn) return;
 
@@ -82,8 +85,8 @@ public partial class AccountsViewModel : ObservableObject
             Items.Clear();
 
             var list = await _accounts.GetAccountsForUserAsync();
-            foreach (var a in list)
-                Items.Add(new AccountItem(a.Id, a.AccountName, a.AccountType, a.CachedBalance));
+            foreach (var account in list)
+                Items.Add(account);
 
             StatusMessage = list.Count == 0 ? "No accounts found" : $"Loaded {list.Count} accounts";
         }
@@ -97,9 +100,10 @@ public partial class AccountsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: v1 Add refresh command for manual reload
-    [RelayCommand]
-    private async Task RefreshAsync()
+    /// <summary>
+    /// Refresh accounts by checking session and reloading data.
+    /// </summary>
+    public async Task RefreshAsync()
     {
         await CheckUserSessionAsync();
         if (IsLoggedIn)
@@ -107,22 +111,4 @@ public partial class AccountsViewModel : ObservableObject
             await LoadAccountsAsync();
         }
     }
-
-    // LLM-Dev:v2 Add command to open Add Account popup
-    [RelayCommand]
-    private async Task AddAccount()
-    {
-        await _popupService.ShowAddAccountAsync();
-        // Refresh the list after popup closes
-        await RefreshAsync();
-    }
-
-    // LLM-Dev:v3 Navigation command to return to home page
-    [RelayCommand]
-    private async Task NavigateToHome()
-    {
-        await Shell.Current.GoToAsync("//MainPage");
-    }
 }
-
-public sealed record AccountItem(int Id, string Name, string Type, decimal Balance);

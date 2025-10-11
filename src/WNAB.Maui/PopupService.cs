@@ -1,6 +1,6 @@
-namespace WNAB.MVM;
+namespace WNAB.Maui;
 
-public class PopupService : IPopupService
+public class PopupService : IMVMPopupService
 {
     private readonly IServiceProvider _services;
 

@@ -5,8 +5,8 @@
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                xmlns:converters="clr-namespace:WNAB.Maui.Converters"
                x:Class="WNAB.Maui.TransactionPopup"
-               x:DataType="local:TransactionViewModel"
-               Color="MidnightBlue">
+               x:DataType="local:TransactionViewModel">
+               
     <!-- LLM-Dev:v4 Wrapped in ScrollView to handle long forms with splits -->
     <ScrollView WidthRequest="400" MaximumHeightRequest="600">
         <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="White">

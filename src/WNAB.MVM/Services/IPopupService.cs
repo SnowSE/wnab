@@ -1,6 +1,6 @@
 namespace WNAB.MVM;
 
-public interface IPopupService
+public interface IMVMPopupService
 {
     Task ShowNewTransactionAsync();
     Task ShowAddCategoryAsync();

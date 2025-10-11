@@ -1,3 +1,5 @@
+using WNAB.MVM;
+
 namespace WNAB.Maui;
 
 public partial class AccountsPage : ContentPage

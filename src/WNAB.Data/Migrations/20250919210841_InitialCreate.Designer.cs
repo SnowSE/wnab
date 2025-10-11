@@ -9,7 +9,7 @@ using WNAB.Data;
 
 #nullable disable
 
-namespace WNAB.Logic.Data.Migrations
+namespace WNAB.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
     [Migration("20250919210841_InitialCreate")]
