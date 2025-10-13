@@ -85,6 +85,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<CategoriesViewModel>();
 		builder.Services.AddTransient<CategoriesPage>();
 
+		builder.Services.AddTransient<UsersModel>();
 		builder.Services.AddTransient<UsersViewModel>();
 		builder.Services.AddTransient<UsersPage>();
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
@@ -95,6 +96,7 @@ public static class MauiProgram
 		builder.Services.AddTransient<LoginViewModel>();
 		builder.Services.AddTransient<LoginPage>();
 		// LLM-Dev: Register Transactions page and view model
+		builder.Services.AddTransient<TransactionsModel>();
 		builder.Services.AddTransient<TransactionsViewModel>();
 		builder.Services.AddTransient<TransactionsPage>();
 		// LLM-Dev: Register PlanBudget page, model, and view model

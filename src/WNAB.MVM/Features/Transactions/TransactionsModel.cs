@@ -1,16 +1,16 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
 using WNAB.Services;
 
 namespace WNAB.MVM;
 
-// LLM-Dev: TransactionsViewModel to display transactions for a user across all their accounts
-public partial class TransactionsViewModel : ObservableObject
+/// <summary>
+/// Business logic and state management for Transactions feature.
+/// Handles data fetching, authentication state, and transaction list management.
+/// </summary>
+public partial class TransactionsModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
-    private readonly IPopupService _popupService;
     private readonly IAuthenticationService _authService;
 
     public ObservableCollection<TransactionItem> Items { get; } = new();
@@ -24,14 +24,15 @@ public partial class TransactionsViewModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public TransactionsViewModel(TransactionManagementService transactions, IPopupService popupService, IAuthenticationService authService)
+    public TransactionsModel(TransactionManagementService transactions, IAuthenticationService authService)
     {
         _transactions = transactions;
-        _popupService = popupService;
         _authService = authService;
     }
 
-    // LLM-Dev: Initialize by checking user session and loading transactions
+    /// <summary>
+    /// Initialize the model by checking user session and loading transactions if authenticated.
+    /// </summary>
     public async Task InitializeAsync()
     {
         await CheckUserSessionAsync();
@@ -41,9 +42,10 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Check if user is logged in using AuthenticationService
-    [RelayCommand]
-    private async Task CheckUserSessionAsync()
+    /// <summary>
+    /// Check if user is logged in and update authentication state.
+    /// </summary>
+    public async Task CheckUserSessionAsync()
     {
         try
         {
@@ -68,9 +70,11 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v2 Load transactions for the current authenticated user (now using DTOs)
-    [RelayCommand]
-    private async Task LoadTransactionsAsync()
+    /// <summary>
+    /// Load transactions for the current authenticated user (using DTOs).
+    /// Transforms DTOs into TransactionItem view models with category information.
+    /// </summary>
+    public async Task LoadTransactionsAsync()
     {
         if (IsBusy || !IsLoggedIn) return;
 
@@ -83,7 +87,7 @@ public partial class TransactionsViewModel : ObservableObject
             var list = await _transactions.GetTransactionsForUserAsync();
             foreach (var t in list)
             {
-                // LLM-Dev:v2 DTO now has CategoryName directly in TransactionSplits
+                // DTO has CategoryName directly in TransactionSplits
                 var categoryNames = t.TransactionSplits.Select(ts => ts.CategoryName ?? "Unknown").ToList();
                 var categoriesText = categoryNames.Count > 1
                     ? $"{categoryNames.Count} categories"
@@ -111,9 +115,10 @@ public partial class TransactionsViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev: Refresh command for manual reload
-    [RelayCommand]
-    private async Task RefreshAsync()
+    /// <summary>
+    /// Refresh transactions by checking session and reloading data.
+    /// </summary>
+    public async Task RefreshAsync()
     {
         await CheckUserSessionAsync();
         if (IsLoggedIn)
@@ -121,30 +126,17 @@ public partial class TransactionsViewModel : ObservableObject
             await LoadTransactionsAsync();
         }
     }
-
-    // LLM-Dev: Add command to open Add Transaction popup
-    [RelayCommand]
-    private async Task AddTransaction()
-    {
-        await _popupService.ShowNewTransactionAsync();
-        // Refresh the list after popup closes
-        await RefreshAsync();
-    }
-
-    // LLM-Dev:v2 Navigation command to return to home page
-    [RelayCommand]
-    private async Task NavigateToHome()
-    {
-        await Shell.Current.GoToAsync("//MainPage");
-    }
 }
 
-// LLM-Dev: Item model for displaying transaction information in the UI
+/// <summary>
+/// Item model for displaying transaction information in the UI.
+/// Represents a flattened view of transaction data with computed category display.
+/// </summary>
 public sealed record TransactionItem(
-    int Id, 
-    DateTime Date, 
-    string Payee, 
-    string Description, 
-    decimal Amount, 
+    int Id,
+    DateTime Date,
+    string Payee,
+    string Description,
+    decimal Amount,
     string AccountName,
     string Categories);

@@ -12,10 +12,10 @@ public partial class UsersPage : ContentPage
         BindingContext = vm;
     }
 
-    // LLM-Dev:v4 Added automatic loading when page appears to refresh on navigation, following other pages pattern
+    // LLM-Dev:v5 Updated to call InitializeAsync following refactored ViewModel pattern
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.LoadCommand.ExecuteAsync(null);
+        await _viewModel.InitializeAsync();
     }
 }

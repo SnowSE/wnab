@@ -6,7 +6,7 @@
                xmlns:converters="clr-namespace:WNAB.Maui.Converters"
                x:Class="WNAB.Maui.TransactionPopup"
                x:DataType="local:TransactionViewModel">
-               
+
     <!-- LLM-Dev:v4 Wrapped in ScrollView to handle long forms with splits -->
     <ScrollView WidthRequest="400" MaximumHeightRequest="600">
         <VerticalStackLayout Padding="20" Spacing="16" BackgroundColor="White">
@@ -107,14 +107,14 @@
                                       Margin="0,2">
                                     <Picker Grid.Column="0"
                                             ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=AvailableCategories}"
-                                            SelectedItem="{Binding SelectedCategory}"
+                                            SelectedItem="{Binding Model.SelectedCategory}"
                                             ItemDisplayBinding="{Binding Name}"
                                             Title="Category"
                                             BackgroundColor="White"
                                             TextColor="Black"
                                             FontSize="12" />
                                     <Entry Grid.Column="1"
-                                           Text="{Binding Amount}"
+                                           Text="{Binding Model.Amount}"
                                            Keyboard="Numeric"
                                            Placeholder="0.00"
                                            WidthRequest="80"

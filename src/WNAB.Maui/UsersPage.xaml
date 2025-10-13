@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+             xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.UsersPage"
              x:DataType="local:UsersViewModel"
              Title="Users">
@@ -18,16 +19,16 @@
     </ContentPage.ToolbarItems>
     
     <Grid Padding="16" RowDefinitions="Auto,*" RowSpacing="12">
-        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Users}">
+        <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Model.Users}">
             <CollectionView.EmptyView>
                 <Label Text="No users yet." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="local:UserItem">
+                <DataTemplate x:DataType="data:User">
                     <HorizontalStackLayout Padding="8,6" Spacing="12">
-                        <Label Text="{Binding First}" FontAttributes="Bold" />
-                        <Label Text="{Binding Last}" />
+                        <Label Text="{Binding FirstName}" FontAttributes="Bold" />
+                        <Label Text="{Binding LastName}" />
                         <Label Text="{Binding Email}" TextColor="Gray" />
                     </HorizontalStackLayout>
                 </DataTemplate>

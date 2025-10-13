@@ -1,21 +1,21 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.Storage;
+using WNAB.Data;
 using WNAB.Services;
 
 namespace WNAB.MVM;
 
-// LLM-Dev:v2 Enhanced with account/category loading, date picker, and proper validation feedback
-public partial class TransactionViewModel : ObservableObject
+/// <summary>
+/// Business logic and state management for Transaction feature.
+/// Handles transaction creation, validation, split management, and category allocation enforcement.
+/// </summary>
+public partial class TransactionModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
     private readonly CategoryManagementService _categories;
     private readonly IAuthenticationService _authService;
     private readonly CategoryAllocationManagementService _allocations;
-
-    public event EventHandler? RequestClose; // Raised to close popup
 
     [ObservableProperty]
     private int accountId;
@@ -47,16 +47,37 @@ public partial class TransactionViewModel : ObservableObject
     [ObservableProperty]
     private bool isSplitTransaction = false;
 
-    // LLM-Dev:v2 Observable collections for pickers
+    [ObservableProperty]
+    private bool isLoggedIn;
+
+    [ObservableProperty]
+    private bool isBusy;
+
+    // Observable collections for pickers
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
 
-    // LLM-Dev:v3 Collection for managing transaction splits
+    // Collection for managing transaction splits
     public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
 
-    private bool _isLoggedIn;
+    /// <summary>
+    /// Calculate remaining amount to allocate across splits.
+    /// </summary>
+    public decimal RemainingAmount
+    {
+        get
+        {
+            var splitsTotal = Splits.Sum(s => s.Model.Amount);
+            return Amount - splitsTotal;
+        }
+    }
 
-    public TransactionViewModel(
+    /// <summary>
+    /// Check if splits are balanced with transaction amount.
+    /// </summary>
+    public bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
+
+    public TransactionModel(
         TransactionManagementService transactions,
         AccountManagementService accounts,
         CategoryManagementService categories,
@@ -70,33 +91,48 @@ public partial class TransactionViewModel : ObservableObject
         _allocations = allocations;
     }
 
-    // LLM-Dev:v2 Initialize by loading user session and available accounts/categories
+    /// <summary>
+    /// Initialize by loading user session and available accounts/categories.
+    /// </summary>
     public async Task InitializeAsync()
+    {
+        await CheckUserSessionAsync();
+        if (IsLoggedIn)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    /// <summary>
+    /// Check if user is logged in and update authentication state.
+    /// </summary>
+    public async Task CheckUserSessionAsync()
     {
         try
         {
-            _isLoggedIn = await _authService.IsAuthenticatedAsync();
-            if (_isLoggedIn)
-            {
-                await LoadDataAsync();
-            }
-            else
+            IsLoggedIn = await _authService.IsAuthenticatedAsync();
+            if (!IsLoggedIn)
             {
                 StatusMessage = "Please log in first";
             }
         }
         catch (Exception ex)
         {
-            _isLoggedIn = false;
+            IsLoggedIn = false;
             StatusMessage = $"Error checking login: {ex.Message}";
         }
     }
 
-    // LLM-Dev:v2 Load accounts and categories for the logged-in user
+    /// <summary>
+    /// Load accounts and categories for the logged-in user.
+    /// </summary>
     private async Task LoadDataAsync()
     {
+        if (IsBusy) return;
+
         try
         {
+            IsBusy = true;
             StatusMessage = "Loading...";
 
             var accountsTask = _accounts.GetAccountsForUserAsync();
@@ -129,28 +165,38 @@ public partial class TransactionViewModel : ObservableObject
         {
             StatusMessage = $"Error loading data: {ex.Message}";
         }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
-    // LLM-Dev:v2 Update AccountId when account is selected
+    /// <summary>
+    /// Update AccountId when account is selected.
+    /// </summary>
     partial void OnSelectedAccountChanged(Account? value)
     {
         AccountId = value?.Id ?? 0;
     }
 
-    // LLM-Dev:v5 Update CategoryId and find CategoryAllocation when category is selected
-    // Enforces budget-first approach: CategoryAllocation must exist for the transaction date
+    /// <summary>
+    /// Update CategoryId and find CategoryAllocation when category is selected.
+    /// Enforces budget-first approach: CategoryAllocation must exist for the transaction date.
+    /// </summary>
     partial void OnSelectedCategoryChanged(Category? value)
     {
         CategoryId = value?.Id ?? 0;
         
-        // LLM-Dev:v5 When category changes, automatically find allocation for transaction date
+        // When category changes, automatically find allocation for transaction date
         if (value != null && !IsSplitTransaction)
         {
             _ = ValidateAndSetCategoryAllocationAsync(value.Id);
         }
     }
     
-    // LLM-Dev:v5 Find and validate CategoryAllocation for the selected category and transaction date
+    /// <summary>
+    /// Find and validate CategoryAllocation for the selected category and transaction date.
+    /// </summary>
     private async Task ValidateAndSetCategoryAllocationAsync(int categoryId)
     {
         try
@@ -175,7 +221,9 @@ public partial class TransactionViewModel : ObservableObject
         }
     }
     
-    // LLM-Dev:v5 Re-validate allocation when transaction date changes
+    /// <summary>
+    /// Re-validate allocation when transaction date changes.
+    /// </summary>
     partial void OnTransactionDateChanged(DateTime value)
     {
         if (SelectedCategory != null && !IsSplitTransaction)
@@ -184,34 +232,25 @@ public partial class TransactionViewModel : ObservableObject
         }
     }
 
-    // LLM-Dev:v3 Calculate remaining amount to allocate across splits
-    public decimal RemainingAmount
-    {
-        get
-        {
-            var splitsTotal = Splits.Sum(s => s.Amount);
-            return Amount - splitsTotal;
-        }
-    }
-
-    // LLM-Dev:v3 Check if splits are balanced with transaction amount
-    public bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
-
-    // LLM-Dev:v3 Recalculate split totals when amount changes
+    /// <summary>
+    /// Recalculate split totals when amount changes.
+    /// </summary>
     partial void OnAmountChanged(decimal value)
     {
         OnPropertyChanged(nameof(RemainingAmount));
         OnPropertyChanged(nameof(AreSplitsBalanced));
     }
 
-    [RelayCommand]
-    private void ToggleSplitTransaction()
+    /// <summary>
+    /// Toggle split transaction mode.
+    /// </summary>
+    public void ToggleSplitTransaction()
     {
         IsSplitTransaction = !IsSplitTransaction;
         
         if (IsSplitTransaction)
         {
-            // LLM-Dev:v3 Initialize with one split containing the full amount
+            // Initialize with one split containing the full amount
             if (Splits.Count == 0)
             {
                 AddSplit();
@@ -219,27 +258,27 @@ public partial class TransactionViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void AddSplit()
+    /// <summary>
+    /// Add a new split to the transaction.
+    /// </summary>
+    public void AddSplit()
     {
-        // LLM-Dev:v5 Create new split with remaining amount as default
-        var newSplit = new TransactionSplitViewModel
-        {
-            Amount = RemainingAmount > 0 ? RemainingAmount : 0
-        };
+        // Create new split with remaining amount as default
+        var newSplit = new TransactionSplitViewModel();
+        newSplit.Model.Amount = RemainingAmount > 0 ? RemainingAmount : 0;
         
-        // LLM-Dev:v5 Subscribe to property changes to update totals and validate allocations
-        newSplit.PropertyChanged += async (s, e) =>
+        // Subscribe to Model property changes to update totals and validate allocations
+        newSplit.Model.PropertyChanged += async (s, e) =>
         {
-            if (e.PropertyName == nameof(TransactionSplitViewModel.Amount))
+            if (e.PropertyName == nameof(TransactionSplitModel.Amount))
             {
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(AreSplitsBalanced));
             }
-            else if (e.PropertyName == nameof(TransactionSplitViewModel.SelectedCategory))
+            else if (e.PropertyName == nameof(TransactionSplitModel.SelectedCategory))
             {
-                // LLM-Dev:v5 When category is selected in a split, find and set the allocation
-                if (newSplit.SelectedCategory != null)
+                // When category is selected in a split, find and set the allocation
+                if (newSplit.Model.SelectedCategory != null)
                 {
                     await FindAndSetAllocationForSplitAsync(newSplit);
                 }
@@ -251,25 +290,27 @@ public partial class TransactionViewModel : ObservableObject
         OnPropertyChanged(nameof(AreSplitsBalanced));
     }
     
-    // LLM-Dev:v5 Find CategoryAllocation for a split based on transaction date
+    /// <summary>
+    /// Find CategoryAllocation for a split based on transaction date.
+    /// </summary>
     private async Task FindAndSetAllocationForSplitAsync(TransactionSplitViewModel split)
     {
-        if (split.SelectedCategory == null) return;
+        if (split.Model.SelectedCategory == null) return;
         
         try
         {
             var allocation = await _allocations.FindAllocationAsync(
-                split.SelectedCategory.Id, 
+                split.Model.SelectedCategory.Id, 
                 TransactionDate.Month, 
                 TransactionDate.Year);
             
-            split.SelectedCategoryAllocation = allocation;
+            split.Model.SelectedCategoryAllocation = allocation;
             
             if (allocation == null)
             {
-                StatusMessage = $"Missing budget allocation for {split.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
+                StatusMessage = $"Missing budget allocation for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
             }
-            else if (Splits.All(s => s.CategoryAllocationId > 0))
+            else if (Splits.All(s => s.Model.CategoryAllocationId > 0))
             {
                 StatusMessage = "Ready to create transaction";
             }
@@ -280,10 +321,12 @@ public partial class TransactionViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void RemoveSplit(TransactionSplitViewModel split)
+    /// <summary>
+    /// Remove a split from the transaction.
+    /// Prevent removing the last split in split mode.
+    /// </summary>
+    public void RemoveSplit(TransactionSplitViewModel split)
     {
-        // LLM-Dev:v3 Prevent removing the last split in split mode
         if (Splits.Count > 1)
         {
             Splits.Remove(split);
@@ -292,96 +335,90 @@ public partial class TransactionViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    private void Cancel()
+    /// <summary>
+    /// Validate all fields for transaction creation.
+    /// Returns error message if validation fails, null if valid.
+    /// </summary>
+    public string? ValidateForSave()
     {
-        RequestClose?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
-    private async Task Save()
-    {
-        // LLM-Dev:v2 Enhanced validation with user feedback
-        if (!_isLoggedIn)
-        {
-            StatusMessage = "Please log in first";
-            return;
-        }
+        if (!IsLoggedIn)
+            return "Please log in first";
 
         if (AccountId <= 0)
-        {
-            StatusMessage = "Please select an account";
-            return;
-        }
+            return "Please select an account";
 
         if (string.IsNullOrWhiteSpace(Payee))
-        {
-            StatusMessage = "Please enter a payee";
-            return;
-        }
+            return "Please enter a payee";
 
         if (Amount == 0)
-        {
-            StatusMessage = "Please enter an amount";
-            return;
-        }
+            return "Please enter an amount";
 
-        // LLM-Dev:v5 Validate category selection (allocation will be checked during save)
+        // Validate category selection (allocation will be checked during save)
         if (!IsSplitTransaction && SelectedCategory == null)
-        {
-            StatusMessage = "Please select a category";
-            return;
-        }
+            return "Please select a category";
 
-        // LLM-Dev:v3 Validate splits if in split mode
+        // Validate splits if in split mode
         if (IsSplitTransaction)
         {
             if (Splits.Count == 0)
-            {
-                StatusMessage = "Please add at least one split";
-                return;
-            }
+                return "Please add at least one split";
 
             if (!AreSplitsBalanced)
-            {
-                StatusMessage = $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
-                return;
-            }
+                return $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
 
-            // LLM-Dev:v4 Validate each split has a category allocation
-            if (Splits.Any(s => s.CategoryAllocationId <= 0))
-            {
-                StatusMessage = "Please select a category for all splits";
-                return;
-            }
+            // Validate each split has a category allocation
+            if (Splits.Any(s => s.Model.CategoryAllocationId <= 0))
+                return "Please select a category for all splits";
+        }
+
+        return null; // Valid
+    }
+
+    /// <summary>
+    /// Create the transaction by building the record and calling the service.
+    /// Returns success message if created, error message if failed.
+    /// </summary>
+    public async Task<(bool success, string message)> CreateTransactionAsync()
+    {
+        // Validate first
+        var validationError = ValidateForSave();
+        if (validationError != null)
+        {
+            StatusMessage = validationError;
+            return (false, validationError);
         }
 
         try
         {
+            IsBusy = true;
             StatusMessage = "Creating transaction...";
             
-            // LLM-Dev:v3 Convert selected date to UTC for PostgreSQL compatibility
-            // DatePicker returns local DateTime, but PostgreSQL requires UTC for timestamp with time zone
+            // Convert selected date to UTC for PostgreSQL compatibility
             var utcTransactionDate = DateTime.SpecifyKind(TransactionDate, DateTimeKind.Utc);
             
             TransactionRecord record;
             
             if (IsSplitTransaction)
             {
-                // LLM-Dev:v4 Create transaction with multiple splits using CategoryAllocation
+                // Create transaction with multiple splits using CategoryAllocation
                 var splitRecords = Splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryAllocationId, s.Amount, s.IsIncome, s.Notes)).ToList();
+                    new TransactionSplitRecord(
+                        s.Model.CategoryAllocationId, 
+                        -1, 
+                        s.Model.Amount, 
+                        s.Model.IsIncome, 
+                        s.Model.Notes)).ToList();
                     
-                record = TransactionManagementService.CreateTransactionRecord(
+                record = new TransactionRecord(
                     AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
             }
             else
             {
-                // LLM-Dev:v5 For simple transactions, find the CategoryAllocation for the selected category and date
+                // For simple transactions, find the CategoryAllocation for the selected category and date
                 if (SelectedCategory == null)
                 {
                     StatusMessage = "Please select a category";
-                    return;
+                    return (false, "Please select a category");
                 }
                 
                 var allocation = await _allocations.FindAllocationAsync(
@@ -391,32 +428,50 @@ public partial class TransactionViewModel : ObservableObject
                 
                 if (allocation == null)
                 {
-                    StatusMessage = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                    return;
+                    var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                    StatusMessage = errorMsg;
+                    return (false, errorMsg);
                 }
                 
-                record = TransactionManagementService.CreateSimpleTransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, allocation.Id, SelectedCategory.IsIncome);
+                var splitRecords = new List<TransactionSplitRecord>
+                {
+                    new TransactionSplitRecord(allocation.Id, -1, Amount, SelectedCategory.IsIncome, null)
+                };
+                
+                record = new TransactionRecord(
+                    AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
             }
             
             await _transactions.CreateTransactionAsync(record);
             StatusMessage = "Transaction created successfully!";
-
-            // LLM-Dev:v2 Clear fields for next use
-            Payee = string.Empty;
-            Memo = string.Empty;
-            Amount = 0;
-            SelectedAccount = null;
-            SelectedCategory = null;
-            TransactionDate = DateTime.Today;
-            IsSplitTransaction = false;
-            Splits.Clear();
-
-            RequestClose?.Invoke(this, EventArgs.Empty);
+            
+            return (true, "Transaction created successfully!");
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error creating transaction: {ex.Message}";
+            var errorMsg = $"Error creating transaction: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Clear all form fields for next use.
+    /// </summary>
+    public void Clear()
+    {
+        Payee = string.Empty;
+        Memo = string.Empty;
+        Amount = 0;
+        SelectedAccount = null;
+        SelectedCategory = null;
+        TransactionDate = DateTime.Today;
+        IsSplitTransaction = false;
+        Splits.Clear();
+        StatusMessage = "Ready to create transaction";
     }
 }
