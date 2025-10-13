@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+             xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.CategoriesPage"
              x:DataType="local:CategoriesViewModel"
              Title="Categories">
@@ -15,30 +16,30 @@
                      Priority="0"
                      Order="Primary"
                      Command="{Binding AddCategoryCommand}"
-                     IsEnabled="{Binding IsLoggedIn}" />
+                     IsEnabled="{Binding Model.IsLoggedIn}" />
     </ContentPage.ToolbarItems>
     
     <Grid Padding="16" RowDefinitions="Auto,Auto,*" RowSpacing="12">
         <!-- Status and refresh section -->
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="{Binding StatusMessage}" VerticalOptions="Center" />
+            <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
             <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
         </Grid>
 
         <!-- Login prompt when not logged in -->
         <Label Grid.Row="1" Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+               IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                HorizontalOptions="Center" 
                TextColor="Orange"
                Margin="0,10" />
         
-        <ActivityIndicator Grid.Row="2" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Categories}" IsVisible="{Binding IsLoggedIn}">
+        <ActivityIndicator Grid.Row="2" IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Model.Items}" IsVisible="{Binding Model.IsLoggedIn}">
             <CollectionView.EmptyView>
                 <Label Text="No categories yet." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="local:CategoryItem">
+                <DataTemplate x:DataType="data:Category">
                     <HorizontalStackLayout Padding="8,6">
                         <Label Text="{Binding Name}" FontSize="16" />
                     </HorizontalStackLayout>

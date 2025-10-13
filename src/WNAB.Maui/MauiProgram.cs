@@ -41,24 +41,29 @@ public static class MauiProgram
 
 		// DI registrations for MVVM
 		builder.Services.AddSingleton<IMVMPopupService, PopupService>();
+		builder.Services.AddTransient<MainPageModel>();
 		builder.Services.AddTransient<MainPageViewModel>();
 		builder.Services.AddTransient<MainPage>();
 
 		builder.Services.AddTransient<TransactionViewModel>();
 		builder.Services.AddTransient<TransactionPopup>();
 
+		builder.Services.AddTransient<AddCategoryModel>();
 		builder.Services.AddTransient<AddCategoryViewModel>();
 		builder.Services.AddTransient<AddCategoryPopup>();
 
+		builder.Services.AddTransient<AddUserModel>();
 		builder.Services.AddTransient<AddUserViewModel>();
 		builder.Services.AddTransient<AddUserPopup>();
 
-		builder.Services.AddTransient<AddAccountViewModel>();
 		builder.Services.AddTransient<AddAccountModel>();
+		builder.Services.AddTransient<AddAccountViewModel>();
 		builder.Services.AddTransient<AddAccountPopup>();
-		
+
 		builder.Services.AddTransient<NewMainPageViewModel>();
 		builder.Services.AddTransient<NewMainPage>();
+
+
 
 		// LLM-Dev:v2 Centralize base root for MAUI API calls with authentication
 		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
@@ -76,8 +81,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton(sp => new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 		// ViewModels/Pages
+		builder.Services.AddTransient<CategoriesModel>();
 		builder.Services.AddTransient<CategoriesViewModel>();
 		builder.Services.AddTransient<CategoriesPage>();
+
 		builder.Services.AddTransient<UsersViewModel>();
 		builder.Services.AddTransient<UsersPage>();
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
@@ -90,7 +97,8 @@ public static class MauiProgram
 		// LLM-Dev: Register Transactions page and view model
 		builder.Services.AddTransient<TransactionsViewModel>();
 		builder.Services.AddTransient<TransactionsPage>();
-		// LLM-Dev: Register PlanBudget page and view model
+		// LLM-Dev: Register PlanBudget page, model, and view model
+		builder.Services.AddTransient<PlanBudgetModel>();
 		builder.Services.AddTransient<PlanBudgetViewModel>();
 		builder.Services.AddTransient<PlanBudgetPage>();
 

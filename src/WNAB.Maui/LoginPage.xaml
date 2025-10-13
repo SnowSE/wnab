@@ -13,7 +13,7 @@
         Padding="24" Spacing="16" WidthRequest="320">
         <Label Text="Login" FontAttributes="Bold" HorizontalOptions="Center" />
         <Label Text="Enter your User ID" />
-        <Entry Placeholder="User ID" Text="{Binding UserId}" />
+        <Entry Placeholder="User ID" Text="{Binding Model.UserId}" />
         
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel"
