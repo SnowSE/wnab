@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using WNAB.Logic;
-using WNAB.Logic.Data;
-using WNAB.Maui.Services;
+using WNAB.Data;
+using WNAB.Services;
 using WNAB.Maui.NewMainPageModels;
 
 namespace WNAB.Maui;
@@ -11,7 +10,7 @@ namespace WNAB.Maui;
 // LLM-Dev:v4 Refactor to use AllocationProgressModel and compute progress from transaction splits
 public partial class NewMainPageViewModel : ObservableObject
 {
-    private readonly IPopupService _popupService;
+    private readonly IMVMPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
     private readonly CategoryManagementService _categoryService;
     private readonly CategoryAllocationManagementService _allocationService;
@@ -32,7 +31,7 @@ public partial class NewMainPageViewModel : ObservableObject
     public ObservableCollection<AllocationProgressModel> Allocations { get; } = new();
 
     public NewMainPageViewModel(
-        IPopupService popupService,
+        IMVMPopupService popupService,
         IAuthenticationService authservice,
         CategoryManagementService categoryService,
         CategoryAllocationManagementService allocationService,
