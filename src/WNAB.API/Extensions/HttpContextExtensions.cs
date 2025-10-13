@@ -12,8 +12,7 @@ public static class HttpContextExtensions
     public static async Task<User?> GetCurrentUserAsync(this HttpContext context, WnabContext db, Services.UserProvisioningService provisioningService)
     {
         // Try "cid" claim first (Snow College), then fall back to standard "sub" claim
-        var subjectId = context.User.FindFirst("sid")?.Value
-            ?? context.User.FindFirst("sub")?.Value;
+        var subjectId = context.User.FindFirst("sub")?.Value;
         if (string.IsNullOrEmpty(subjectId))
         {
             return null;

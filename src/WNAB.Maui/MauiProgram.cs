@@ -36,32 +36,32 @@ public static class MauiProgram
 
 		// Authentication services
 		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
-		builder.Services.AddTransient<AuthenticationDelegatingHandler>();
+		builder.Services.AddSingleton<AuthenticationDelegatingHandler>();
 
 		// DI registrations for MVVM
 		builder.Services.AddSingleton<IMVMPopupService, PopupService>();
-		builder.Services.AddTransient<MainPageModel>();
-		builder.Services.AddTransient<MainPageViewModel>();
-		builder.Services.AddTransient<MainPage>();
+		builder.Services.AddSingleton<MainPageModel>();
+		builder.Services.AddSingleton<MainPageViewModel>();
+		builder.Services.AddSingleton<MainPage>();
 
-		builder.Services.AddTransient<TransactionModel>();
-		builder.Services.AddTransient<TransactionViewModel>();
-		builder.Services.AddTransient<TransactionPopup>();
+		builder.Services.AddSingleton<TransactionModel>();
+		builder.Services.AddSingleton<TransactionViewModel>();
+		builder.Services.AddSingleton<TransactionPopup>();
 
-        builder.Services.AddTransient<AddCategoryModel>();
-		builder.Services.AddTransient<AddCategoryViewModel>();
-		builder.Services.AddTransient<AddCategoryPopup>();
+        builder.Services.AddSingleton<AddCategoryModel>();
+		builder.Services.AddSingleton<AddCategoryViewModel>();
+		builder.Services.AddSingleton<AddCategoryPopup>();
 
-		builder.Services.AddTransient<AddUserModel>();
-		builder.Services.AddTransient<AddUserViewModel>();
-		builder.Services.AddTransient<AddUserPopup>();
+		builder.Services.AddSingleton<AddUserModel>();
+		builder.Services.AddSingleton<AddUserViewModel>();
+		builder.Services.AddSingleton<AddUserPopup>();
 
-		builder.Services.AddTransient<AddAccountModel>();
-		builder.Services.AddTransient<AddAccountViewModel>();
-		builder.Services.AddTransient<AddAccountPopup>();
+		builder.Services.AddSingleton<AddAccountModel>();
+		builder.Services.AddSingleton<AddAccountViewModel>();
+		builder.Services.AddSingleton<AddAccountPopup>();
 
-		builder.Services.AddTransient<NewMainPageViewModel>();
-		builder.Services.AddTransient<NewMainPage>();
+		builder.Services.AddSingleton<NewMainPageViewModel>();
+		builder.Services.AddSingleton<NewMainPage>();
 
 
 
@@ -81,28 +81,28 @@ public static class MauiProgram
 		builder.Services.AddSingleton(sp => new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 		// ViewModels/Pages
-		builder.Services.AddTransient<CategoriesModel>();
-		builder.Services.AddTransient<CategoriesViewModel>();
-		builder.Services.AddTransient<CategoriesPage>();
+		builder.Services.AddSingleton<CategoriesModel>();
+		builder.Services.AddSingleton<CategoriesViewModel>();
+		builder.Services.AddSingleton<CategoriesPage>();
 
-		builder.Services.AddTransient<UsersModel>();
-		builder.Services.AddTransient<UsersViewModel>();
-		builder.Services.AddTransient<UsersPage>();
+		builder.Services.AddSingleton<UsersModel>();
+		builder.Services.AddSingleton<UsersViewModel>();
+		builder.Services.AddSingleton<UsersPage>();
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
-        builder.Services.AddTransient<AccountsModel>();
-        builder.Services.AddTransient<WNAB.MVM.AccountsViewModel>();
-        builder.Services.AddTransient<AccountsPage>();
+        builder.Services.AddSingleton<AccountsModel>();
+        builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
+        builder.Services.AddSingleton<AccountsPage>();
 		// LLM-Dev:v5 Re-add Login page & VM registrations (ensures Shell can resolve via DI)
-		builder.Services.AddTransient<LoginViewModel>();
-		builder.Services.AddTransient<LoginPage>();
+		builder.Services.AddSingleton<LoginViewModel>();
+		builder.Services.AddSingleton<LoginPage>();
 		// LLM-Dev: Register Transactions page and view model
-		builder.Services.AddTransient<TransactionsModel>();
-		builder.Services.AddTransient<TransactionsViewModel>();
-		builder.Services.AddTransient<TransactionsPage>();
+		builder.Services.AddSingleton<TransactionsModel>();
+		builder.Services.AddSingleton<TransactionsViewModel>();
+		builder.Services.AddSingleton<TransactionsPage>();
 		// LLM-Dev: Register PlanBudget page, model, and view model
-		builder.Services.AddTransient<PlanBudgetModel>();
-		builder.Services.AddTransient<PlanBudgetViewModel>();
-		builder.Services.AddTransient<PlanBudgetPage>();
+		builder.Services.AddSingleton<PlanBudgetModel>();
+		builder.Services.AddSingleton<PlanBudgetViewModel>();
+		builder.Services.AddSingleton<PlanBudgetPage>();
 
 #if DEBUG
 	builder.Logging.AddDebug();
