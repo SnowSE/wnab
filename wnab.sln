@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11104.47
+VisualStudioVersion = 18.0.11018.127 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.API", "src\WNAB.API\WNAB.API.csproj", "{C02423C7-290B-48D2-8974-638B600668CA}"
 EndProject
