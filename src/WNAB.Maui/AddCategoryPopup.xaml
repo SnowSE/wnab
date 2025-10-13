@@ -5,7 +5,7 @@
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                x:Class="WNAB.Maui.AddCategoryPopup"
                x:DataType="local:AddCategoryViewModel"
-               Color="MidnightBlue">
+               >
     
     <!-- LLM-Dev:v4 Updated styling to match improved popup design with better contrast and removed User ID field -->
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">

@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using WNAB.Services;
-using WNAB.MVM;
 
 namespace WNAB.Maui;
 
@@ -45,10 +44,11 @@ public static class MauiProgram
 		builder.Services.AddTransient<MainPageViewModel>();
 		builder.Services.AddTransient<MainPage>();
 
+		builder.Services.AddTransient<TransactionModel>();
 		builder.Services.AddTransient<TransactionViewModel>();
 		builder.Services.AddTransient<TransactionPopup>();
 
-		builder.Services.AddTransient<AddCategoryModel>();
+        builder.Services.AddTransient<AddCategoryModel>();
 		builder.Services.AddTransient<AddCategoryViewModel>();
 		builder.Services.AddTransient<AddCategoryPopup>();
 

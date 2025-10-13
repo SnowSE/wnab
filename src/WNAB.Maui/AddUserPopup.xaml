@@ -5,7 +5,7 @@
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                x:Class="WNAB.Maui.AddUserPopup"
                x:DataType="local:AddUserViewModel"
-               Color="MidnightBlue">
+               >
     <!-- LLM-Dev:v3 Updated styling to match improved AddAccountPopup with better contrast -->
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
         <Label Text="Add User" 

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace WNAB.MVM;
+namespace WNAB.Maui;
 
 public class AuthenticationService : IAuthenticationService
 {
@@ -24,7 +24,7 @@ public class AuthenticationService : IAuthenticationService
         // Use different redirect URIs based on platform
         string redirectUri;
         IdentityModel.OidcClient.Browser.IBrowser browser;
-
+                
 #if WINDOWS
         // For Windows, create the browser first to get the actual redirect URI with port
         var windowsBrowser = new Platforms.Windows.WindowsBrowser(logger);
