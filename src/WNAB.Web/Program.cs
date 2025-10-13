@@ -1,11 +1,11 @@
 using WNAB.Web;
 using WNAB.Web.Components;
-using WNAB.Logic; // LLM-Dev: Register services that call the API
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Security.Claims;
+using WNAB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

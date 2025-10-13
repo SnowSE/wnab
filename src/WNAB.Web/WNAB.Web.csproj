@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
-    <ProjectReference Include="..\WNAB.Logic\WNAB.Logic.csproj" />
+    <ProjectReference Include="..\WNAB.Services\WNAB.Services.csproj" />
     <ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
     <ProjectReference Include="..\WNAB.ServiceDefaults\WNAB.ServiceDefaults.csproj" />
   </ItemGroup>
