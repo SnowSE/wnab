@@ -12,7 +12,8 @@
       "Bash(dotnet sln:*)",
       "WebFetch(domain:devblogs.microsoft.com)",
       "WebSearch",
-      "Bash(dotnet remove:*)"
+      "Bash(dotnet remove:*)",
+      "WebFetch(domain:www.nuget.org)"
     ],
     "deny": [],
     "ask": []

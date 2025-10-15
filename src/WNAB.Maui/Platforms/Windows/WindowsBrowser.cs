@@ -1,4 +1,4 @@
-using IdentityModel.OidcClient.Browser;
+using Duende.IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Net;
@@ -8,7 +8,7 @@ using System.Text;
 
 namespace WNAB.Maui.Platforms.Windows;
 
-public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
+public class WindowsBrowser : Duende.IdentityModel.OidcClient.Browser.IBrowser
 {
     private readonly int _port;
     private readonly ILogger _logger;

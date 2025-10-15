@@ -1,5 +1,5 @@
-using IdentityModel.OidcClient;
-using IdentityModel.OidcClient.Browser;
+using Duende.IdentityModel.OidcClient;
+using Duende.IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.IdentityModel.Tokens.Jwt;
@@ -23,7 +23,7 @@ public class AuthenticationService : IAuthenticationService
 
         // Use different redirect URIs based on platform
         string redirectUri;
-        IdentityModel.OidcClient.Browser.IBrowser browser;
+        Duende.IdentityModel.OidcClient.Browser.IBrowser browser;
                 
 #if WINDOWS
         // For Windows, create the browser first to get the actual redirect URI with port
@@ -217,7 +217,7 @@ public class AuthenticationService : IAuthenticationService
         }
     }
 
-    private class WebBrowserAuthenticator : IdentityModel.OidcClient.Browser.IBrowser
+    private class WebBrowserAuthenticator : Duende.IdentityModel.OidcClient.Browser.IBrowser
     {
         public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
         {
