@@ -5,7 +5,7 @@ namespace WNAB.Maui;
 // LLM-Dev:v2 Initialize ViewModel on popup creation
 public partial class TransactionPopup : Popup
 {
-    public TransactionPopup(TransactionViewModel vm)
+    public TransactionPopup(AddTransactionViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;

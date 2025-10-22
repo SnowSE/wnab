@@ -9,7 +9,7 @@ namespace WNAB.MVM;
 /// Business logic and state management for Transaction feature.
 /// Handles transaction creation, validation, split management, and category allocation enforcement.
 /// </summary>
-public partial class TransactionModel : ObservableObject
+public partial class AddTransactionModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
@@ -58,7 +58,7 @@ public partial class TransactionModel : ObservableObject
     public ObservableCollection<Category> AvailableCategories { get; } = new();
 
     // Collection for managing transaction splits
-    public ObservableCollection<TransactionSplitViewModel> Splits { get; } = new();
+    public ObservableCollection<AddTransactionSplitViewModel> Splits { get; } = new();
 
     /// <summary>
     /// Calculate remaining amount to allocate across splits.
@@ -77,7 +77,7 @@ public partial class TransactionModel : ObservableObject
     /// </summary>
     public bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
 
-    public TransactionModel(
+    public AddTransactionModel(
         TransactionManagementService transactions,
         AccountManagementService accounts,
         CategoryManagementService categories,
@@ -264,18 +264,18 @@ public partial class TransactionModel : ObservableObject
     public void AddSplit()
     {
         // Create new split with remaining amount as default
-        var newSplit = new TransactionSplitViewModel();
+        var newSplit = new AddTransactionSplitViewModel();
         newSplit.Model.Amount = RemainingAmount > 0 ? RemainingAmount : 0;
         
         // Subscribe to Model property changes to update totals and validate allocations
         newSplit.Model.PropertyChanged += async (s, e) =>
         {
-            if (e.PropertyName == nameof(TransactionSplitModel.Amount))
+            if (e.PropertyName == nameof(AddTransactionSplitModel.Amount))
             {
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(AreSplitsBalanced));
             }
-            else if (e.PropertyName == nameof(TransactionSplitModel.SelectedCategory))
+            else if (e.PropertyName == nameof(AddTransactionSplitModel.SelectedCategory))
             {
                 // When category is selected in a split, find and set the allocation
                 if (newSplit.Model.SelectedCategory != null)
@@ -293,7 +293,7 @@ public partial class TransactionModel : ObservableObject
     /// <summary>
     /// Find CategoryAllocation for a split based on transaction date.
     /// </summary>
-    private async Task FindAndSetAllocationForSplitAsync(TransactionSplitViewModel split)
+    private async Task FindAndSetAllocationForSplitAsync(AddTransactionSplitViewModel split)
     {
         if (split.Model.SelectedCategory == null) return;
         
@@ -325,7 +325,7 @@ public partial class TransactionModel : ObservableObject
     /// Remove a split from the transaction.
     /// Prevent removing the last split in split mode.
     /// </summary>
-    public void RemoveSplit(TransactionSplitViewModel split)
+    public void RemoveSplit(AddTransactionSplitViewModel split)
     {
         if (Splits.Count > 1)
         {

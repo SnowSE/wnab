@@ -44,8 +44,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 
-		builder.Services.AddSingleton<TransactionModel>();
-		builder.Services.AddSingleton<TransactionViewModel>();
+		builder.Services.AddSingleton<AddTransactionModel>();
+		builder.Services.AddSingleton<AddTransactionViewModel>();
 		builder.Services.AddSingleton<TransactionPopup>();
 
         builder.Services.AddSingleton<AddCategoryModel>();

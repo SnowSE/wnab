@@ -5,7 +5,7 @@
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                xmlns:converters="clr-namespace:WNAB.Maui.Converters"
                x:Class="WNAB.Maui.TransactionPopup"
-               x:DataType="local:TransactionViewModel">
+               x:DataType="local:AddTransactionViewModel">
 
     <!-- LLM-Dev:v4 Wrapped in ScrollView to handle long forms with splits -->
     <ScrollView WidthRequest="400" MaximumHeightRequest="600">
@@ -99,14 +99,14 @@
                     <CollectionView ItemsSource="{Binding Splits}"
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="local:TransactionSplitViewModel">
+                            <DataTemplate x:DataType="local:AddTransactionSplitViewModel">
                                 <Grid ColumnDefinitions="*,Auto,Auto" 
                                       ColumnSpacing="8" 
                                       Padding="0,4"
                                       BackgroundColor="WhiteSmoke"
                                       Margin="0,2">
                                     <Picker Grid.Column="0"
-                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=AvailableCategories}"
+                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:AddTransactionViewModel}}, Path=AvailableCategories}"
                                             SelectedItem="{Binding Model.SelectedCategory}"
                                             ItemDisplayBinding="{Binding Name}"
                                             Title="Category"

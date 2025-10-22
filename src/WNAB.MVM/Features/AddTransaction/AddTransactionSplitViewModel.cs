@@ -4,13 +4,13 @@ namespace WNAB.MVM;
 
 /// <summary>
 /// ViewModel for individual transaction split items - thin coordination layer between View and Model.
-/// Delegates all business logic to TransactionSplitModel.
+/// Delegates all business logic to AddTransactionSplitModel.
 /// </summary>
-public partial class TransactionSplitViewModel : ObservableObject
+public partial class AddTransactionSplitViewModel : ObservableObject
 {
-    public TransactionSplitModel Model { get; }
+    public AddTransactionSplitModel Model { get; }
 
-    public TransactionSplitViewModel(TransactionSplitModel model)
+    public AddTransactionSplitViewModel(AddTransactionSplitModel model)
     {
         Model = model;
     }
@@ -18,7 +18,7 @@ public partial class TransactionSplitViewModel : ObservableObject
     /// <summary>
     /// Convenience constructor that creates a new Model instance.
     /// </summary>
-    public TransactionSplitViewModel() : this(new TransactionSplitModel())
+    public AddTransactionSplitViewModel() : this(new AddTransactionSplitModel())
     {
     }
 }
