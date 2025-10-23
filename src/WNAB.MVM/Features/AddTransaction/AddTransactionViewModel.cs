@@ -7,13 +7,13 @@ namespace WNAB.MVM;
 /// ViewModel for Transaction creation - thin coordination layer between View and Model.
 /// Handles UI-specific concerns like popup closing, delegates business logic to Model.
 /// </summary>
-public partial class TransactionViewModel : ObservableObject
+public partial class AddTransactionViewModel : ObservableObject
 {
-    public TransactionModel Model { get; }
+    public AddTransactionModel Model { get; }
 
     public event EventHandler? RequestClose; // Raised to close popup
 
-    public TransactionViewModel(TransactionModel model)
+    public AddTransactionViewModel(AddTransactionModel model)
     {
         Model = model;
     }
@@ -48,7 +48,7 @@ public partial class TransactionViewModel : ObservableObject
     /// Remove a split - delegates to Model.
     /// </summary>
     [RelayCommand]
-    private void RemoveSplit(TransactionSplitViewModel split)
+    private void RemoveSplit(AddTransactionSplitViewModel split)
     {
         Model.RemoveSplit(split);
     }

@@ -7,7 +7,7 @@ namespace WNAB.MVM;
 /// Business logic and state management for individual transaction split items.
 /// Represents a single category allocation within a transaction split.
 /// </summary>
-public partial class TransactionSplitModel : ObservableObject
+public partial class AddTransactionSplitModel : ObservableObject
 {
     [ObservableProperty]
     private int transactionId;

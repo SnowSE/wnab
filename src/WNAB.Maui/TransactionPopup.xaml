@@ -5,7 +5,7 @@
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
                xmlns:converters="clr-namespace:WNAB.Maui.Converters"
                x:Class="WNAB.Maui.TransactionPopup"
-               x:DataType="local:TransactionViewModel">
+               x:DataType="local:AddTransactionViewModel">
 
     <!-- LLM-Dev:v4 Wrapped in ScrollView to handle long forms with splits -->
     <ScrollView WidthRequest="400" MaximumHeightRequest="600">
@@ -24,7 +24,7 @@
                FontSize="18" />
         
         <!-- LLM-Dev:v2 Status message for validation feedback -->
-        <Label Text="{Binding StatusMessage}" 
+        <Label Text="{Binding Model.StatusMessage}" 
                HorizontalOptions="Center" 
                TextColor="DarkSlateGray" 
                FontSize="14" />
@@ -34,8 +34,8 @@
             <!-- Account Picker -->
             <StackLayout Spacing="4">
                 <Label Text="Account" TextColor="Black" FontSize="14" />
-                <Picker ItemsSource="{Binding AvailableAccounts}"
-                        SelectedItem="{Binding SelectedAccount}"
+                <Picker ItemsSource="{Binding Model.AvailableAccounts}"
+                        SelectedItem="{Binding Model.SelectedAccount}"
                         ItemDisplayBinding="{Binding AccountName}"
                         Title="Select Account"
                         BackgroundColor="LightGray"
@@ -45,7 +45,7 @@
             <!-- Payee -->
             <StackLayout Spacing="4">
                 <Label Text="Payee" TextColor="Black" FontSize="14" />
-                <Entry Text="{Binding Payee}" 
+                <Entry Text="{Binding Model.Payee}" 
                        Placeholder="Enter payee name" 
                        BackgroundColor="LightGray"
                        TextColor="Black"
@@ -55,7 +55,7 @@
             <!-- Date Picker -->
             <StackLayout Spacing="4">
                 <Label Text="Date" TextColor="Black" FontSize="14" />
-                <DatePicker Date="{Binding TransactionDate}"
+                <DatePicker Date="{Binding Model.TransactionDate}"
                             BackgroundColor="LightGray"
                             TextColor="Black" />
             </StackLayout>
@@ -63,7 +63,7 @@
             <!-- Amount -->
             <StackLayout Spacing="4">
                 <Label Text="Amount" TextColor="Black" FontSize="14" />
-                <Entry Text="{Binding Amount}" 
+                <Entry Text="{Binding Model.Amount}" 
                        Keyboard="Numeric" 
                        Placeholder="0.00" 
                        BackgroundColor="LightGray"
@@ -75,7 +75,7 @@
             <StackLayout Spacing="4">
                 <HorizontalStackLayout Spacing="8">
                     <Label Text="Category" TextColor="Black" FontSize="14" VerticalOptions="Center" />
-                    <Button Text="{Binding IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}" 
+                    <Button Text="{Binding Model.IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}" 
                             Command="{Binding ToggleSplitTransactionCommand}"
                             BackgroundColor="LightBlue"
                             TextColor="Black"
@@ -85,28 +85,28 @@
                 </HorizontalStackLayout>
                 
                 <!-- LLM-Dev:v3 Single category picker - visible when NOT in split mode -->
-                <Picker ItemsSource="{Binding AvailableCategories}"
-                        SelectedItem="{Binding SelectedCategory}"
+                <Picker ItemsSource="{Binding Model.AvailableCategories}"
+                        SelectedItem="{Binding Model.SelectedCategory}"
                         ItemDisplayBinding="{Binding Name}"
                         Title="Select Category"
                         BackgroundColor="LightGray"
                         TextColor="Black"
-                        IsVisible="{Binding IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
+                        IsVisible="{Binding Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
                 
                 <!-- LLM-Dev:v3 Split mode UI - visible when in split mode -->
-                <StackLayout IsVisible="{Binding IsSplitTransaction}" Spacing="8">
+                <StackLayout IsVisible="{Binding Model.IsSplitTransaction}" Spacing="8">
                     <!-- Split items list -->
-                    <CollectionView ItemsSource="{Binding Splits}"
+                    <CollectionView ItemsSource="{Binding Model.Splits}"
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="local:TransactionSplitViewModel">
+                            <DataTemplate x:DataType="local:AddTransactionSplitViewModel">
                                 <Grid ColumnDefinitions="*,Auto,Auto" 
                                       ColumnSpacing="8" 
                                       Padding="0,4"
                                       BackgroundColor="WhiteSmoke"
                                       Margin="0,2">
                                     <Picker Grid.Column="0"
-                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=AvailableCategories}"
+                                            ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:AddTransactionViewModel}}, Path=Model.AvailableCategories}"
                                             SelectedItem="{Binding Model.SelectedCategory}"
                                             ItemDisplayBinding="{Binding Name}"
                                             Title="Category"
@@ -124,7 +124,7 @@
                                            HorizontalTextAlignment="End" />
                                     <Button Grid.Column="2"
                                             Text="✕"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionViewModel}}, Path=RemoveSplitCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type local:AddTransactionViewModel}}, Path=RemoveSplitCommand}"
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="IndianRed"
                                             TextColor="White"
@@ -152,18 +152,18 @@
                                TextColor="Black"
                                FontSize="12"
                                VerticalOptions="Center" />
-                        <Label Text="{Binding RemainingAmount, StringFormat='{0:C}'}"
+                        <Label Text="{Binding Model.RemainingAmount, StringFormat='{0:C}'}"
                                FontSize="12"
                                FontAttributes="Bold"
                                VerticalOptions="Center">
                             <Label.Triggers>
                                 <DataTrigger TargetType="Label" 
-                                           Binding="{Binding AreSplitsBalanced}" 
+                                           Binding="{Binding Model.AreSplitsBalanced}" 
                                            Value="True">
                                     <Setter Property="TextColor" Value="Green" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Label" 
-                                           Binding="{Binding AreSplitsBalanced}" 
+                                           Binding="{Binding Model.AreSplitsBalanced}" 
                                            Value="False">
                                     <Setter Property="TextColor" Value="Red" />
                                 </DataTrigger>
@@ -180,7 +180,7 @@
             <!-- Memo -->
             <StackLayout Spacing="4">
                 <Label Text="Memo (Optional)" TextColor="Black" FontSize="14" />
-                <Entry Text="{Binding Memo}" 
+                <Entry Text="{Binding Model.Memo}" 
                        Placeholder="Add notes or description" 
                        BackgroundColor="LightGray"
                        TextColor="Black"

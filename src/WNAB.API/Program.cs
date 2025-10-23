@@ -181,21 +181,6 @@ app.MapGet("/transactions/account", async (int accountId, WnabContext db) =>
     return Results.Ok(transactions);
 });
 
-// get transactions by user id
-app.MapGet("/transactions", async (int userId, WnabContext db) =>
-{
-    var transactions = await db.Transactions
-        .Where(t => t.Account.UserId == userId)
-        .Include(t => t.TransactionSplits)
-        .ThenInclude(ts => ts.CategoryAllocation)
-        .Include(t => t.Account)
-        .AsNoTracking()
-        .OrderByDescending(t => t.TransactionDate)
-        .ToListAsync();
-    
-    return Results.Ok(transactions);
-});
-
 // get transactionsplits by category id
 app.MapGet("/transactionsplits", async (int AllocationId, WnabContext db) => {
     var transactionSplits = await db.TransactionSplits
@@ -256,6 +241,15 @@ app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db)
     db.Allocations.Add(allocation);
     await db.SaveChangesAsync();
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
+}).RequireAuthorization();
+
+// get allocations for a category
+app.MapGet("/allocations", async (int categoryId, WnabContext db) =>
+{
+    var allocations = await db.Allocations
+        .Where(a => a.CategoryId == categoryId)
+        .ToListAsync();
+    return Results.Ok(allocations);
 }).RequireAuthorization();
 
 // create transaction

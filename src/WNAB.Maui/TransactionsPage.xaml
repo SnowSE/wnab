@@ -15,7 +15,7 @@
                      Priority="0"
                      Order="Primary"
                      Command="{Binding AddTransactionCommand}"
-                     IsEnabled="{Binding IsLoggedIn}" />
+                     IsEnabled="{Binding Model.IsLoggedIn}" />
     </ContentPage.ToolbarItems>
     
     <!-- LLM-Dev: Transactions page following same pattern as AccountsPage -->
@@ -23,22 +23,22 @@
         
         <!-- Status and refresh section -->
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="{Binding StatusMessage}" VerticalOptions="Center" />
+            <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
             <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
         </Grid>
 
         <!-- Login prompt when not logged in -->
         <Label Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+               IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                HorizontalOptions="Center" 
                TextColor="Orange"
                Margin="0,20" />
 
         <!-- Loading indicator -->
-        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+        <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
         
         <!-- Transactions list -->
-        <CollectionView ItemsSource="{Binding Items}" IsVisible="{Binding IsLoggedIn}">
+        <CollectionView ItemsSource="{Binding Model.Items}" IsVisible="{Binding Model.IsLoggedIn}">
             <CollectionView.EmptyView>
                 <Label Text="No transactions found." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
