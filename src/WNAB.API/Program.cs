@@ -243,6 +243,15 @@ app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db)
     return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
 }).RequireAuthorization();
 
+// get allocations for a category
+app.MapGet("/allocations", async (int categoryId, WnabContext db) =>
+{
+    var allocations = await db.Allocations
+        .Where(a => a.CategoryId == categoryId)
+        .ToListAsync();
+    return Results.Ok(allocations);
+}).RequireAuthorization();
+
 // create transaction
 app.MapPost("/transactions", async (TransactionRecord rec, WnabContext db) =>
 {
