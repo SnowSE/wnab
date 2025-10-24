@@ -1,5 +1,5 @@
-using WNAB.Logic;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 using Reqnroll;
 
@@ -23,8 +23,8 @@ public partial class StepDefinitions
         foreach (var row in dataTable.Rows)
         {
             var name = row["CategoryName"].ToString()!;
-            // Act: Create category record using service
-            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            // Act: Create category record
+            var record = new CategoryRecord(name);
             categoryRecords.Add(record);
         }
         
@@ -44,13 +44,29 @@ public partial class StepDefinitions
         foreach (var row in dataTable.Rows)
         {
             var name = row["CategoryName"].ToString()!;
-            // Act: Create category record using service
-            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            // Act: Create category record
+            var record = new CategoryRecord(name);
             categoryRecords.Add(record);
         }
         
         // Store: Store records for later conversion
         context["CategoryRecords"] = categoryRecords;
+    }
+
+    [Given(@"the following category for user ""(.*)""")]
+    public void GivenTheFollowingCategoryForUserWithEmail(string email, DataTable dataTable)
+    {
+        // Create categories immediately (combines Given + When steps)
+        GivenTheFollowingCategory(dataTable);
+        WhenICreateTheCategory();
+    }
+
+    [Given(@"the following categories for user ""(.*)""")]
+    public void GivenTheFollowingCategoriesForUserWithEmail(string email, DataTable dataTable)
+    {
+        // Create categories immediately (combines Given + When steps)
+        GivenTheFollowingCategories(dataTable);
+        WhenICreateTheCategories();
     }
 
     [Given(@"the existing categories")]
@@ -69,13 +85,16 @@ public partial class StepDefinitions
         foreach (var row in dataTable.Rows)
         {
             var name = row["CategoryName"].ToString()!;
-            // Act: Create category record using service
-            var record = new CategoryRecord(name, user.Id == 0 ? 1 : user.Id);
+            // Act: Create category record
+            var record = new CategoryRecord(name);
             
             // Convert to category object immediately
-            var category = new Category(record, user.Id)
+            var category = new Category
             {
-                Id = nextCategoryId++
+                Id = nextCategoryId++,
+                Name = name,
+                UserId = user.Id == 0 ? 1 : user.Id,
+                User = user
             };
             
             user.Categories.Add(category);
@@ -93,9 +112,12 @@ public partial class StepDefinitions
         
         foreach (var record in categoryRecords)
         {
-            var category = new Category(record, user.Id)
+            var category = new Category
             {
-                Id = categoryId++
+                Id = categoryId++,
+                Name = record.Name,
+                UserId = user.Id,
+                User = user
             };
             convertedCategories.Add(category);
         }
@@ -121,10 +143,12 @@ public partial class StepDefinitions
         
         foreach (var record in categoryRecords)
         {
-            var category = new Category(record, user.Id)
-            // the only thing that should ever be set here is an ID, nothing else.
+            var category = new Category
             {
-                Id = categoryId++
+                Id = categoryId++,
+                Name = record.Name,
+                UserId = user.Id,
+                User = user
             };
             convertedCategories.Add(category);
         }

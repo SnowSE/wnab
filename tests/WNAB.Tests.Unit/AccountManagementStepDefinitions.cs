@@ -27,8 +27,8 @@ public partial class StepDefinitions
 		// Get user from context
 		var user = context.Get<User>("User");
 		
-		// Act: Create account record using service
-		var accountRecord = new AccountRecord(accountName, user.Id);
+		// Act: Create account record
+		var accountRecord = new AccountRecord(accountName);
 		// Note: OpeningBalance and AccountType aren't in the service method, so we'll set them after creation
 		
 		// Store the account record
@@ -46,12 +46,19 @@ public partial class StepDefinitions
 		// Actual
 		var user = context.Get<User>("User");
 		
-		// Act: Create account record using service
-		var accountRecord = new AccountRecord(accountName, user.Id);
+		// Act: Create account record
+		var accountRecord = new AccountRecord(accountName);
 		
 		// LLM-Dev:v3 Store record and temporarily store account data table for When step to access
 		context["AccountRecord"] = accountRecord;
 		context["AccountDataTable"] = dataTable;
+	}
+
+	[Given(@"the following account for user ""(.*)""")]
+	public void GivenTheFollowingAccountForUserWithEmail(string email, DataTable dataTable)
+	{
+		// Just call the existing method - email is already in context from "Given the created user"
+		Giventhefollowingaccountforuser(dataTable);
 	}
 
 	[Given(@"I create the accounts")]
@@ -62,10 +69,14 @@ public partial class StepDefinitions
 		var accountRecord = context.Get<AccountRecord>("AccountRecord");
 
 		//act
-		var account = new Account(accountRecord)
-		// the only thing that should ever be set here is an ID!
+		var account = new Account
 		{
-			Id = 1 // Set test ID
+			Id = 1,
+			AccountName = accountRecord.Name,
+			UserId = user.Id,
+			User = user,
+			AccountType = "bank",
+			CachedBalance = 0
 		};
 		
 		// Initialize user accounts if not already done
@@ -94,11 +105,14 @@ public partial class StepDefinitions
 		var accountType = accountDataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
 
 		// Act
-		var account = new Account(record)
-		// LLM-Dev:v4 Set ID and AccountType from the test data
+		var account = new Account
 		{
 			Id = accounts.Count + 1,
-			AccountType = accountType
+			AccountName = record.Name,
+			UserId = user.Id,
+			User = user,
+			AccountType = accountType,
+			CachedBalance = 0
 		};
 		accounts.Add(account);
 		
@@ -146,13 +160,18 @@ public partial class StepDefinitions
 		foreach (var row in dataTable.Rows)
 		{
 			var name = row["AccountName"].ToString()!;
-			// Act: Create account record using service
-			var record = new AccountRecord(name, user.Id == 0 ? 1 : user.Id);
+			// Act: Create account record
+			var record = new AccountRecord(name);
 			
 			// Convert to account object immediately
-			var account = new Account(record)
+			var account = new Account
 			{
-				Id = nextAccountId++
+				Id = nextAccountId++,
+				AccountName = record.Name,
+				UserId = user.Id == 0 ? 1 : user.Id,
+				User = user,
+				AccountType = "bank",
+				CachedBalance = 0
 			};
 			
 			user.Accounts.Add(account);

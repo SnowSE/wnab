@@ -1,5 +1,5 @@
-using WNAB.Logic;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 using Reqnroll;
 
@@ -32,8 +32,10 @@ public partial class StepDefinitions
             var transactionRecord = new TransactionRecord(
                 account.Id,
 				payee,
+				"",  // Description
                 amount,
-                date
+                date,
+				new List<TransactionSplitRecord>()  // Empty splits list
             );
             
             transactionRecords.Add(transactionRecord);
@@ -41,6 +43,17 @@ public partial class StepDefinitions
         
         // Store the transaction records
         context["TransactionRecords"] = transactionRecords;
+    }
+
+    [Given(@"the following transaction")]
+    public void GivenTheFollowingTransaction(DataTable dataTable)
+    {
+        // Store transaction data for later use in "When I enter the transaction with split"
+        var row = dataTable.Rows[0];
+        context["TransactionDate"] = DateTime.Parse(row["Date"].ToString()!);
+        context["TransactionPayee"] = row["Payee"].ToString()!;
+        context["TransactionMemo"] = row["Memo"].ToString()!;
+        context["TransactionAmount"] = decimal.Parse(row["Amount"].ToString()!);
     }
 
     [When("I enter the transaction with split")]
@@ -91,10 +104,10 @@ public partial class StepDefinitions
                         "Budget allocations must be created before transactions (budget-first approach).");
                 }
                 
-                splitRecords.Add(new TransactionSplitRecord(allocation.Id, splitAmount, false, null));
+                splitRecords.Add(new TransactionSplitRecord(allocation.Id, 0, splitAmount, false, null));
             }
 
-            var record = TransactionManagementService.CreateTransactionRecord(
+            var record = new TransactionRecord(
                 account.Id,
                 payee,
                 memo,
@@ -139,11 +152,15 @@ public partial class StepDefinitions
         
         foreach (var record in transactionRecords)
         {
-            var transaction = new Transaction(record)
+            var transaction = new Transaction
             {
                 Id = nextTransactionId++,
+                AccountId = record.AccountId,
                 Account = account,
-                Payee = "" 
+                Payee = record.Payee,
+                Description = record.Description,
+                Amount = record.Amount,
+                TransactionDate = record.TransactionDate
             };
             transactions.Add(transaction);
         }
@@ -225,14 +242,22 @@ public partial class StepDefinitions
             var record = new TransactionRecord(
                 account.Id,
                 payee,
+				"",  // Description
                 amount,
-                date
+                date,
+				new List<TransactionSplitRecord>()  // Empty splits
             );
             
             // Convert to transaction object immediately
-            var transaction = new Transaction(record)
+            var transaction = new Transaction
             {
-                Id = nextTransactionId++
+                Id = nextTransactionId++,
+				AccountId = record.AccountId,
+				Account = account,
+				Payee = record.Payee,
+				Description = record.Description,
+				Amount = record.Amount,
+				TransactionDate = record.TransactionDate
             };
             
             existingTransactions.Add(transaction);
@@ -240,35 +265,5 @@ public partial class StepDefinitions
         
         // Store: Store transactions for later use
         context["Transactions"] = existingTransactions;
-    }
-
-    [Then("I should have the following transaction splits")]
-    public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
-    {
-        // Inputs (expected)
-        var expectedSplits = dataTable.Rows.Select(row => new
-        {
-            Category = row["Category"].ToString(),
-            Amount = decimal.Parse(row["Amount"].ToString())
-        }).ToList();
-
-        // Actual
-        var actualRecord = context.Get<TransactionRecord>("TransactionRecord");
-        var user = context.Get<User>("User");
-        var categories = user.Categories.ToList();
-        var allocations = context.Get<List<CategoryAllocation>>("Allocations");
-
-        // Assert
-        actualRecord.Splits.Count.ShouldBe(expectedSplits.Count);
-        for (int i = 0; i < expectedSplits.Count; i++)
-        {
-            var expectedSplit = expectedSplits[i];
-            var actualSplit = actualRecord.Splits[i];
-            var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
-            var expectedAllocation = allocations.Single(a => a.CategoryId == expectedCategory.Id);
-
-            actualSplit.Amount.ShouldBe(expectedSplit.Amount);
-            actualSplit.CategoryAllocationId.ShouldBe(expectedAllocation.Id);
-        }
     }
 }

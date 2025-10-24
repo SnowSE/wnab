@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using Reqnroll;
-using WNAB.Logic;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
@@ -22,9 +22,9 @@ public partial class StepDefinitions
 		var firstname = row["FirstName"];
 		var lastname = row["LastName"];
 		var email = row["Email"];
-		var userId = int.Parse(row["Id"]); // LLM-Dev v6.4: Get user ID from feature data instead of hardcoding
+		var userId = dataTable.Header.Contains("Id") ? int.Parse(row["Id"]) : 1;  // Default to 1 if not provided
 		
-		// Act - create user with ID from feature data
+		// Act - create user with ID from feature data (or default)
 		User user = new() { 
 			Id = userId,
 			FirstName = firstname, 
@@ -62,10 +62,14 @@ public partial class StepDefinitions
 		var record = context.Get<UserRecord>("UserRecord");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
 		// Act
-		// TODO: Need UserManagementService.CreateUserFromRecord() method
-		var user = new User(record);
+		var user = new User
+		{
+			Id = users.Count + 1,
+			FirstName = record.FirstName,
+			LastName = record.LastName,
+			Email = record.Email
+		};
 		// Store
-		user.Id = users.Count + 1;
 		users.Add(user);
 		context["Users"] = users;
 		context["User"] = user;
