@@ -11,7 +11,7 @@ Feature: Transaction Splits
     And the created accounts
       | AccountName |
       | Checking    |
-    And the existing categories
+    And the created categories
       | CategoryName |
       | Groceries    |
     And the created transactions
@@ -32,7 +32,7 @@ Feature: Transaction Splits
     And the created accounts
       | AccountName |
       | Checking    |
-    And the existing categories
+    And the created categories
       | CategoryName  |
       | Groceries     |
       | Personal Care |
@@ -56,7 +56,7 @@ Feature: Transaction Splits
     And the created accounts
       | AccountName |
       | Checking    |
-    And the existing categories
+    And the created categories
       | CategoryName  |
       | Groceries     |
       | Dining        |

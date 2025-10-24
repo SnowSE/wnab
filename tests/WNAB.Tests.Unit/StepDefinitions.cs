@@ -1,7 +1,6 @@
 
-using WNAB.Logic;
-// using WNAB.Logic.Interfaces;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
