@@ -8,7 +8,7 @@ Feature: Category Allocation
     Given the created user
       | Id | FirstName | LastName | Email                |
       | 4  | Carol     | Wang     | carol.w@example.io   |
-    And the existing categories
+    And the created categories
       | CategoryName |
       | Groceries    |
     When I allocate the following amounts
@@ -22,7 +22,7 @@ Feature: Category Allocation
     Given the created user
       | Id | FirstName | LastName | Email                |
       | 5  | Dana      | Lee      | dana.lee@example.io  |
-    And the existing categories
+    And the created categories
       | CategoryName |
       | Utilities    |
     When I allocate the following amounts
@@ -40,7 +40,7 @@ Feature: Category Allocation
     Given the created user
       | Id | FirstName | LastName | Email                 |
       | 6  | Fiona     | Patel    | fiona.p@example.io    |
-    And the existing categories
+    And the created categories
       | CategoryName |
       | Dining       |
       | Fuel         |

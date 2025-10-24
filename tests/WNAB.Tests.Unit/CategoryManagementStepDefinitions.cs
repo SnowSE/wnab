@@ -69,8 +69,8 @@ public partial class StepDefinitions
         WhenICreateTheCategories();
     }
 
-    [Given(@"the existing categories")]
-    public void GivenTheExistingCategories(DataTable dataTable)
+    [Given(@"the created categories")]
+    public void GivenTheCreatedCategories(DataTable dataTable)
     {
         // Inputs: parse category data and create categories directly
         var user = context.Get<User>("User");
