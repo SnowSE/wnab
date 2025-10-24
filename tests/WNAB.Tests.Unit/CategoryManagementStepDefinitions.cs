@@ -53,16 +53,16 @@ public partial class StepDefinitions
         context["CategoryRecords"] = categoryRecords;
     }
 
-    [Given(@"the following category for user ""(.*)""")]
-    public void GivenTheFollowingCategoryForUserWithEmail(string email, DataTable dataTable)
+    [Given(@"the created category for user ""(.*)""")]
+    public void GivenTheCreatedCategoryForUserWithEmail(string email, DataTable dataTable)
     {
         // Create categories immediately (combines Given + When steps)
         GivenTheFollowingCategory(dataTable);
         WhenICreateTheCategory();
     }
 
-    [Given(@"the following categories for user ""(.*)""")]
-    public void GivenTheFollowingCategoriesForUserWithEmail(string email, DataTable dataTable)
+    [Given(@"the created categories for user ""(.*)""")]
+    public void GivenTheCreatedCategoriesForUserWithEmail(string email, DataTable dataTable)
     {
         // Create categories immediately (combines Given + When steps)
         GivenTheFollowingCategories(dataTable);

@@ -54,11 +54,12 @@ public partial class StepDefinitions
 		context["AccountDataTable"] = dataTable;
 	}
 
-	[Given(@"the following account for user ""(.*)""")]
-	public void GivenTheFollowingAccountForUserWithEmail(string email, DataTable dataTable)
+	[Given(@"the created account for user ""(.*)""")]
+	public void GivenTheCreatedAccountForUserWithEmail(string email, DataTable dataTable)
 	{
-		// Just call the existing method - email is already in context from "Given the created user"
+		// Create account immediately (combines Given + When steps) - email is already in context from "Given the created user"
 		Giventhefollowingaccountforuser(dataTable);
+		WhenICreateTheAccounts();
 	}
 
 	[Given(@"I create the accounts")]
