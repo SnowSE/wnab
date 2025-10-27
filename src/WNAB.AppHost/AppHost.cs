@@ -14,7 +14,8 @@ var mailpit = builder.AddMailPit("mailpit")
 
 var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
     .WithReference(db)
-    .WithReference(mailpit);
+    .WithReference(mailpit)
+    .WaitFor(db);
 
 var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
     .WithReference(api);

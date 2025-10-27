@@ -8,6 +8,18 @@ public partial class AddCategoryPopup : Popup
     {
         InitializeComponent();
         BindingContext = vm;
-        vm.RequestClose += async (_, _) => await CloseAsync();
+        vm.RequestClose += OnRequestCloseAsync;
+    }
+
+    private async void OnRequestCloseAsync(object? sender, EventArgs e)
+    {
+        try
+        {
+            await CloseAsync();
+        }
+        catch (InvalidOperationException)
+        {
+            // do nothing , popup is already closed
+        }
     }
 }
