@@ -7,14 +7,6 @@
     Shell.FlyoutBehavior="Flyout"
     Title="WNAB">
 
-    <!-- LLM-Dev:v1 Updated to add NewMainPage to shell dropdown navigation -->
-    <FlyoutItem Title="New Main Page" Icon="home.png">
-        <ShellContent
-            Title="New Main Page"
-            ContentTemplate="{DataTemplate local:NewMainPage}"
-            Route="NewMainPage" />
-    </FlyoutItem>
-
     <FlyoutItem Title="Original Home" Icon="home.png">
         <ShellContent
             Title="Home"

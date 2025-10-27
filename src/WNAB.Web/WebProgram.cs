@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Security.Claims;
-using WNAB.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

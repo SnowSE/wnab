@@ -37,7 +37,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\WNAB.API\WNAB.API.csproj" />
     <ProjectReference Include="..\..\src\WNAB.Data\WNAB.Data.csproj" />
-    <ProjectReference Include="..\..\src\WNAB.Services\WNAB.Services.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using WNAB.Data;
+using WNAB.SharedDTOs;
 
-namespace WNAB.Services;
+namespace WNAB.MVM;
 
 
 public class UserManagementService
