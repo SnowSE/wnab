@@ -18,7 +18,7 @@
         <!-- LLM-Dev:v4 Simplified to just category name - removed User ID field -->
         <StackLayout Spacing="8">
             <Label Text="Name" TextColor="Black" FontSize="16" />
-            <Entry Text="{Binding Name}" 
+            <Entry Text="{Binding Model.Name}" 
                    Placeholder="Category name"
                    BackgroundColor="LightGray"
                    TextColor="Black"

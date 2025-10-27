@@ -77,6 +77,13 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("No connection string found for 'wnabdb'. Run via AppHost or set env var ConnectionStrings__wnabdb.");
 }
 
+// Add Include Error Detail to connection string for debugging  OA 10/24/2025
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+{
+    IncludeErrorDetail = true
+};
+connectionString = connectionStringBuilder.ToString();
+
 // Register a shared NpgsqlDataSource for efficient pooling and re-use it in EF Core.
 builder.Services.AddNpgsqlDataSource(connectionString);
 
