@@ -21,22 +21,39 @@ public class CategoryManagementService
         if (record is null) throw new ArgumentNullException(nameof(record));
 
         var response = await _http.PostAsJsonAsync("categories", record, ct);
-        response.EnsureSuccessStatusCode();
+      response.EnsureSuccessStatusCode();
 
-        var created = await response.Content.ReadFromJsonAsync<Category>(cancellationToken: ct);
+        // CHANGE: Receive DTO instead of entity
+        var created = await response.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
         if (created is null) throw new InvalidOperationException("API returned no content when creating category.");
         return created.Id;
     }
 
     public async Task<List<Category>> GetCategoriesAsync(CancellationToken ct = default)
     {
-        var items = await _http.GetFromJsonAsync<List<Category>>("all/categories", ct);
-        return items ?? new();
+ // CHANGE: Receive DTOs and map to entities for backward compatibility
+  var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("all/categories", ct);
+    return dtos?.Select(MapToEntity).ToList() ?? new();
     }
 
     public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
     {
-        var list = await _http.GetFromJsonAsync<List<Category>>("categories", ct);
-        return list ?? new();
+    // CHANGE: Receive DTOs and map to entities for backward compatibility
+  var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct);
+return dtos?.Select(MapToEntity).ToList() ?? new();
     }
+
+  // Helper method to map DTO to entity
+    private static Category MapToEntity(CategoryDto dto) => new()
+    {
+        Id = dto.Id,
+        Name = dto.Name,
+        Description = dto.Description,
+      Color = dto.Color,
+        IsIncome = dto.IsIncome,
+        IsActive = dto.IsActive,
+  CreatedAt = dto.CreatedAt,
+   UpdatedAt = dto.UpdatedAt
+        // Note: User and UserId are intentionally not set to avoid circular references
+    };
 }

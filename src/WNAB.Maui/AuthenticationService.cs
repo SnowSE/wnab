@@ -137,7 +137,7 @@ public class AuthenticationService : IAuthenticationService
             if (!string.IsNullOrEmpty(_currentAccessToken))
             {
                 // Check if token is expired
-                if (_tokenExpiration > DateTime.UtcNow)
+                if (_tokenExpiration > DateTimeOffset.UtcNow)
                 {
                     return _currentAccessToken;
                 }

@@ -34,9 +34,11 @@ public partial class AddCategoryViewModel : ObservableObject
     private async Task CreateAsync()
     {
         var success = await Model.CreateCategoryAsync();
-        if (success)
+        if (!success)
         {
-            RequestClose?.Invoke(this, EventArgs.Empty);
+            await Shell.Current.DisplayAlertAsync("Error", "Something went wrong and we were unable to create the category.", "OK");
         }
+
+        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 }
