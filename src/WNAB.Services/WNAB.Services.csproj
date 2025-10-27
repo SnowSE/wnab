@@ -21,9 +21,5 @@
 	<ItemGroup>
 		<ProjectReference Include="..\WNAB.Data\WNAB.Data.csproj" />
 	</ItemGroup>
-	
-  <ItemGroup>
-    <Folder Include="DBServices\" />
-  </ItemGroup>
 
 </Project>
