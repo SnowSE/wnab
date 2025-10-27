@@ -1,5 +1,5 @@
-using WNAB.Logic; 
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 using Reqnroll;
 
@@ -42,11 +42,14 @@ public partial class StepDefinitions
 		{
 			var category = categories.Single(c => c.Id == record.CategoryId);
 
-			var allocation = new CategoryAllocation(record)
-			// the only thing that should ever be set here is an ID, nothing else.
+			var allocation = new CategoryAllocation
 			{
 				Id = nextId++,
-				Category = category // Set the navigation property for test validation
+				CategoryId = record.CategoryId,
+				BudgetedAmount = record.BudgetedAmount,
+				Month = record.Month,
+				Year = record.Year,
+				Category = category
 			};
 			allocations.Add(allocation);
 		}
@@ -75,16 +78,20 @@ public partial class StepDefinitions
 			var category = categories.Single(c => c.Name == categoryName);
 			if (category.Id == 0) category.Id = categories.IndexOf(category) + 1;
 
-			var record = CategoryAllocationManagementService.CreateCategoryAllocationRecord(
+			var record = new CategoryAllocationRecord(
 				category.Id,
 				decimal.Parse(row["BudgetedAmount"].ToString()!),
 				month,
 				year
 			);
 
-			var allocation = new CategoryAllocation(record)
+			var allocation = new CategoryAllocation
 			{
 				Id = nextId++,
+				CategoryId = record.CategoryId,
+				BudgetedAmount = record.BudgetedAmount,
+				Month = record.Month,
+				Year = record.Year,
 				Category = category
 			};
 			allocations.Add(allocation);
@@ -114,5 +121,12 @@ public partial class StepDefinitions
 			match.ShouldNotBeNull();
 			match!.BudgetedAmount.ShouldBe(expectedAmount);
 		}
+	}
+
+	[Then(@"I should have the following category allocations")]
+	public void ThenIshouldhavethefollowingcategoryallocations(DataTable dataTable)
+	{
+		// Just call the other method with empty email parameter (not used anyway)
+		ThenIshouldhavethefollowingcategoryallocationsforuser("", dataTable);
 	}
 }

@@ -1,5 +1,5 @@
-using WNAB.Logic;
-using WNAB.Logic.Data;
+using WNAB.Data;
+using WNAB.Services;
 using Shouldly;
 using Reqnroll;
 
@@ -28,11 +28,13 @@ public partial class StepDefinitions
             var amount = decimal.Parse(row["Amount"].ToString()!);
             var category = categories.Single(c => c.Name == categoryName);
             
-            // Create split record using service method
+            // Create split record
             var splitRecord = new TransactionSplitRecord(
-                category.Id, 
-                transaction.Id, 
-                amount
+                category.Id,
+                transaction.Id,
+                amount,
+                false,
+                null
             );
             splitRecords.Add(splitRecord);
         }
@@ -55,18 +57,23 @@ public partial class StepDefinitions
         var transactionSplits = new List<TransactionSplit>();
         int nextSplitId = 1;
         
-        foreach (var splitRecord in splitRecords)
-        {
-            var category = categories.Single(c => c.Id == splitRecord.CategoryId);
-            var split = new TransactionSplit(splitRecord)
-            {
-                Id = nextSplitId++,
-                Category = category,
-                Transaction = transaction
-            };
-            transactionSplits.Add(split);
-        }
-        
+		foreach (var splitRecord in splitRecords)
+		{
+			var category = categories.Single(c => c.Id == splitRecord.CategoryAllocationId);
+			var split = new TransactionSplit
+			{
+				Id = nextSplitId++,
+				CategoryAllocationId = splitRecord.CategoryAllocationId,
+				TransactionId = splitRecord.TransactionId,
+				Amount = splitRecord.Amount,
+				IsIncome = splitRecord.IsIncome,
+				Notes = splitRecord.Notes,
+				CategoryAllocation = new CategoryAllocation { Id = splitRecord.CategoryAllocationId, CategoryId = category.Id, Category = category },
+				Transaction = transaction
+			};
+			transactionSplits.Add(split);
+		}
+		
         // Associate splits with transaction
         transaction.TransactionSplits = transactionSplits;
         
@@ -75,7 +82,7 @@ public partial class StepDefinitions
     }
 
     [Then(@"I should have the following transaction splits")]
-    public void ThenIShouldHaveTheFollowingTransactionSplits(DataTable dataTable)
+    public void ThenIShouldHaveTheFollowingTransactionSplitsFromSplitObjects(DataTable dataTable)
     {
         // Inputs (expected)
         var expectedSplits = dataTable.Rows.Select(row => new
@@ -84,23 +91,54 @@ public partial class StepDefinitions
             Amount = decimal.Parse(row["Amount"].ToString()!)
         }).ToList();
 
-        // Actual - get splits from converted objects
-        var actualSplits = context.Get<List<TransactionSplit>>("TransactionSplits");
-        var user = context.Get<User>("User");
-        var categories = user.Categories.ToList();
-
-        // Assert
-        actualSplits.Count.ShouldBe(expectedSplits.Count);
-        
-        foreach (var expectedSplit in expectedSplits)
+        // Actual - get splits from converted objects (for tests that use "I create the transaction splits")
+        if (context.ContainsKey("TransactionSplits"))
         {
-            var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
-            var actualSplit = actualSplits.FirstOrDefault(s => 
-                s.CategoryId == expectedCategory.Id && s.Amount == expectedSplit.Amount);
+            var actualSplits = context.Get<List<TransactionSplit>>("TransactionSplits");
+            var user = context.Get<User>("User");
+            var categories = user.Categories.ToList();
+
+            // Assert
+            actualSplits.Count.ShouldBe(expectedSplits.Count);
             
-            actualSplit.ShouldNotBeNull($"Split for category '{expectedSplit.Category}' with amount {expectedSplit.Amount} should exist");
-            actualSplit!.Amount.ShouldBe(expectedSplit.Amount);
-            actualSplit.CategoryId.ShouldBe(expectedCategory.Id);
+            foreach (var expectedSplit in expectedSplits)
+            {
+                var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
+                // Find matching category allocation
+                var allocations = context.ContainsKey("Allocations") ? context.Get<List<CategoryAllocation>>("Allocations") : new List<CategoryAllocation>();
+                var expectedAllocation = allocations.FirstOrDefault(a => a.CategoryId == expectedCategory.Id);
+                
+                var actualSplit = actualSplits.FirstOrDefault(s => 
+                    s.CategoryAllocationId == (expectedAllocation?.Id ?? expectedCategory.Id) && s.Amount == expectedSplit.Amount);
+                
+                actualSplit.ShouldNotBeNull($"Split for category '{expectedSplit.Category}' with amount {expectedSplit.Amount} should exist");
+                actualSplit!.Amount.ShouldBe(expectedSplit.Amount);
+            }
+        }
+        // Otherwise fallback to TransactionRecord (for tests that use "I enter the transaction with split")
+        else if (context.ContainsKey("TransactionRecord"))
+        {
+            var actualRecord = context.Get<TransactionRecord>("TransactionRecord");
+            var user = context.Get<User>("User");
+            var categories = user.Categories.ToList();
+            var allocations = context.Get<List<CategoryAllocation>>("Allocations");
+
+            // Assert
+            actualRecord.Splits.Count.ShouldBe(expectedSplits.Count);
+            for (int i = 0; i < expectedSplits.Count; i++)
+            {
+                var expectedSplit = expectedSplits[i];
+                var actualSplit = actualRecord.Splits[i];
+                var expectedCategory = categories.Single(c => c.Name == expectedSplit.Category);
+                var expectedAllocation = allocations.Single(a => a.CategoryId == expectedCategory.Id);
+
+                actualSplit.Amount.ShouldBe(expectedSplit.Amount);
+                actualSplit.CategoryAllocationId.ShouldBe(expectedAllocation.Id);
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException("Neither 'TransactionSplits' nor 'TransactionRecord' was found in context");
         }
     }
 }

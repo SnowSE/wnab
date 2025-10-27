@@ -43,11 +43,10 @@ Scenario: Buy groceries
 	Given the created user
 		| FirstName | LastName | Email                |
 		| John      | Doe      | john.doe@example.com |
-	And the following account for user "john.doe@example.com"
+	And the created account for user "john.doe@example.com"
 		| AccountName     | AccountType | OpeningBalance |
 		| Checking        | Checking    | 1000.00        |
-	And I create the accounts
-	And the following category for user "john.doe@example.com"
+	And the created category for user "john.doe@example.com"
 		| CategoryName |
 		| Groceries    |
 	And the following budget allocation for September 2025
@@ -70,11 +69,10 @@ Scenario: Buy groceries and personal care
 	Given the created user
 		| FirstName | LastName | Email                |
 		| Jane      | Smith    | jane.smith@example.com |
-	And the following account for user "jane.smith@example.com"
+	And the created account for user "jane.smith@example.com"
 		| AccountName     | AccountType | OpeningBalance |
 		| Checking        | Checking    | 1000.00        |
-	And I create the accounts
-	And the following categories for user "jane.smith@example.com"
+	And the created categories for user "jane.smith@example.com"
 		| CategoryName  |
 		| Groceries     |
 		| Personal Care |
@@ -112,11 +110,10 @@ Scenario: Cannot create transaction without budget allocation
 	Given the created user
 		| FirstName | LastName | Email                  |
 		| Bob       | Johnson  | bob.johnson@example.com |
-	And the following account for user "bob.johnson@example.com"
+	And the created account for user "bob.johnson@example.com"
 		| AccountName | AccountType | OpeningBalance |
 		| Checking    | Checking    | 1000.00        |
-	And I create the accounts
-	And the following category for user "bob.johnson@example.com"
+	And the created category for user "bob.johnson@example.com"
 		| CategoryName |
 		| Groceries    |
 	And the following transaction
