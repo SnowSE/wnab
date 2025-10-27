@@ -144,7 +144,18 @@ app.MapGet("/categories", async (HttpContext context, WnabContext db, WNAB.API.S
     var categories = await db.Categories
         .Where(c => c.UserId == user.Id && c.IsActive)
         .AsNoTracking()
+        .Select(c => new CategoryDto(
+            c.Id,
+            c.Name,
+            c.Description,
+            c.Color,
+            c.IsIncome,
+            c.IsActive,
+            c.CreatedAt,
+            c.UpdatedAt
+        ))
         .ToListAsync();
+   
     return Results.Ok(categories);
 }).RequireAuthorization();
 
@@ -222,8 +233,21 @@ app.MapPost("/categories", async (HttpContext context, CategoryRecord rec, WnabC
         var category = new Category { Name = rec.Name, UserId = user.Id };
         db.Categories.Add(category);
         await db.SaveChangesAsync();
-        return Results.Created($"/categories/{category.Id}", category);
-
+        
+        // CHANGE: Return a DTO instead of the entity
+        var categoryDto = new CategoryDto(
+            category.Id,
+            category.Name,
+            category.Description,
+            category.Color,
+            category.IsIncome,
+            category.IsActive,
+            category.CreatedAt,
+            category.UpdatedAt
+        );
+        
+        await transaction.CommitAsync();
+        return Results.Created($"/categories/{category.Id}", categoryDto);
     }
     catch
     {
