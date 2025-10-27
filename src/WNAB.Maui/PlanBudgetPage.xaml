@@ -108,6 +108,40 @@
             <ScrollView Padding="30,0,30,20">
                 <VerticalStackLayout Spacing="20">
                     
+                    <!-- LLM-Dev: Month/Year Selection -->
+                    <Border Padding="20,15"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                            Margin="0,0,0,10">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="Budget Period" 
+                                   FontSize="18" 
+                                   FontAttributes="Bold"/>
+                            <HorizontalStackLayout Spacing="15">
+                                <VerticalStackLayout Spacing="5" WidthRequest="150">
+                                    <Label Text="Month" FontSize="14"/>
+                                    <Picker ItemsSource="{Binding MonthOptions}"
+                                            SelectedItem="{Binding SelectedMonthName, Mode=TwoWay}"
+                                            FontSize="16"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Spacing="5" WidthRequest="150">
+                                    <Label Text="Year" FontSize="14"/>
+                                    <Entry Text="{Binding Model.CurrentYear, Mode=TwoWay}"
+                                           Keyboard="Numeric"
+                                           FontSize="16"
+                                           Placeholder="2025"/>
+                                </VerticalStackLayout>
+                                <Button Text="Load"
+                                        Command="{Binding SetMonthYearCommand}"
+                                        VerticalOptions="End"
+                                        WidthRequest="80"
+                                        HeightRequest="40"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                    
                     <!-- LLM-Dev: Selected categories for budget planning -->
                     <VerticalStackLayout Spacing="10">
                     

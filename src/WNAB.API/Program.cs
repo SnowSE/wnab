@@ -277,7 +277,14 @@ app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db)
         CategoryId = rec.CategoryId,
         BudgetedAmount = rec.BudgetedAmount,
         Month = rec.Month,
-        Year = rec.Year
+        Year = rec.Year,
+        EditorName = rec.EditorName,
+        PercentageAllocation = rec.PercentageAllocation,
+        OldAmount = rec.OldAmount,
+        EditedMemo = rec.EditedMemo,
+        IsActive = true,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
     };
 
     db.Allocations.Add(allocation);
