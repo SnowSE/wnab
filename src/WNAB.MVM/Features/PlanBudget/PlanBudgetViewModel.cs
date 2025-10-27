@@ -15,6 +15,28 @@ public partial class PlanBudgetViewModel : ObservableObject
 
     public PlanBudgetModel Model { get; }
 
+    // Month names for picker
+    public List<string> MonthOptions { get; } = new()
+    {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    // Selected month name for picker binding
+    public string SelectedMonthName
+    {
+        get => MonthOptions[Model.CurrentMonth - 1];
+        set
+        {
+            var index = MonthOptions.IndexOf(value);
+            if (index >= 0)
+            {
+                Model.CurrentMonth = index + 1;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService)
     {
         Model = model;
@@ -135,10 +157,8 @@ public partial class PlanBudgetViewModel : ObservableObject
     /// Set month/year command - delegates to Model to load allocations for that period.
     /// </summary>
     [RelayCommand]
-    private async Task SetMonthYear(object parameter)
+    private async Task SetMonthYear()
     {
-        // Parameter could be a tuple or custom object with Month and Year
-        // For now, just delegate to Model's current month/year
-        await Model.LoadDataAsync();
+        await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
     }
 }

@@ -14,6 +14,7 @@
             <!-- LLM-Dev: v1 Added converters for data binding -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
+            <converters:MonthToIndexConverter x:Key="MonthToIndexConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
