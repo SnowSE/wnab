@@ -216,10 +216,21 @@ app.MapPost("/categories", async (HttpContext context, CategoryRecord rec, WnabC
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    var category = new Category { Name = rec.Name, UserId = user.Id };
-    db.Categories.Add(category);
-    await db.SaveChangesAsync();
-    return Results.Created($"/categories/{category.Id}", category);
+    using var transaction = await db.Database.BeginTransactionAsync();
+    try
+    {
+        var category = new Category { Name = rec.Name, UserId = user.Id };
+        db.Categories.Add(category);
+        await db.SaveChangesAsync();
+        return Results.Created($"/categories/{category.Id}", category);
+
+    }
+    catch
+    {
+        await transaction.RollbackAsync();
+        throw;
+    }
+
 }).RequireAuthorization();
 
 app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
