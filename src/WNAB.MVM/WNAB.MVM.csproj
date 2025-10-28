@@ -20,7 +20,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\WNAB.Data\WNAB.Data.csproj" />
 		<ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
-		<ProjectReference Include="..\WNAB.Maui.ServiceDefaults\WNAB.Maui.ServiceDefaults.csproj" />
 		<ProjectReference Include="..\WNAB.SharedDTOs\WNAB.SharedDTOs.csproj" />
 	</ItemGroup>
 

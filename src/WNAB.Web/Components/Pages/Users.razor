@@ -1,18 +1,19 @@
 @page "/users"
-@inject UserManagementService UsersService
+@inject UsersViewModel ViewModel
 @layout MainLayoutNoSidebar
+@implements IDisposable
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h1>Users</h1>
     </div>
     <div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal" @onclick="OnAddUserClick">
             <i class="bi bi-person-plus me-1"></i>
             Create User
         </button>
-        <button class="btn btn-outline-secondary ms-2" @onclick="Load" disabled="@_isLoading">
-            @if (_isLoading)
+        <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+            @if (ViewModel.Model.IsBusy)
             {
                 <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             }
@@ -25,27 +26,19 @@
     </div>
 </div>
 
-@if (_error is not null)
+@if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
 {
-    <div class="alert alert-danger">
+    <div class="alert alert-info">
         <h6 class="alert-heading">
-            <i class="bi bi-exclamation-triangle me-1"></i>
-            Error Loading Users
+            <i class="bi bi-info-circle me-1"></i>
+            Status
         </h6>
-        <p class="mb-2">@_error</p>
-        @if (_error.Contains("HttpRequestException") || _error.Contains("TaskCanceledException") || _error.Contains("SocketException"))
-        {
-            <hr>
-            <p class="mb-0 small">
-                <i class="bi bi-info-circle me-1"></i>
-                This appears to be a connectivity issue. Please ensure the API server is running and accessible.
-            </p>
-        }
+        <p class="mb-0">@ViewModel.Model.StatusMessage</p>
     </div>
 }
 
 <div class="responsive-panel">
-    @if (_users is null)
+    @if (ViewModel.Model.Users == null)
     {
         <div class="text-center p-4">
             <div class="spinner-border text-primary" role="status">
@@ -54,7 +47,7 @@
             <p class="mt-2 text-muted">Loading users...</p>
         </div>
     }
-    else if (_users.Count == 0)
+    else if (ViewModel.Model.Users.Count == 0)
     {
         <div class="text-center p-4">
             <i class="bi bi-people fs-1 text-muted"></i>
@@ -75,7 +68,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var u in _users)
+                    @foreach (var u in ViewModel.Model.Users)
                     {
                         <tr>
                             <td class="fw-semibold">@u.FirstName @u.LastName</td>
@@ -103,85 +96,60 @@
 </div>
 
 <!-- Include the Create User Modal -->
-<CreateUserModal OnUserCreated="RefreshUsersAfterCreate" />
+<CreateUserModal OnUserCreated="OnUserCreated" />
 
 @code {
-    // LLM-Dev:v5 Updated to use popup modals instead of navigation pages, matching MAUI pattern. Enhanced error handling for better debugging.
-    private List<User>? _users;
-    private string? _error;
-    private bool _isLoading;
-
-    protected override async Task OnInitializedAsync() => await Load();
-
-    private async Task Load()
+    // LLM-Dev:v6 Refactored to use WNAB.MVM ViewModels and Models for shared business logic
+    // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
+    
+    protected override async Task OnInitializedAsync()
     {
-        if (_isLoading) return;
+        // Subscribe to property changes to trigger UI updates
+        ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
         
-        _error = null;
-        _isLoading = true;
-        StateHasChanged();
-        
-        try
-        {
-            // LLM-Dev:v5 Use service list method to avoid HttpClient in UI. Added timeout handling.
-            _users = await UsersService.GetUsersAsync();
-        }
-        catch (HttpRequestException httpEx)
-        {
-            _error = $"Network error: {httpEx.Message}";
-        }
-        catch (TaskCanceledException tcEx) when (tcEx.InnerException is TimeoutException)
-        {
-            _error = "Request timed out. The API server may be unavailable.";
-        }
-        catch (TaskCanceledException tcEx)
-        {
-            _error = $"Request was cancelled: {tcEx.Message}";
-        }
-        catch (Exception ex)
-        {
-            _error = $"Unexpected error: {ex.Message}";
-        }
-        finally 
-        { 
-            _isLoading = false;
-            StateHasChanged();
-        }
+        await ViewModel.InitializeAsync();
     }
 
-    // LLM-Dev:v4 Handler for when user is created in modal to refresh list
-    private async Task RefreshUsersAfterCreate()
+    private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        await Load();
+        // When Model properties change, update the UI
+        InvokeAsync(StateHasChanged);
     }
 
-    // LLM-Dev:v4 Add action handlers for table actions
+    private async Task OnRefreshClick()
+    {
+        await ViewModel.Model.RefreshAsync();
+    }
+
+    private async Task OnAddUserClick()
+    {
+        // Modal is shown via Bootstrap, but we call the ViewModel command for consistency
+        // (the BlazorPopupService is a no-op)
+        await ViewModel.AddUserCommand.ExecuteAsync(null);
+    }
+
+    private async Task OnUserCreated()
+    {
+        // Called by modal when user is created - refresh the list
+        await ViewModel.Model.RefreshAsync();
+    }
+
+    // Placeholder action handlers
     private void EditUser(int userId)
     {
-        // This could open an edit modal popup - for now just show an alert
-        // In a future version, this could open an edit user modal popup
+        // Future: open edit modal
     }
 
     private async Task DeleteUser(int userId)
     {
-        if (await ConfirmDelete())
-        {
-            try
-            {
-                // Implementation would call delete service method
-                await Load(); // Refresh after delete
-            }
-            catch (Exception ex)
-            {
-                _error = $"Error deleting user: {ex.Message}";
-            }
-        }
+        // Future: implement delete with confirmation
     }
 
-    private Task<bool> ConfirmDelete()
+    public void Dispose()
     {
-        // In a real implementation, this would use a confirmation modal
-        // For now, return false to prevent accidental deletion
-        return Task.FromResult(false);
+        if (ViewModel?.Model != null)
+        {
+            ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;
+        }
     }
 }

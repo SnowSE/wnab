@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
-using WNAB.Services;
 
 namespace WNAB.Maui;
 
@@ -59,9 +58,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AddAccountModel>();
 		builder.Services.AddSingleton<AddAccountViewModel>();
 		builder.Services.AddSingleton<AddAccountPopup>();
-
-		builder.Services.AddSingleton<NewMainPageViewModel>();
-		builder.Services.AddSingleton<NewMainPage>();
 
 
 

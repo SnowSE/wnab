@@ -1,5 +1,7 @@
 using WNAB.Web;
 using WNAB.Web.Components;
+using WNAB.Web.Services;
+using WNAB.MVM;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
@@ -72,13 +74,13 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddHttpContextAccessor();
 
 // Register the authentication delegating handler
-builder.Services.AddTransient<AuthenticationDelegatingHandler>();
+builder.Services.AddTransient<WNAB.Web.AuthenticationDelegatingHandler>();
 
 // LLM-Dev:v2 Centralize base root: define ONE named HttpClient with the service-discovery base URI
 // and construct all Logic services with that named client via IHttpClientFactory.
 // Add the authentication handler to attach tokens to API requests
 builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"))
-    .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
+    .AddHttpMessageHandler<WNAB.Web.AuthenticationDelegatingHandler>();
 
 builder.Services.AddTransient<UserManagementService>(sp =>
     new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
@@ -90,6 +92,24 @@ builder.Services.AddTransient<CategoryAllocationManagementService>(sp =>
     new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddTransient<TransactionManagementService>(sp =>
     new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+
+// Register WNAB.MVM services for shared business logic
+builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
+builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
+
+// Register all Models (business logic layer)
+builder.Services.AddScoped<AccountsModel>();
+builder.Services.AddScoped<CategoriesModel>();
+builder.Services.AddScoped<TransactionsModel>();
+builder.Services.AddScoped<PlanBudgetModel>();
+builder.Services.AddScoped<UsersModel>();
+
+// Register all ViewModels (UI coordination layer)
+builder.Services.AddScoped<AccountsViewModel>();
+builder.Services.AddScoped<CategoriesViewModel>();
+builder.Services.AddScoped<TransactionsViewModel>();
+builder.Services.AddScoped<PlanBudgetViewModel>();
+builder.Services.AddScoped<UsersViewModel>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

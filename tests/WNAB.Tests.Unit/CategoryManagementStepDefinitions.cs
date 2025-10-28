@@ -1,7 +1,7 @@
 using WNAB.Data;
-using WNAB.Services;
 using Shouldly;
 using Reqnroll;
+using WNAB.SharedDTOs;
 
 namespace WNAB.Tests.Unit;
 

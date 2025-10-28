@@ -1,5 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using WNAB.Services;
+using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
 
