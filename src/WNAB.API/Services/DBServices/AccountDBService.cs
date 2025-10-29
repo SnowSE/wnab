@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WNAB.Data;
 
-namespace WNAB.Services;
+namespace WNAB.API;
 
 public class AccountDBService
 {

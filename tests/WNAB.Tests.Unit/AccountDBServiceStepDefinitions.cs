@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Reqnroll;
 using Shouldly;
 using WNAB.Data;
-using WNAB.Services;
+using WNAB.API;
 
 namespace WNAB.Tests.Unit;
 
