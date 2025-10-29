@@ -2,3 +2,4 @@ Ask Questions. Do one thing at a time. Do not do more than what was asked. Try n
 Every time you finish a task or task list, read the files in and compare against what was asked.
 Read errors before you move on.
 Unless given express permission: Do not run the program, but you can build and run tests.
+The first thing you should try when you see an error is a package restore with dotnet restore.
