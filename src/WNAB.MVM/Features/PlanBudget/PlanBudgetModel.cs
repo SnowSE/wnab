@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using WNAB.Data;
-using WNAB.Services;
+using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
 

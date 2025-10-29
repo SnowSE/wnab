@@ -7,7 +7,6 @@ public partial class AppShell : Shell
 		InitializeComponent();
 		
 		// LLM-Dev:v4 Register routes for programmatic navigation, including NewMainPage
-		Routing.RegisterRoute("NewMainPage", typeof(NewMainPage));
 		Routing.RegisterRoute("Categories", typeof(CategoriesPage));
 		Routing.RegisterRoute("Accounts", typeof(AccountsPage));
 		Routing.RegisterRoute("Transactions", typeof(TransactionsPage));

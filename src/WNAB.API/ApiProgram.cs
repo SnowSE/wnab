@@ -4,7 +4,7 @@ using Npgsql;
 using WNAB.API;
 using WNAB.API.Extensions;
 using WNAB.Data;
-using WNAB.Services;
+using WNAB.SharedDTOs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 

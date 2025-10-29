@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+             xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.AccountsPage"
              x:DataType="vm:AccountsViewModel"
              Title="Accounts">
@@ -43,7 +44,7 @@
                 <Label Text="No accounts found." HorizontalOptions="Center" VerticalOptions="Center" />
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
-                <DataTemplate>
+                <DataTemplate x:DataType="data:Account">
                     <Grid ColumnDefinitions="*,Auto,Auto" Padding="8,6">
                         <Label Text="{Binding AccountName}" />
                         <Label Grid.Column="1" Text="{Binding AccountType}" TextColor="Gray" />

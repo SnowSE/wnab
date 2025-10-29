@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11018.127 d18.0
+VisualStudioVersion = 18.0.11018.127
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.API", "src\WNAB.API\WNAB.API.csproj", "{C02423C7-290B-48D2-8974-638B600668CA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Services", "src\WNAB.Services\WNAB.Services.csproj", "{B80D7325-1A99-4C86-9775-4C7FB89607D9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Maui", "src\WNAB.Maui\WNAB.Maui.csproj", "{560F0564-72F0-4470-B555-5016C1DE19D9}"
 EndProject
@@ -39,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.Data", "src\WNAB.Data\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.MVM", "src\WNAB.MVM\WNAB.MVM.csproj", "{2D55D355-402C-4556-8810-68ED5D62E863}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WNAB.SharedDTOs", "src\WNAB.SharedDTOs\WNAB.SharedDTOs.csproj", "{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,18 +61,6 @@ Global
 		{C02423C7-290B-48D2-8974-638B600668CA}.Release|x64.Build.0 = Release|Any CPU
 		{C02423C7-290B-48D2-8974-638B600668CA}.Release|x86.ActiveCfg = Release|Any CPU
 		{C02423C7-290B-48D2-8974-638B600668CA}.Release|x86.Build.0 = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|x64.Build.0 = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Debug|x86.Build.0 = Debug|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|x64.ActiveCfg = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|x64.Build.0 = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|x86.ActiveCfg = Release|Any CPU
-		{B80D7325-1A99-4C86-9775-4C7FB89607D9}.Release|x86.Build.0 = Release|Any CPU
 		{560F0564-72F0-4470-B555-5016C1DE19D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{560F0564-72F0-4470-B555-5016C1DE19D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{560F0564-72F0-4470-B555-5016C1DE19D9}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
@@ -194,6 +182,18 @@ Global
 		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x64.Build.0 = Release|Any CPU
 		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x86.ActiveCfg = Release|Any CPU
 		{2D55D355-402C-4556-8810-68ED5D62E863}.Release|x86.Build.0 = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|x64.Build.0 = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Debug|x86.Build.0 = Debug|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|x64.ActiveCfg = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|x64.Build.0 = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|x86.ActiveCfg = Release|Any CPU
+		{59003A8C-EE4F-9F31-069F-EEDDAF25F8EF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

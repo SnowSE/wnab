@@ -79,7 +79,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\WNAB.MVM\WNAB.MVM.csproj" />
-		<ProjectReference Include="..\WNAB.Services\WNAB.Services.csproj" />
 	  <ProjectReference Include="..\WNAB.Plaid\WNAB.Plaid.csproj" />
 	  <ProjectReference Include="..\WNAB.Maui.ServiceDefaults\WNAB.Maui.ServiceDefaults.csproj" />
 	</ItemGroup>

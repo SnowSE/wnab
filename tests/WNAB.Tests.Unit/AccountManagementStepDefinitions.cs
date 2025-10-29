@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Reqnroll;
 using WNAB.Data;
-using WNAB.Services;
+using WNAB.SharedDTOs;
+
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
