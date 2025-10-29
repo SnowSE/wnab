@@ -26,6 +26,11 @@
                         Command="{Binding LoginCommand}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                         WidthRequest="80" />
+                <Button Text="Add Allocation"
+                        IsVisible="{Binding Model.IsEditMode}"
+                        Command="{Binding ToggleCategoriesVisibilityCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        WidthRequest="120" />
                 <Button Text="Undo"
                         IsVisible="{Binding Model.IsEditMode}"
                         Command="{Binding UndoChangesCommand}"
@@ -128,6 +133,42 @@
             <!-- Category Allocations Section -->
             <Label Text="Category Allocations" FontSize="16" FontAttributes="Bold"/>
             
+            <!-- Available Categories Section -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding Model.IsCategoriesVisible}">
+                <Label Text="Available Categories" FontSize="16" FontAttributes="Bold"/>
+                <CollectionView ItemsSource="{Binding Model.AvailableCategories}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="data:Category">
+                            <Border Padding="15"
+                                    Margin="0,5"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="1"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
+                                <HorizontalStackLayout Spacing="10">
+                                    <!-- Category Color Dot -->
+                                    <BoxView WidthRequest="12"
+                                             HeightRequest="12"
+                                             CornerRadius="6"
+                                             Color="{Binding Color}"
+                                             VerticalOptions="Center"/>
+                                    <!-- Category Name -->
+                                    <Label Text="{Binding Name}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center"/>
+                                    <!-- Allocate Button -->
+                                    <Button Text="Allocate"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AllocateCategoryCommand}"
+                                            CommandParameter="{Binding}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                            HorizontalOptions="End"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+            
             <!-- Login warning -->
             <Border Padding="15"
                     BackgroundColor="{AppThemeBinding Light=#FFF3CD, Dark=#856404}"
@@ -153,7 +194,7 @@
                             
                             <VerticalStackLayout Spacing="10">
                                 <!-- Category Header -->
-                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowSpacing="10">
                                     <!-- Category Color Dot -->
                                     <BoxView Grid.Column="0"
                                              WidthRequest="12"
@@ -175,6 +216,15 @@
                                            Text="{Binding BudgetedAmount, StringFormat='{0:C}'}"
                                            FontAttributes="Bold"
                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
+                                    
+                                    <!-- Remove Button (edit mode) -->
+                                    <Button Grid.Column="3"
+                                            Text="Remove"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveAllocationCommand}"
+                                            CommandParameter="{Binding}"
+                                            BackgroundColor="Red"
+                                            WidthRequest="80"/>
                                 </Grid>
 
                                 <!-- Budget Amount (edit mode) -->

@@ -16,11 +16,14 @@ public partial class PlanBudgetModel : ObservableObject
     private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
 
-    // Available categories (left column) - categories not yet allocated
+    // Available categories - categories not yet allocated
     public ObservableCollection<Category> AvailableCategories { get; } = new();
-    
-    // Budget allocations (center column) - allocated categories with budget amounts
+
+    // Budget allocations - allocated categories with budget amounts
     public ObservableCollection<CategoryAllocation> BudgetAllocations { get; } = new();
+    
+    // Changed allocations - changed allocated categories with budget amounts
+    public ObservableCollection<CategoryAllocation> ChangedAllocations { get; } = new();
     
     // Track IDs of allocated categories to filter them from available list
     private readonly HashSet<int> _allocatedCategoryIds = new();
