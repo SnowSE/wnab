@@ -16,7 +16,7 @@ public class TransactionSplit
     public bool IsIncome { get; set; }
 
     [MaxLength(1000)]
-    public string? Notes { get; set; }
+    public string? Description { get; set; }
 
     public DateTime CreatedAt { get; set; }
 
