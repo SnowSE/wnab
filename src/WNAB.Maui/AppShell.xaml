@@ -7,9 +7,9 @@
     Shell.FlyoutBehavior="Flyout"
     Title="WNAB">
 
-    <FlyoutItem Title="Original Home" Icon="home.png">
+    <FlyoutItem Title="Budget" Icon="home.png">
         <ShellContent
-            Title="Home"
+            Title="Monthly Budget"
             ContentTemplate="{DataTemplate local:MainPage}"
             Route="MainPage" />
     </FlyoutItem>

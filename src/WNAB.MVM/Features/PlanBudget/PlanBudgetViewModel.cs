@@ -11,6 +11,7 @@ namespace WNAB.MVM;
 public partial class PlanBudgetViewModel : ObservableObject
 {
     private readonly IMVMPopupService _popupService;
+    private readonly IAuthenticationService _authenticationService;
 
     public PlanBudgetModel Model { get; }
 
@@ -36,11 +37,39 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
     }
 
-    public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService)
+    public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService, IAuthenticationService authenticationService)
     {
         Model = model;
         _popupService = popupService;
+        _authenticationService = authenticationService;
+        
+        // Subscribe to model changes to update computed properties
+        Model.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Model.MonthlyLimit) || 
+                e.PropertyName == nameof(Model.BudgetAllocations))
+            {
+                OnPropertyChanged(nameof(TotalAllocatedFormatted));
+                OnPropertyChanged(nameof(UnallocatedFormatted));
+                OnPropertyChanged(nameof(HasNoBudgetAllocations));
+            }
+        };
     }
+
+    /// <summary>
+    /// Formatted total allocated amount for MAUI binding.
+    /// </summary>
+    public string TotalAllocatedFormatted => Model.GetTotalAllocated().ToString("C");
+    
+    /// <summary>
+    /// Formatted unallocated amount for MAUI binding.
+    /// </summary>
+    public string UnallocatedFormatted => Model.GetUnallocated().ToString("C");
+    
+    /// <summary>
+    /// Check if there are no budget allocations for empty state display.
+    /// </summary>
+    public bool HasNoBudgetAllocations => Model.BudgetAllocations == null || Model.BudgetAllocations.Count == 0;
 
     /// <summary>
     /// Initialize the ViewModel by delegating to the Model.
@@ -159,5 +188,63 @@ public partial class PlanBudgetViewModel : ObservableObject
     private async Task SetMonthYear()
     {
         await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
+    }
+    
+    /// <summary>
+    /// Toggle edit mode - enter or exit edit mode.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleEditMode()
+    {
+        if (Model.IsEditMode)
+        {
+            // Exiting edit mode - this would be the "Save Changes" action
+            // Don't actually save here, let SaveAsync handle that
+            Model.IsEditMode = false;
+        }
+        else
+        {
+            // Entering edit mode
+            Model.EnterEditMode();
+        }
+    }
+    
+    /// <summary>
+    /// Undo changes and exit edit mode without saving.
+    /// </summary>
+    [RelayCommand]
+    private void UndoChanges()
+    {
+        Model.UndoChanges();
+    }
+    
+    /// <summary>
+    /// Cancel edit mode (same as undo for now).
+    /// </summary>
+    [RelayCommand]
+    private void CancelEditMode()
+    {
+        Model.CancelEdit();
+    }
+    
+    /// <summary>
+    /// Login command - shows login popup and refreshes authentication state on success.
+    /// </summary>
+    [RelayCommand]
+    private async Task LoginAsync()
+    {
+        var success = await _authenticationService.LoginAsync();
+        if (success)
+        {
+            // Refresh user session after successful login
+            await Model.CheckUserSessionAsync();
+        }
+        else
+        {
+            if (Shell.Current is not null)
+            {
+                await Shell.Current.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.", "OK");
+            }
+        }
     }
 }

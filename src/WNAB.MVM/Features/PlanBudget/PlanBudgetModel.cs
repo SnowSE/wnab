@@ -13,16 +13,23 @@ public partial class PlanBudgetModel : ObservableObject
 {
     private readonly CategoryManagementService _categoryService;
     private readonly CategoryAllocationManagementService _allocationService;
+    private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
 
-    // Available categories (left column) - categories not yet allocated
+    // Available categories - categories not yet allocated
     public ObservableCollection<Category> AvailableCategories { get; } = new();
-    
-    // Budget allocations (center column) - allocated categories with budget amounts
+
+    // Budget allocations - allocated categories with budget amounts
     public ObservableCollection<CategoryAllocation> BudgetAllocations { get; } = new();
+    
+    // Changed allocations - changed allocated categories with budget amounts
+    public ObservableCollection<CategoryAllocation> ChangedAllocations { get; } = new();
     
     // Track IDs of allocated categories to filter them from available list
     private readonly HashSet<int> _allocatedCategoryIds = new();
+    
+    // Track spent amounts per allocation ID
+    private readonly Dictionary<int, decimal> _spentAmounts = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -41,14 +48,26 @@ public partial class PlanBudgetModel : ObservableObject
 
     [ObservableProperty]
     private int currentYear;
+    
+    [ObservableProperty]
+    private decimal monthlyLimit = 0m;
+    
+    [ObservableProperty]
+    private bool isEditMode = false;
+    
+    // Backup state for undo functionality
+    private decimal _backupMonthlyLimit;
+    private List<(int AllocationId, decimal BudgetedAmount)> _backupAllocations = new();
 
     public PlanBudgetModel(
         CategoryManagementService categoryService,
         CategoryAllocationManagementService allocationService,
+        TransactionManagementService transactionService,
         IAuthenticationService authService)
     {
         _categoryService = categoryService;
         _allocationService = allocationService;
+        _transactionService = transactionService;
         _authService = authService;
         
         // Default to current month/year
@@ -155,6 +174,7 @@ public partial class PlanBudgetModel : ObservableObject
     {
         BudgetAllocations.Clear();
         _allocatedCategoryIds.Clear();
+        _spentAmounts.Clear();
 
         // Get all categories first to find their allocations
         var categories = await _categoryService.GetCategoriesForUserAsync();
@@ -173,8 +193,112 @@ public partial class PlanBudgetModel : ObservableObject
                 allocation.Category = category;
                 BudgetAllocations.Add(allocation);
                 _allocatedCategoryIds.Add(category.Id);
+                
+                // Load spent amount for this allocation
+                await LoadSpentAmountAsync(allocation.Id);
             }
         }
+    }
+    
+    /// <summary>
+    /// Load the spent amount for a specific allocation from transaction splits.
+    /// </summary>
+    private async Task LoadSpentAmountAsync(int allocationId)
+    {
+        try
+        {
+            // Get the allocation to find its category
+            var allocation = BudgetAllocations.FirstOrDefault(a => a.Id == allocationId);
+            if (allocation == null) return;
+            
+            // Get all transaction splits for this category
+            var splits = await _transactionService.GetTransactionSplitsForCategoryAsync(allocation.CategoryId);
+            
+            // Filter splits that belong to this specific allocation (by matching the allocation ID)
+            var relevantSplits = splits.Where(s => s.CategoryAllocationId == allocationId);
+            
+            // Sum the amounts (expenses are positive, income would be negative if IsIncome = true)
+            var spent = relevantSplits.Sum(s => s.IsIncome ? -s.Amount : s.Amount);
+            
+            _spentAmounts[allocationId] = spent;
+        }
+        catch (Exception)
+        {
+            // If we can't load spent amount, default to 0
+            _spentAmounts[allocationId] = 0;
+        }
+    }
+    
+    /// <summary>
+    /// Get the spent amount for a specific allocation.
+    /// </summary>
+    public decimal GetSpentAmount(int allocationId)
+    {
+        return _spentAmounts.TryGetValue(allocationId, out var amount) ? amount : 0;
+    }
+    
+    /// <summary>
+    /// Get the remaining amount for a specific allocation.
+    /// </summary>
+    public decimal GetRemainingAmount(CategoryAllocation allocation)
+    {
+        var spent = GetSpentAmount(allocation.Id);
+        return allocation.BudgetedAmount - spent;
+    }
+    
+    /// <summary>
+    /// Calculate total allocated amount across all budget allocations.
+    /// </summary>
+    public decimal GetTotalAllocated()
+    {
+        return BudgetAllocations.Sum(a => a.BudgetedAmount);
+    }
+    
+    /// <summary>
+    /// Calculate unallocated amount (monthly limit minus allocated).
+    /// </summary>
+    public decimal GetUnallocated()
+    {
+        return MonthlyLimit - GetTotalAllocated();
+    }
+    
+    /// <summary>
+    /// Enter edit mode and backup current state for undo.
+    /// </summary>
+    public void EnterEditMode()
+    {
+        IsEditMode = true;
+        _backupMonthlyLimit = MonthlyLimit;
+        _backupAllocations = BudgetAllocations
+            .Select(a => (a.Id, a.BudgetedAmount))
+            .ToList();
+    }
+    
+    /// <summary>
+    /// Exit edit mode without saving (undo changes).
+    /// </summary>
+    public void UndoChanges()
+    {
+        MonthlyLimit = _backupMonthlyLimit;
+        
+        foreach (var backup in _backupAllocations)
+        {
+            var allocation = BudgetAllocations.FirstOrDefault(a => a.Id == backup.AllocationId);
+            if (allocation != null)
+            {
+                allocation.BudgetedAmount = backup.BudgetedAmount;
+            }
+        }
+        
+        IsEditMode = false;
+    }
+    
+    /// <summary>
+    /// Exit edit mode (user clicked Cancel without undo).
+    /// </summary>
+    public void CancelEdit()
+    {
+        UndoChanges(); // Cancel is same as undo
     }
 
     /// <summary>

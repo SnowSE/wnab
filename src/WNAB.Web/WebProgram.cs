@@ -101,7 +101,11 @@ builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 builder.Services.AddScoped<AccountsModel>();
 builder.Services.AddScoped<CategoriesModel>();
 builder.Services.AddScoped<TransactionsModel>();
-builder.Services.AddScoped<PlanBudgetModel>();
+builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
+    sp.GetRequiredService<CategoryManagementService>(),
+    sp.GetRequiredService<CategoryAllocationManagementService>(),
+    sp.GetRequiredService<TransactionManagementService>(),
+    sp.GetRequiredService<WNAB.MVM.IAuthenticationService>()));
 builder.Services.AddScoped<UsersModel>();
 
 // Register all ViewModels (UI coordination layer)

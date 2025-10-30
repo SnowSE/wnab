@@ -1,71 +1,269 @@
 ﻿@page "/"
+@inject PlanBudgetViewModel ViewModel
 @layout MainLayoutNoSidebar
+@implements IDisposable
 
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="text-center mb-4">
-                <img src="_content/WNAB.Web/images/dotnet_bot.png" alt="WNAB Bot" class="img-fluid mb-3" style="max-height: 150px;" />
-                <h1 class="display-4 fw-bold">Welcome to WNAB</h1>
-                <p class="lead">We Need A Budget - Manage your finances with ease</p>
-                <p class="text-muted">Click the buttons below to access different sections. All forms now open in popup modals for a better user experience!</p>
-            </div>
+<!-- LLM-Dev: Home page is now the Budgets page, following the design in the screenshots -->
 
-            <div class="row g-3">
-                @* <div class="col-12 col-md-6">
-                    <a href="/login" class="btn btn-primary btn-lg w-100 mb-2">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>
-                        Login
-                    </a>
-                </div> *@
-                <div class="col-12 col-md-6">
-                    <a href="/users" class="btn btn-info btn-lg w-100 mb-2">
-                        <i class="bi bi-people-fill me-2"></i>
-                        Manage Users
-                    </a>
+<div class="budgets-container">
+    <div class="budgets-content">
+        <!-- Header Section -->
+        <div class="budgets-header">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <h2 class="fw-bold mb-1">Monthly Budget</h2>
+                    <p class="text-muted mb-0">Allocate your monthly income to categories</p>
                 </div>
-                <div class="col-12 col-md-6">
-                    <a href="/categories" class="btn btn-success btn-lg w-100 mb-2">
-                        <i class="bi bi-tags-fill me-2"></i>
-                        View Categories
-                    </a>
-                </div>
-                <div class="col-12 col-md-6">
-                    <a href="/accounts" class="btn btn-warning btn-lg w-100 mb-2">
-                        <i class="bi bi-wallet-fill me-2"></i>
-                        View Accounts
-                    </a>
-                </div>
-                <div class="col-12 col-md-6">
-                    <a href="/plan-budget" class="btn btn-primary btn-lg w-100 mb-2">
-                        <i class="bi bi-calendar-check-fill me-2"></i>
-                        Plan Budget
-                    </a>
-                </div>
-                <div class="col-12">
-                    <a href="/transactions" class="btn btn-secondary btn-lg w-100 mb-2">
-                        <i class="bi bi-receipt me-2"></i>
-                        Manage Transactions
-                    </a>
+                <div>
+                    @if (!ViewModel.Model.IsEditMode)
+                    {
+                        <button class="btn btn-dark btn-edit-budget" @onclick="OnEditBudgetClick">
+                            <i class="bi bi-pencil-square me-2"></i>Edit Budget
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary" @onclick="OnUndoClick">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Undo
+                            </button>
+                            <button class="btn btn-outline-dark" @onclick="OnCancelEditClick">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
+                            </button>
+                            <button class="btn btn-dark" @onclick="OnSaveChangesClick">
+                                <i class="bi bi-save me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
 
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <h5 class="alert-heading">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Features Available
-                        </h5>
-                        <ul class="mb-0">
-                            <li><strong>Popup Modals:</strong> All create/edit forms now open in convenient popup modals</li>
-                            <li><strong>User Status:</strong> See your login status in the top navigation bar</li>
-                            <li><strong>Transaction Management:</strong> Create and view transactions across all your accounts</li>
-                            <li><strong>Clean Interface:</strong> Streamlined navigation without permanent sidebars</li>
-                        </ul>
+            <!-- Month/Year Selector -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Month</label>
+                    <select class="form-select" @bind="ViewModel.SelectedMonthName" @bind:after="OnMonthYearChanged" disabled="@ViewModel.Model.IsEditMode">
+                        @foreach (var month in ViewModel.MonthOptions)
+                        {
+                            <option value="@month">@month</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">Year</label>
+                    <input type="number" class="form-control" @bind="ViewModel.Model.CurrentYear" @bind:after="OnMonthYearChanged" min="2000" max="2100" disabled="@ViewModel.Model.IsEditMode" />
+                </div>
+            </div>
+
+            <!-- Monthly Limit Section -->
+            <div class="monthly-limit-card">
+                <h6 class="fw-bold mb-3">Monthly Limit</h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Total Income/Limit:</span>
+                            @if (ViewModel.Model.IsEditMode)
+                            {
+                                <div class="input-group input-group-sm" style="width: 150px;">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control text-end" @bind="ViewModel.Model.MonthlyLimit" step="0.01" />
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="fw-bold">@ViewModel.Model.MonthlyLimit.ToString("C")</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Allocated:</span>
+                            <span class="fw-bold">@ViewModel.Model.GetTotalAllocated().ToString("C")</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Unallocated:</span>
+                            <span class="fw-bold text-success">@ViewModel.Model.GetUnallocated().ToString("C")</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Category Allocations Section -->
+        <div class="category-allocations-section">
+            <h6 class="fw-bold mb-3">Category Allocations</h6>
+            
+            @if (!ViewModel.Model.IsLoggedIn)
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Please log in to view budget.
+                </div>
+            }
+            else if (ViewModel.Model.BudgetAllocations != null && ViewModel.Model.BudgetAllocations.Count > 0)
+            {
+                @foreach (var allocation in ViewModel.Model.BudgetAllocations)
+                {
+                    var spent = ViewModel.Model.GetSpentAmount(allocation.Id);
+                    var remaining = ViewModel.Model.GetRemainingAmount(allocation);
+                    var progress = allocation.BudgetedAmount > 0 ? (spent / allocation.BudgetedAmount * 100) : 0;
+                    var categoryColor = allocation.Category?.Color ?? "#6c757d";
+                    var isExpanded = _expandedCategories.Contains(allocation.Id);
+
+                    <div class="category-card mb-3">
+                        <div class="category-card-header" @onclick="() => ToggleCategoryExpand(allocation.Id)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                    <span class="category-dot" style="background-color: @categoryColor"></span>
+                                    <h6 class="mb-0 fw-bold">@allocation.Category?.Name</h6>
+                                    <i class="bi @(isExpanded ? "bi-chevron-up" : "bi-chevron-down") ms-2 text-muted"></i>
+                                </div>
+                                <div class="text-end">
+                                    @if (ViewModel.Model.IsEditMode)
+                                    {
+                                        <div class="input-group input-group-sm" style="width: 150px;">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" 
+                                                   class="form-control text-end" 
+                                                   @bind="allocation.BudgetedAmount" 
+                                                   step="0.01"
+                                                   @onclick:stopPropagation="true" />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="fw-bold">@allocation.BudgetedAmount.ToString("C")</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-muted">Spent:</span>
+                                <span class="small">@spent.ToString("C")</span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="category-progress-bar mb-2">
+                                <div class="category-progress-fill" style="width: @Math.Min(progress, 100)%"></div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-muted">Remaining:</span>
+                                <span class="small fw-bold text-success">@remaining.ToString("C")</span>
+                            </div>
+                        </div>
+
+                        @if (isExpanded)
+                        {
+                            <div class="category-card-graph">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 small fw-bold"><i class="bi bi-graph-up me-1"></i>Spending Projection</h6>
+                                    <span class="badge bg-secondary">Current Pace</span>
+                                </div>
+                                <div class="graph-placeholder">
+                                    <div class="text-center py-4 text-muted">
+                                        <i class="bi bi-graph-up fs-1"></i>
+                                        <p class="small mt-2 mb-0">SciChart Integration Placeholder</p>
+                                        <p class="small text-muted">Actual Spent • Budget Limit • Projected</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center mt-5">
+                    <i class="bi bi-calendar-check fs-1 text-muted"></i>
+                    <p class="text-muted mt-3">No budget allocations for this month. Add categories to get started.</p>
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+<!-- Include the Create Category Modal -->
+<CreateCategoryModal OnCategoryCreated="OnCategoryCreated" />
+
+@code {
+    private HashSet<int> _expandedCategories = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to property changes to trigger UI updates
+        ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        
+        await ViewModel.InitializeAsync();
+    }
+
+    private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnMonthYearChanged()
+    {
+        await ViewModel.SetMonthYearCommand.ExecuteAsync(null);
+    }
+
+    private void OnEditBudgetClick()
+    {
+        ViewModel.ToggleEditModeCommand.Execute(null);
+    }
+
+    private void OnUndoClick()
+    {
+        ViewModel.UndoChangesCommand.Execute(null);
+    }
+
+    private void OnCancelEditClick()
+    {
+        ViewModel.CancelEditModeCommand.Execute(null);
+    }
+
+    private async Task OnSaveChangesClick()
+    {
+        await ViewModel.SaveCommand.ExecuteAsync(null);
+        ViewModel.Model.IsEditMode = false;
+    }
+
+    private async Task OnCategoryCreated()
+    {
+        await ViewModel.Model.HandleNewCategoryAsync();
+    }
+
+    private void ToggleCategoryExpand(int allocationId)
+    {
+        if (_expandedCategories.Contains(allocationId))
+        {
+            _expandedCategories.Remove(allocationId);
+        }
+        else
+        {
+            _expandedCategories.Add(allocationId);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (ViewModel?.Model != null)
+        {
+            ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;
+        }
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+    }
+}

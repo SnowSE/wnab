@@ -95,8 +95,12 @@ public static class MauiProgram
 		builder.Services.AddSingleton<TransactionsModel>();
 		builder.Services.AddSingleton<TransactionsViewModel>();
 		builder.Services.AddSingleton<TransactionsPage>();
-		// LLM-Dev: Register PlanBudget page, model, and view model
-		builder.Services.AddSingleton<PlanBudgetModel>();
+		// LLM-Dev: Register PlanBudget page, model, and view model with TransactionManagementService
+		builder.Services.AddSingleton<PlanBudgetModel>(sp => new PlanBudgetModel(
+			sp.GetRequiredService<CategoryManagementService>(),
+			sp.GetRequiredService<CategoryAllocationManagementService>(),
+			sp.GetRequiredService<TransactionManagementService>(),
+			sp.GetRequiredService<IAuthenticationService>()));
 		builder.Services.AddSingleton<PlanBudgetViewModel>();
 		builder.Services.AddSingleton<PlanBudgetPage>();
 

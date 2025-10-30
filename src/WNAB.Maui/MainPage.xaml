@@ -2,74 +2,278 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+             xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.MainPage"
-             x:DataType="local:MainPageViewModel">
+             x:DataType="local:PlanBudgetViewModel"
+             Title="Monthly Budget">
 
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="{Binding LogInSignOutText}"
-                     Priority="0"
-                     Order="Primary"
-                     Command="{Binding LogInSignOutCommand}" />
-    </ContentPage.ToolbarItems>
+    <!-- LLM-Dev: MainPage is now the Budgets page, following the design pattern from Web -->
+    
 
-    <ContentPage.Content>
-        <ScrollView>
-            <VerticalStackLayout
-                Padding="30,0"
-                Spacing="25">
-                <Label
-                    Text="{Binding UserDisplay}"
-                    TextColor="Gray"
-                    HorizontalOptions="End"
-                    AutomationId="SignedInIndicator" />
-                
-               
-                <Label
-                    Text="Welcome to &#10;WNAB"
-                    Style="{StaticResource SubHeadline}"
-                    SemanticProperties.HeadingLevel="Level2"
-                    SemanticProperties.Description="Welcome to WNAB - We Need A Budget" />
 
-                <Label
-                    Text="Manage your finances with ease. Use the buttons below to access different sections."
-                    Style="{StaticResource BodyLarge}"
-                    HorizontalOptions="Center"
-                    HorizontalTextAlignment="Center" />
-
-                <!-- LLM-Dev:v2 Updated navigation buttons to replace shell navigation -->
-                <!-- <Button
-                    Text="Login"
-                    Command="{Binding NavigateToLoginCommand}"
-                    HorizontalOptions="Fill" /> -->
-
-                <Button
-                    Text="Manage Users"
-                    Command="{Binding NavigateToUsersCommand}"
-                    HorizontalOptions="Fill" />
-
-                <Button
-                    Text="View Categories"
-                    Command="{Binding NavigateToCategoriesCommand}"
-                    HorizontalOptions="Fill" />
-
-                <Button
-                    Text="View Accounts"
-                    Command="{Binding NavigateToAccountsCommand}"
-                    HorizontalOptions="Fill" />
-
-                <!-- LLM-Dev:v3 Combined View and Manage transactions into single button -->
-                <Button
-                    Text="Manage Transactions"
-                    Command="{Binding NavigateToTransactionsCommand}"
-                    HorizontalOptions="Fill" />
-
-                <!-- LLM-Dev:v1 Added Create Plan button for PlanBudget navigation -->
-                <Button
-                    Text="Create Plan"
-                    Command="{Binding NavigateToPlanBudgetCommand}"
-                    HorizontalOptions="Fill" />
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Toolbar buttons at top of page -->
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+                <Button Text="Edit Budget"
+                        IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
+                        Command="{Binding ToggleEditModeCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                        WidthRequest="100" />
+                <Button Text="Login"
+                        IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
+                        Command="{Binding LoginCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        WidthRequest="80" />
+                <Button Text="Add Allocation"
+                        IsVisible="{Binding Model.IsEditMode}"
+                        Command="{Binding ToggleCategoriesVisibilityCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        WidthRequest="120" />
+                <Button Text="Undo"
+                        IsVisible="{Binding Model.IsEditMode}"
+                        Command="{Binding UndoChangesCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        WidthRequest="80" />
+                <Button Text="Save"
+                        IsVisible="{Binding Model.IsEditMode}"
+                        Command="{Binding SaveCommand}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        WidthRequest="80" />
+            </HorizontalStackLayout>
+            
+            <!-- Header Section -->
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Monthly Budget"
+                       FontSize="28"
+                       FontAttributes="Bold" />
+                <Label Text="Allocate your monthly income to categories"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                       FontSize="14" />
             </VerticalStackLayout>
-        </ScrollView>
-    </ContentPage.Content>
+
+            <!-- Month/Year Selector -->
+            <Border Padding="15"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
+                <HorizontalStackLayout Spacing="15">
+                    <VerticalStackLayout Spacing="5" WidthRequest="150">
+                        <Label Text="Month" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Picker ItemsSource="{Binding MonthOptions}"
+                                SelectedItem="{Binding SelectedMonthName, Mode=TwoWay}"
+                                FontSize="14"
+                                IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
+                    </VerticalStackLayout>
+                    <VerticalStackLayout Spacing="5" WidthRequest="100">
+                        <Label Text="Year" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Entry Text="{Binding Model.CurrentYear, Mode=TwoWay}"
+                               Keyboard="Numeric"
+                               FontSize="14"
+                               IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
+                    </VerticalStackLayout>
+                    <Button Text="Load"
+                            Command="{Binding SetMonthYearCommand}"
+                            VerticalOptions="End"
+                            WidthRequest="80"
+                            HeightRequest="40"
+                            IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- Monthly Limit Section -->
+            <Border Padding="20"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Monthly Limit" FontSize="16" FontAttributes="Bold"/>
+                    
+                    <Grid ColumnDefinitions="*,Auto" RowSpacing="10">
+                        <!-- Total Income/Limit -->
+                        <Label Grid.Column="0" Text="Total Income/Limit:" 
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                               VerticalOptions="Center"/>
+                        <HorizontalStackLayout Grid.Column="1" Spacing="5" IsVisible="{Binding Model.IsEditMode}">
+                            <Label Text="$" VerticalOptions="Center"/>
+                            <Entry Text="{Binding Model.MonthlyLimit, Mode=TwoWay}"
+                                   Keyboard="Numeric"
+                                   WidthRequest="120"
+                                   HorizontalTextAlignment="End"/>
+                        </HorizontalStackLayout>
+                        <Label Grid.Column="1" 
+                               Text="{Binding Model.MonthlyLimit, StringFormat='{0:C}'}"
+                               FontAttributes="Bold"
+                               IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Allocated -->
+                        <Label Grid.Column="0" Text="Allocated:" 
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Label Grid.Column="1" 
+                               Text="{Binding TotalAllocatedFormatted}"
+                               FontAttributes="Bold"/>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Unallocated -->
+                        <Label Grid.Column="0" Text="Unallocated:" 
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Label Grid.Column="1" 
+                               Text="{Binding UnallocatedFormatted}"
+                               TextColor="Green"
+                               FontAttributes="Bold"/>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Category Allocations Section -->
+            <Label Text="Category Allocations" FontSize="16" FontAttributes="Bold"/>
+            
+            <!-- Available Categories Section -->
+            <VerticalStackLayout Spacing="10" IsVisible="{Binding Model.IsCategoriesVisible}">
+                <Label Text="Available Categories" FontSize="16" FontAttributes="Bold"/>
+                <CollectionView ItemsSource="{Binding Model.AvailableCategories}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="data:Category">
+                            <Border Padding="15"
+                                    Margin="0,5"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="1"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
+                                <HorizontalStackLayout Spacing="10">
+                                    <!-- Category Color Dot -->
+                                    <BoxView WidthRequest="12"
+                                             HeightRequest="12"
+                                             CornerRadius="6"
+                                             Color="{Binding Color}"
+                                             VerticalOptions="Center"/>
+                                    <!-- Category Name -->
+                                    <Label Text="{Binding Name}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center"/>
+                                    <!-- Allocate Button -->
+                                    <Button Text="Allocate"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AllocateCategoryCommand}"
+                                            CommandParameter="{Binding}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                                            HorizontalOptions="End"/>
+                                </HorizontalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+            
+            <!-- Login warning -->
+            <Border Padding="15"
+                    BackgroundColor="{AppThemeBinding Light=#FFF3CD, Dark=#856404}"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#FFC107, Dark=#FFC107}"
+                    IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}">
+                <HorizontalStackLayout Spacing="10">
+                    <Label Text="⚠️" FontSize="18" VerticalOptions="Center"/>
+                    <Label Text="Please log in to view budget."
+                           VerticalOptions="Center"/>
+                </HorizontalStackLayout>
+            </Border>
+            
+            <CollectionView ItemsSource="{Binding Model.BudgetAllocations}"
+                            SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="data:CategoryAllocation">
+                        <Border Padding="15"
+                                Margin="0,5"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
+                            
+                            <VerticalStackLayout Spacing="10">
+                                <!-- Category Header -->
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" RowSpacing="10">
+                                    <!-- Category Color Dot -->
+                                    <BoxView Grid.Column="0"
+                                             WidthRequest="12"
+                                             HeightRequest="12"
+                                             CornerRadius="6"
+                                             Color="{Binding Category.Color}"
+                                             VerticalOptions="Center"
+                                             Margin="0,0,10,0"/>
+                                    
+                                    <!-- Category Name -->
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Category.Name}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <!-- Budget Amount (view mode) -->
+                                    <Label Grid.Column="2"
+                                           Text="{Binding BudgetedAmount, StringFormat='{0:C}'}"
+                                           FontAttributes="Bold"
+                                           IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
+                                    
+                                    <!-- Remove Button (edit mode) -->
+                                    <Button Grid.Column="3"
+                                            Text="Remove"
+                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveAllocationCommand}"
+                                            CommandParameter="{Binding}"
+                                            BackgroundColor="Red"
+                                            WidthRequest="80"/>
+                                </Grid>
+
+                                <!-- Budget Amount (edit mode) -->
+                                <HorizontalStackLayout Spacing="5" 
+                                                      IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode}">
+                                    <Label Text="Budget: $" VerticalOptions="Center" FontSize="14"/>
+                                    <Entry Text="{Binding BudgetedAmount, Mode=TwoWay}"
+                                           Keyboard="Numeric"
+                                           WidthRequest="120"
+                                           HorizontalTextAlignment="End"/>
+                                </HorizontalStackLayout>
+
+                                <!-- Progress Bar Placeholder -->
+                                <Grid ColumnDefinitions="*" HeightRequest="8">
+                                    <BoxView Grid.Column="0"
+                                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                                             CornerRadius="4"/>
+                                    <!-- TODO: Add spent/budgeted calculation for progress width -->
+                                </Grid>
+
+                                <!-- Status text -->
+                                <Label Text="Tap card for spending details"
+                                       FontSize="10"
+                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                       HorizontalOptions="Center"/>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Empty State -->
+            <VerticalStackLayout Spacing="10" 
+                                 Padding="20"
+                                 IsVisible="{Binding HasNoBudgetAllocations}">
+                <Label Text="📅"
+                       FontSize="48"
+                       HorizontalOptions="Center"/>
+                <Label Text="No budget allocations for this month."
+                       FontSize="14"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                <Label Text="Add categories to get started."
+                       FontSize="12"
+                       HorizontalOptions="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
 
 </ContentPage>
