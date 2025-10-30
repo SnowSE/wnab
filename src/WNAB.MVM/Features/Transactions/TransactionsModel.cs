@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
 
@@ -13,6 +14,9 @@ public partial class TransactionsModel : ObservableObject
     private readonly IAuthenticationService _authService;
 
     public ObservableCollection<TransactionItem> Items { get; } = new();
+
+    // Holds transaction splits loaded separately from transactions
+    public ObservableCollection<TransactionSplitResponse> Splits { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -59,6 +63,7 @@ public partial class TransactionsModel : ObservableObject
                 IsLoggedIn = false;
                 StatusMessage = "Please log in to view transactions";
                 Items.Clear();
+                Splits.Clear();
             }
         }
         catch
@@ -66,12 +71,12 @@ public partial class TransactionsModel : ObservableObject
             IsLoggedIn = false;
             StatusMessage = "Error checking login status";
             Items.Clear();
+            Splits.Clear();
         }
     }
 
     /// <summary>
-    /// Load transactions for the current authenticated user (using DTOs).
-    /// Transforms DTOs into TransactionItem view models with category information.
+    /// Load transactions for the current authenticated user (using API response records).
     /// </summary>
     public async Task LoadTransactionsAsync()
     {
@@ -86,11 +91,8 @@ public partial class TransactionsModel : ObservableObject
             var list = await _transactions.GetTransactionsForUserAsync();
             foreach (var t in list)
             {
-                // DTO has CategoryName directly in TransactionSplits
-                var categoryNames = t.TransactionSplits.Select(ts => ts.CategoryName ?? "Unknown").ToList();
-                var categoriesText = categoryNames.Count > 1
-                    ? $"{categoryNames.Count} categories"
-                    : categoryNames.FirstOrDefault() ?? "No category";
+                // TransactionResponse does not include splits; show placeholder for categories
+                var categoriesText = "N/A";
 
                 Items.Add(new TransactionItem(
                     t.Id,
@@ -98,7 +100,7 @@ public partial class TransactionsModel : ObservableObject
                     t.Payee,
                     t.Description,
                     t.Amount,
-                    t.AccountName, // DTO has AccountName directly
+                    t.AccountName,
                     categoriesText));
             }
 
@@ -111,6 +113,60 @@ public partial class TransactionsModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Load all transaction splits for the current authenticated user.
+    /// Uses the new /transactionsplits endpoint without filters.
+    /// </summary>
+    public async Task LoadAllTransactionSplitsAsync()
+    {
+        if (!IsLoggedIn) return;
+
+        try
+        {
+            StatusMessage = "Loading transaction splits...";
+            Splits.Clear();
+
+            var list = await _transactions.GetTransactionSplitsAsync();
+            foreach (var s in list)
+            {
+                Splits.Add(s);
+            }
+
+            StatusMessage = list.Count == 0 ? "No transaction splits found" : $"Loaded {list.Count} transaction splits";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading transaction splits: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Load transaction splits for a specific allocation.
+    /// Uses the existing /transactionsplits?AllocationId=... endpoint.
+    /// </summary>
+    public async Task LoadTransactionSplitsForAllocationAsync(int allocationId)
+    {
+        if (!IsLoggedIn) return;
+
+        try
+        {
+            StatusMessage = "Loading transaction splits...";
+            Splits.Clear();
+
+            var list = await _transactions.GetTransactionSplitsForAllocationAsync(allocationId);
+            foreach (var s in list)
+            {
+                Splits.Add(s);
+            }
+
+            StatusMessage = list.Count == 0 ? "No transaction splits found" : $"Loaded {list.Count} transaction splits";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading transaction splits: {ex.Message}";
         }
     }
 

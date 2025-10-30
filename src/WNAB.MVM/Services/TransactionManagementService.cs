@@ -1,14 +1,10 @@
 using System.Net.Http.Json;
-using WNAB.Data;
 using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
 
 /// <summary>
 /// Handles transaction-related operations via the API.
-/// LLM-Dev: Complete transaction service following established patterns. 
-/// Supports both simple single-category transactions and complex multi-split transactions.
-/// Validates that split amounts sum to transaction total to maintain data integrity.
 /// </summary>
 public class TransactionManagementService
 {
@@ -26,35 +22,37 @@ public class TransactionManagementService
         var response = await _http.PostAsJsonAsync("transactions", record, ct);
         response.EnsureSuccessStatusCode();
 
-        var created = await response.Content.ReadFromJsonAsync<Transaction>(cancellationToken: ct);
+        var created = await response.Content.ReadFromJsonAsync<TransactionResponse>(cancellationToken: ct);
         if (created is null) throw new InvalidOperationException("API returned no content when creating transaction.");
         return created.Id;
     }
 
-    public async Task<List<Transaction>> GetTransactionsForAccountAsync(int accountId, CancellationToken ct = default)
+    // Get transactions for a specific account (uses unified /transactions endpoint with accountId filter)
+    public async Task<List<TransactionResponse>> GetTransactionsForAccountAsync(int accountId, CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<Transaction>>($"transactions/account?accountId={accountId}", ct);
-        return transactions ?? new();
+        var result = await _http.GetFromJsonAsync<GetTransactionsResponse>($"transactions?accountId={accountId}", ct);
+        return result?.Transactions ?? new();
     }
 
-    public async Task<List<Transaction>> GetTransactionsAsync(int? accountId = null, CancellationToken ct = default)
+    // Get transactions (optionally filtered by accountId)
+    public async Task<List<TransactionResponse>> GetTransactionsAsync(int? accountId = null, CancellationToken ct = default)
     {
-        var url = accountId.HasValue ? $"transactions/account?accountId={accountId.Value}" : "transactions";
-        var transactions = await _http.GetFromJsonAsync<List<Transaction>>(url, ct);
-        return transactions ?? new();
+        var url = accountId.HasValue ? $"transactions?accountId={accountId.Value}" : "transactions";
+        var result = await _http.GetFromJsonAsync<GetTransactionsResponse>(url, ct);
+        return result?.Transactions ?? new();
     }
 
     /// <summary>
     /// Gets all transactions for the current authenticated user across all their accounts.
-    /// LLM-Dev:v2 Returns DTOs to avoid circular reference issues.
+    /// Uses API response record types.
     /// </summary>
-    public async Task<List<TransactionDto>> GetTransactionsForUserAsync(CancellationToken ct = default)
+    public async Task<List<TransactionResponse>> GetTransactionsForUserAsync(CancellationToken ct = default)
     {
-        var transactions = await _http.GetFromJsonAsync<List<TransactionDto>>("transactions", ct);
-        return transactions ?? new();
+        var result = await _http.GetFromJsonAsync<GetTransactionsResponse>("transactions", ct);
+        return result?.Transactions ?? new();
     }
 
-    // LLM-Dev: Add TransactionSplit management methods to match API endpoints
+    // Create a transaction split
     public async Task<int> CreateTransactionSplitAsync(TransactionSplitRecord record, CancellationToken ct = default)
     {
         if (record is null) throw new ArgumentNullException(nameof(record));
@@ -62,16 +60,36 @@ public class TransactionManagementService
         var response = await _http.PostAsJsonAsync("transactionsplits", record, ct);
         response.EnsureSuccessStatusCode();
 
-        var created = await response.Content.ReadFromJsonAsync<TransactionSplit>(cancellationToken: ct);
+        // Assuming API returns created split entity; if it returns a DTO with Id, adjust accordingly
+        var created = await response.Content.ReadFromJsonAsync<TransactionSplitResponse>(cancellationToken: ct);
         if (created is null) throw new InvalidOperationException("API returned no content when creating transaction split.");
         return created.Id;
     }
 
-    public async Task<List<TransactionSplit>> GetTransactionSplitsForCategoryAsync(int categoryId, CancellationToken ct = default)
+    // Get splits for a specific allocation (separate from transactions)
+    public async Task<List<TransactionSplitResponse>> GetTransactionSplitsForAllocationAsync(int allocationId, CancellationToken ct = default)
     {
-        var splits = await _http.GetFromJsonAsync<List<TransactionSplit>>($"transactionsplits?CategoryId={categoryId}", ct);
-        return splits ?? new();
+        var result = await _http.GetFromJsonAsync<GetTransactionSplitsResponse>($"transactionsplits?allocationId={allocationId}", ct);
+        return result?.TransactionSplits ?? new();
     }
 
+    // New: Get all transaction splits for the current user
+    public async Task<List<TransactionSplitResponse>> GetTransactionSplitsAsync(CancellationToken ct = default)
+    {
+        var result = await _http.GetFromJsonAsync<GetTransactionSplitsResponse>("transactionsplits", ct);
+        return result?.TransactionSplits ?? new();
+    }
 
+    // Delete endpoints
+    public async Task DeleteTransactionAsync(int transactionId, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"transactions/{transactionId}", ct);
+        response.EnsureSuccessStatusCode();
+    }
+
+    public async Task DeleteTransactionSplitAsync(int transactionSplitId, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"transactionsplits/{transactionSplitId}", ct);
+        response.EnsureSuccessStatusCode();
+    }
 }

@@ -197,7 +197,7 @@ app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
     return Results.Ok(allocations);
 }).RequireAuthorization();
 
-// get (all) transactions for authenticated user, optional accountID to get by account.
+// get transactions for authenticated user, optional accountID to get by account.
 app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
@@ -236,19 +236,27 @@ app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabCont
     return Results.Ok(new GetTransactionsResponse(transactions));
 }).RequireAuthorization();
 
-// get transactionsplits by allocation id
-app.MapGet("/transactionsplits", async (HttpContext context, int AllocationId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+// get transactionsplits: optional allocationId - if provided, filter by allocation, else return all for current user
+app.MapGet("/transactionsplits", async (HttpContext context, int? allocationId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    // Verify the allocation belongs to a category owned by the user
-    var allocationBelongsToUser = await db.Allocations
-        .AnyAsync(a => a.Id == AllocationId && a.Category.UserId == user.Id);
-    if (!allocationBelongsToUser) return Results.NotFound("Allocation not found or does not belong to user");
+    // Base query: all splits for transactions that belong to the current user's accounts
+    var query = db.TransactionSplits
+        .Where(ts => ts.Transaction.Account.UserId == user.Id);
 
-    var transactionSplits = await db.TransactionSplits
-      .Where(ts => ts.CategoryAllocationId == AllocationId)
+    if (allocationId.HasValue)
+    {
+        // Verify the allocation belongs to a category owned by the user
+        var allocationBelongsToUser = await db.Allocations
+            .AnyAsync(a => a.Id == allocationId.Value && a.Category.UserId == user.Id);
+        if (!allocationBelongsToUser) return Results.NotFound("Allocation not found or does not belong to user");
+
+        query = query.Where(ts => ts.CategoryAllocationId == allocationId.Value);
+    }
+
+    var transactionSplits = await query
         .OrderByDescending(ts => ts.Transaction.TransactionDate)
         .Select(ts => new TransactionSplitResponse(
             ts.Id,
@@ -426,15 +434,71 @@ app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, 
         account.AccountName,
         transaction.Payee,
         transaction.Description,
-transaction.Amount,
+        transaction.Amount,
         transaction.TransactionDate,
-      transaction.IsReconciled,
+        transaction.IsReconciled,
         transaction.CreatedAt,
         transaction.UpdatedAt
     );
 
     return Results.Created($"/transactions/{transaction.Id}", result);
 }).RequireAuthorization();
+
+///
+// DELETE ENPOINTS
+///
+
+// delete transaction by id (must belong to current user)
+app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var transaction = await db.Transactions
+        .Include(t => t.TransactionSplits)
+        .Include(t => t.Account)
+        .FirstOrDefaultAsync(t => t.Id == id && t.Account.UserId == user.Id);
+
+    if (transaction is null)
+    {
+        return Results.NotFound("Transaction not found or does not belong to user");
+    }
+
+    // Remove splits first to be explicit regardless of cascade settings
+    if (transaction.TransactionSplits?.Count >0)
+    {
+        db.TransactionSplits.RemoveRange(transaction.TransactionSplits);
+    }
+
+    db.Transactions.Remove(transaction);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+}).RequireAuthorization();
+
+// delete transaction split by id (must belong to current user via transaction->account)
+app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var split = await db.TransactionSplits
+        .Include(ts => ts.Transaction)
+        .ThenInclude(t => t.Account)
+        .FirstOrDefaultAsync(ts => ts.Id == id && ts.Transaction.Account.UserId == user.Id);
+
+    if (split is null)
+    {
+        return Results.NotFound("Transaction split not found or does not belong to user");
+    }
+
+    db.TransactionSplits.Remove(split);
+    await db.SaveChangesAsync();
+
+    return Results.NoContent();
+}).RequireAuthorization();
+
+
 
 ///
 // Apply EF Core migrations at startup so the database schema is up to date.
