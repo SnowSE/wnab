@@ -234,7 +234,7 @@ app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec
     {
         var category = await categoryService.CreateCategoryWithValidationAsync(user.Id, rec);
 
-        return Results.Ok(category);
+        return Results.Created($"/categories/{category.Id}", new CategoryDto(category.Id, category.Name, category.Color, category.IsActive));
     }
     catch (Exception ex)
     {
@@ -405,7 +405,7 @@ app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryR
     {
         var category = await categoryService.UpdateCategoryWithValidationAsync(user.Id, id, rec);
 
-        return Results.Ok(category);
+        return Results.NoContent();
     }
     catch (Exception ex)
     {
