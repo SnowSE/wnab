@@ -101,7 +101,7 @@ public class CategoryDBService
         var category = await GetCategoryByIdAsync(categoryId, cancellationToken);
         if (category == null || category.UserId != userId)
         {
-            throw new InvalidOperationException("InvalidCategoryId");
+            throw new InvalidOperationException($"InvalidCategoryId: {category?.Name} is not {userId}'s");
         }
 
         // Delete the category
