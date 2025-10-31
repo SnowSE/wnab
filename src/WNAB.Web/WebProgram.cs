@@ -131,8 +131,8 @@ if (!app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
-// Add static files middleware explicitly for Aspire hosting
 app.UseStaticFiles();
+
 // Add authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
@@ -140,7 +140,6 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();
-
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
