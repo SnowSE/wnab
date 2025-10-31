@@ -41,7 +41,7 @@ public partial class TransactionsModel : ObservableObject
         await CheckUserSessionAsync();
         if (IsLoggedIn)
         {
-            await LoadTransactionsAsync();
+            await LoadTransactionsAndSplitsAsync();
         }
     }
 
@@ -76,7 +76,64 @@ public partial class TransactionsModel : ObservableObject
     }
 
     /// <summary>
+    /// Load both transactions and splits in parallel.
+    /// Automatically called on initialize and refresh.
+    /// </summary>
+    public async Task LoadTransactionsAndSplitsAsync()
+    {
+        if (IsBusy || !IsLoggedIn) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Loading transactions and splits...";
+            Items.Clear();
+            Splits.Clear();
+
+            // Load both in parallel for better performance
+            var transactionsTask = _transactions.GetTransactionsForUserAsync();
+            var splitsTask = _transactions.GetTransactionSplitsAsync();
+
+            await Task.WhenAll(transactionsTask, splitsTask);
+
+            var transactionsList = transactionsTask.Result;
+            var splitsList = splitsTask.Result;
+
+            // Populate Items collection
+            foreach (var t in transactionsList)
+            {
+                Items.Add(new TransactionItem(
+                    t.Id,
+                    t.TransactionDate,
+                    t.Payee,
+                    t.Description,
+                    t.Amount,
+                    t.AccountName));
+            }
+
+            // Populate Splits collection
+            foreach (var s in splitsList)
+            {
+                Splits.Add(s);
+            }
+
+            StatusMessage = transactionsList.Count == 0 
+                ? "No transactions found" 
+                : $"Loaded {transactionsList.Count} transactions and {splitsList.Count} splits";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
     /// Load transactions for the current authenticated user (using API response records).
+    /// Note: Use LoadTransactionsAndSplitsAsync() instead to load both transactions and splits.
     /// </summary>
     public async Task LoadTransactionsAsync()
     {
@@ -91,17 +148,13 @@ public partial class TransactionsModel : ObservableObject
             var list = await _transactions.GetTransactionsForUserAsync();
             foreach (var t in list)
             {
-                // TransactionResponse does not include splits; show placeholder for categories
-                var categoriesText = "N/A";
-
                 Items.Add(new TransactionItem(
                     t.Id,
                     t.TransactionDate,
                     t.Payee,
                     t.Description,
                     t.Amount,
-                    t.AccountName,
-                    categoriesText));
+                    t.AccountName));
             }
 
             StatusMessage = list.Count == 0 ? "No transactions found" : $"Loaded {list.Count} transactions";
@@ -171,21 +224,21 @@ public partial class TransactionsModel : ObservableObject
     }
 
     /// <summary>
-    /// Refresh transactions by checking session and reloading data.
+    /// Refresh transactions and splits by checking session and reloading data.
     /// </summary>
     public async Task RefreshAsync()
     {
         await CheckUserSessionAsync();
         if (IsLoggedIn)
         {
-            await LoadTransactionsAsync();
+            await LoadTransactionsAndSplitsAsync();     
         }
     }
 }
 
 /// <summary>
 /// Item model for displaying transaction information in the UI.
-/// Represents a flattened view of transaction data with computed category display.
+/// Represents a flattened view of transaction data.
 /// </summary>
 public sealed record TransactionItem(
     int Id,
@@ -193,5 +246,5 @@ public sealed record TransactionItem(
     string Payee,
     string Description,
     decimal Amount,
-    string AccountName,
-    string Categories);
+    string AccountName
+);

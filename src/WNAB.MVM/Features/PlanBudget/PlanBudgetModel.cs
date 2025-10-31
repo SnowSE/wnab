@@ -212,7 +212,7 @@ public partial class PlanBudgetModel : ObservableObject
             if (allocation == null) return;
             
             // Get all transaction splits for this category
-            var splits = await _transactionService.GetTransactionSplitsForCategoryAsync(allocation.CategoryId);
+            var splits = await _transactionService.GetTransactionSplitsForAllocationAsync(allocation.CategoryId);
             
             // Filter splits that belong to this specific allocation (by matching the allocation ID)
             var relevantSplits = splits.Where(s => s.CategoryAllocationId == allocationId);

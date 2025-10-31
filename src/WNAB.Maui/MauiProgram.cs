@@ -88,9 +88,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<AccountsModel>();
         builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
         builder.Services.AddSingleton<AccountsPage>();
-		// LLM-Dev:v5 Re-add Login page & VM registrations (ensures Shell can resolve via DI)
-		builder.Services.AddSingleton<LoginViewModel>();
-		builder.Services.AddSingleton<LoginPage>();
+		
 		// LLM-Dev: Register Transactions page and view model
 		builder.Services.AddSingleton<TransactionsModel>();
 		builder.Services.AddSingleton<TransactionsViewModel>();
