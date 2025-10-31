@@ -140,22 +140,12 @@ app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisio
 }).RequireAuthorization();
 
 // Query endpoints - secured with authorization
-app.MapGet("/categories", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapGet("/categories", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, CategoryDBService categoryService) =>
 {
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    var categories = await db.Categories
-        .Where(c => c.UserId == user.Id && c.IsActive)
-        .AsNoTracking()
-        .Select(c => new CategoryDto(
-            c.Id,
-            c.Name,
-            c.Color,
-            c.IsActive
-        ))
-        .ToListAsync();
-
+    var categories = await categoryService.GetCategoriesForUserAsync(user.Id);
     return Results.Ok(categories);
 }).RequireAuthorization();
 

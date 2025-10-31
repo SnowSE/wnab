@@ -107,4 +107,19 @@ public class CategoryDBService
         // Delete the category
         await DeleteCategoryAsync(category, cancellationToken);
     }
+
+    // Add a new method to fetch categories for a user
+    public async Task<List<CategoryDto>> GetCategoriesForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Categories
+            .Where(c => c.UserId == userId && c.IsActive)
+            .AsNoTracking()
+            .Select(c => new CategoryDto(
+                c.Id,
+                c.Name,
+                c.Color,
+                c.IsActive
+            ))
+            .ToListAsync(cancellationToken);
+    }
 }
