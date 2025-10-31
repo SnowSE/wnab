@@ -5,6 +5,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("wnab_aspire_data")
     .WithPgWeb()
+    .WithPgAdmin()
     .WithLifetime(ContainerLifetime.Persistent);
 
 var db = postgres.AddDatabase("wnabdb");
