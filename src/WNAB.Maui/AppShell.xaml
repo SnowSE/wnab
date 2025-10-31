@@ -19,13 +19,6 @@
             Title="Accounts"
             ContentTemplate="{DataTemplate local:AccountsPage}"
             Route="AccountsPage" />
-
-    </FlyoutItem>
-    <FlyoutItem Title="Accounts" Icon="accounts.png">
-        <ShellContent
-            Title="Accounts"
-            ContentTemplate="{DataTemplate local:AccountsPage}"
-            Route="AccountsPage" />
     </FlyoutItem>
     <FlyoutItem Title="Categories">
         <ShellContent
