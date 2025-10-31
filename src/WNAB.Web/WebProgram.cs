@@ -129,9 +129,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-//app.UseHttpsRedirection();
-
-app.UseStaticFiles();
+app.MapStaticAssets();
 
 // Add authentication and authorization middleware
 app.UseAuthentication();
@@ -139,7 +137,6 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 
-app.MapStaticAssets();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
