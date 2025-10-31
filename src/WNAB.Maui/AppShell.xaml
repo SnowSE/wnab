@@ -12,6 +12,7 @@
             Title="Monthly Budget"
             ContentTemplate="{DataTemplate local:MainPage}"
             Route="MainPage" />
+        
     </FlyoutItem>
     <FlyoutItem Title="Accounts" Icon="accounts.png">
         <ShellContent

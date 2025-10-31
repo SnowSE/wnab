@@ -3,55 +3,162 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
              xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
+             xmlns:converters="clr-namespace:WNAB.Maui.Converters"
              x:Class="WNAB.Maui.AccountsPage"
              x:DataType="vm:AccountsViewModel"
              Title="Accounts">
     
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Home"
-                     Priority="1"
-                     Order="Primary"
-                     Command="{Binding NavigateToHomeCommand}" />
-        <ToolbarItem Text="Add Account"
-                     Priority="0"
-                     Order="Primary"
-                     Command="{Binding AddAccountCommand}"
-                     IsEnabled="{Binding Model.IsLoggedIn}" />
-    </ContentPage.ToolbarItems>
-    
-    <!-- LLM-Dev:v5 Updated to use automatic user session loading instead of manual user ID input -->
-    <VerticalStackLayout Padding="16" Spacing="12">
-        
-        <!-- Status and refresh section -->
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
-            <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
-        </Grid>
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="24">
+            
+            <!-- Header with title and Add Account button -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Accounts" 
+                           FontSize="28" 
+                           FontAttributes="Bold" />
+                    <Label Text="Manage your financial accounts" 
+                           FontSize="14" 
+                           />
+                </VerticalStackLayout>
+                
+                <Button Grid.Column="1" 
+                        Text="+ Add Account"
+                        Command="{Binding AddAccountCommand}"
+                        IsEnabled="{Binding Model.IsLoggedIn}"
+                        CornerRadius="8"
+                        Padding="16,12"
+                        VerticalOptions="Center" />
+            </Grid>
 
-        <!-- Login prompt when not logged in -->
-        <Label Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
-               HorizontalOptions="Center" 
-               TextColor="Orange"
-               Margin="0,20" />
+            <!-- Login prompt when not logged in -->
+            <Label Text="Please use the Login page to sign in first." 
+                   IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+                   HorizontalOptions="Center" 
+                   Margin="0,20" />
 
-        <!-- Loading indicator -->
-        <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
-        
-        <!-- Accounts list -->
-        <CollectionView ItemsSource="{Binding Model.Items}" IsVisible="{Binding Model.IsLoggedIn}">
-            <CollectionView.EmptyView>
-                <Label Text="No accounts found." HorizontalOptions="Center" VerticalOptions="Center" />
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="data:Account">
-                    <Grid ColumnDefinitions="*,Auto,Auto" Padding="8,6">
-                        <Label Text="{Binding AccountName}" />
-                        <Label Grid.Column="1" Text="{Binding AccountType}" TextColor="Gray" />
-                        <Label Grid.Column="2" Text="{Binding CachedBalance, StringFormat='{0:C}'}" />
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </VerticalStackLayout>
+            <!-- Loading indicator -->
+            <ActivityIndicator IsRunning="{Binding Model.IsBusy}" 
+                             IsVisible="{Binding Model.IsBusy}" />
+            
+            <!-- Content when logged in -->
+            <VerticalStackLayout Spacing="24" IsVisible="{Binding Model.IsLoggedIn}">
+                
+                <!-- Total Balance Card -->
+                <Border StrokeThickness="1"
+                        Padding="24"
+                        Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Total Balance" 
+                               FontSize="14" 
+                                />
+                        <Label FontSize="36" 
+                               FontAttributes="Bold">
+                            <Label.Text>
+                                <Binding Path="Model.Items">
+                                    <Binding.Converter>
+                                        <converters:TotalBalanceConverter />
+                                    </Binding.Converter>
+                                </Binding>
+                            </Label.Text>
+                        </Label>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Accounts Grid/List -->
+                <CollectionView ItemsSource="{Binding Model.Items}">
+                    <CollectionView.EmptyView>
+                        <Label Text="No accounts found." 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center"
+                               Margin="0,40" />
+                    </CollectionView.EmptyView>
+                    
+                    <!-- Responsive Layout: Grid on larger screens, Stack on phones -->
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                       HorizontalItemSpacing="16"
+                                       VerticalItemSpacing="16">
+                            <GridItemsLayout.Span>
+                                <OnIdiom x:TypeArguments="x:Int32" 
+                                       Phone="1" 
+                                       Tablet="2" 
+                                       Desktop="3" />
+                            </GridItemsLayout.Span>
+                        </GridItemsLayout>
+                    </CollectionView.ItemsLayout>
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="data:Account">
+                            <Border StrokeThickness="1"
+                                    Padding="20"
+                                    Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Grid RowDefinitions="Auto,*,Auto" 
+                                      RowSpacing="12">
+                                    
+                                    <!-- Account Name with Edit/Delete buttons -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding AccountName}" 
+                                               FontSize="16" 
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center" />
+                                        <Label Grid.Column="1"
+                                               Text="✏️"
+                                               FontSize="18"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Label Grid.Column="2"
+                                               Text="🗑️"
+                                               FontSize="18"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
+                                    
+                                    <!-- Account Type Badge -->
+                                    <HorizontalStackLayout Grid.Row="1" Spacing="8">
+                                        <Border Stroke="Transparent"
+                                                Padding="12,6">
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="6" />
+                                            </Border.StrokeShape>
+                                            <HorizontalStackLayout Spacing="6">
+                                                <Label Text="💳" FontSize="14" />
+                                                <Label Text="{Binding AccountType}" 
+                                                       FontSize="12" />
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                    </HorizontalStackLayout>
+                                    
+                                    <!-- Balance -->
+                                    <VerticalStackLayout Grid.Row="2" Spacing="4">
+                                        <Label Text="{Binding CachedBalance, StringFormat='{0:C}'}" 
+                                               FontSize="24" 
+                                               FontAttributes="Bold" />
+                                        <Label Text="USD" 
+                                               FontSize="12" 
+                                                />
+                                    </VerticalStackLayout>
+                                    
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+                
+            </VerticalStackLayout>
+            
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>
