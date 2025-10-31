@@ -12,7 +12,9 @@
       "Bash(dotnet sln:*)",
       "WebFetch(domain:devblogs.microsoft.com)",
       "WebSearch",
-      "Bash(dotnet remove:*)"
+      "Bash(dotnet remove:*)",
+      "Bash(dir:*)",
+      "Bash(Get-ChildItem -Path obj -Recurse -Filter \"*scopedcss*\" -ErrorAction SilentlyContinue)"
     ],
     "deny": [],
     "ask": []
