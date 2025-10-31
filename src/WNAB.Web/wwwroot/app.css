@@ -183,3 +183,60 @@ h1:focus {
     border: 1px dashed #dee2e6;
     min-height: 200px;
 }
+}
+
+/* Categories card grid styling (matches design screenshots) */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+}
+
+.category-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 1px 0 rgba(16,24,40,0.04), 0 6px 20px rgba(16,24,40,0.06);
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.category-card-header {
+    align-items: flex-start;
+}
+
+.category-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.03) inset;
+}
+
+.category-actions button { color: #222; }
+
+.category-card-body {
+    margin-top: 6px;
+}
+
+.category-amount {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+/* Modal color swatches */
+.color-swatch { background: transparent; border-radius: 999px; }
+.swatch-inner {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+    border: 2px solid transparent;
+}
+.swatch-selected { box-shadow: 0 0 0 3px rgba(0,0,0,0.06); border: 3px solid rgba(255,255,255,0.85); }
+
+@media (max-width: 480px) {
+    .category-amount { font-size: 1.25rem; }
+}

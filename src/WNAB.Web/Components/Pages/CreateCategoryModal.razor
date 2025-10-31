@@ -28,6 +28,27 @@
                         <label class="form-label">Category Name</label>
                         <input class="form-control" @bind-value="_name" required />
                     </div>
+
+                    <div class="row g-2">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" @bind="_isIncome">
+                                <option value="false">Expense</option>
+                                <option value="true">Income</option>
+                            </select>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Color</label>
+                            <div class="d-flex gap-2 align-items-center">
+                                @foreach (var c in _colorOptions)
+                                {
+                                    <button type="button" class="color-swatch btn btn-sm p-0" style="background-color:@c; border: none;" @onclick="() => SelectColor(c)">
+                                        <div class="swatch-inner @(c == _selectedColor ? "swatch-selected" : "")" style="background-color:@c"></div>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -51,6 +72,19 @@
     private string? _result;
     private string? _error;
     private string? _statusMessage;
+    private bool _isIncome = false;
+    private string _selectedColor = "#ef4444";
+    private readonly List<string> _colorOptions = new()
+    {
+        "#ef4444", // red
+        "#f59e0b", // orange
+        "#10b981", // green
+        "#3b82f6", // blue
+        "#6366f1", // indigo
+        "#7c3aed", // purple
+        "#ec4899", // pink
+        "#14b8a6"  // teal
+    };
 
     [Parameter] public EventCallback OnCategoryCreated { get; set; }
 
@@ -76,6 +110,8 @@
 
             // Clear the name field for next use (matching MAUI pattern)
             _name = string.Empty;
+            _selectedColor = _colorOptions.First();
+            _isIncome = false;
 
             // Notify parent component to refresh the categories list
             await OnCategoryCreated.InvokeAsync();
@@ -89,5 +125,10 @@
             _isCreating = false;
             StateHasChanged();
         }
+    }
+
+    private void SelectColor(string color)
+    {
+        _selectedColor = color;
     }
 }

@@ -9,52 +9,48 @@ namespace WNAB.MVM;
 /// </summary>
 public class CategoryManagementService
 {
-    private readonly HttpClient _http;
+  private readonly HttpClient _http;
 
- 
-    public CategoryManagementService(HttpClient http)
-    {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
-    }
 
-    public async Task<int> CreateCategoryAsync(CategoryRecord record, CancellationToken ct = default)
-    {
-        if (record is null) throw new ArgumentNullException(nameof(record));
+  public CategoryManagementService(HttpClient http)
+  {
+    _http = http ?? throw new ArgumentNullException(nameof(http));
+  }
 
-        var response = await _http.PostAsJsonAsync("categories", record, ct);
-      response.EnsureSuccessStatusCode();
+  public async Task<int> CreateCategoryAsync(CategoryRecord record, CancellationToken ct = default)
+  {
+    if (record is null) throw new ArgumentNullException(nameof(record));
 
-        // CHANGE: Receive DTO instead of entity
-        var created = await response.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
-        if (created is null) throw new InvalidOperationException("API returned no content when creating category.");
-        return created.Id;
-    }
+    var response = await _http.PostAsJsonAsync("categories", record, ct);
+    response.EnsureSuccessStatusCode();
 
-    public async Task<List<Category>> GetCategoriesAsync(CancellationToken ct = default)
-    {
- // CHANGE: Receive DTOs and map to entities for backward compatibility
-  var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("all/categories", ct);
-    return dtos?.Select(MapToEntity).ToList() ?? new();
-    }
+    // CHANGE: Receive DTO instead of entity
+    var created = await response.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
+    if (created is null) throw new InvalidOperationException("API returned no content when creating category.");
+    return created.Id;
+  }
 
-    public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
-    {
+  public async Task<List<Category>> GetCategoriesAsync(CancellationToken ct = default)
+  {
     // CHANGE: Receive DTOs and map to entities for backward compatibility
-  var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct);
-return dtos?.Select(MapToEntity).ToList() ?? new();
-    }
+    var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("all/categories", ct);
+    return dtos?.Select(MapToEntity).ToList() ?? new();
+  }
+
+  public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
+  {
+    // CHANGE: Receive DTOs and map to entities for backward compatibility
+    var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct);
+    return dtos?.Select(MapToEntity).ToList() ?? new();
+  }
 
   // Helper method to map DTO to entity
-    private static Category MapToEntity(CategoryDto dto) => new()
-    {
-        Id = dto.Id,
-        Name = dto.Name,
-        Description = dto.Description,
-      Color = dto.Color,
-        IsIncome = dto.IsIncome,
-        IsActive = dto.IsActive,
-  CreatedAt = dto.CreatedAt,
-   UpdatedAt = dto.UpdatedAt
-        // Note: User and UserId are intentionally not set to avoid circular references
-    };
+  private static Category MapToEntity(CategoryDto dto) => new()
+  {
+    Id = dto.Id,
+    Name = dto.Name,
+    Color = dto.Color,
+    IsActive = dto.IsActive
+    // Note: User and UserId are intentionally not set to avoid circular references
+  };
 }

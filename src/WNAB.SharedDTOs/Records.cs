@@ -81,18 +81,15 @@ public record TransactionSplitResponse(
 /// <summary>
 /// DTO for creating a new category - no circular references
 /// </summary>
-public record CategoryCreateDto(string Name);
-
+public record CreateCategoryRequest(string Name, string Color);
+public record EditCategoryRequest(int Id, string NewName, string NewColor, bool IsActive);
+public record DeleteCategoryRequest(int Id);
 /// <summary>
 /// DTO for returning category data - no User navigation property
 /// </summary>
 public record CategoryDto(
     int Id,
     string Name,
-    string? Description,
     string? Color,
-    bool IsIncome,
-    bool IsActive,
-    DateTime CreatedAt,
-    DateTime UpdatedAt
+    bool IsActive
 );

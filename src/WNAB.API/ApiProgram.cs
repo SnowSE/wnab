@@ -69,6 +69,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<WNAB.API.Services.UserProvisioningService>();
 // Register accounts DB service
 builder.Services.AddScoped<AccountDBService>();
+// Register categories DB service
+builder.Services.AddScoped<CategoryDBService>();
 
 // Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
 var connectionString = builder.Configuration.GetConnectionString("wnabdb")
@@ -142,26 +144,12 @@ app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisio
 }).RequireAuthorization();
 
 // Query endpoints - secured with authorization
-app.MapGet("/categories", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapGet("/categories", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, CategoryDBService categoryService) =>
 {
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    var categories = await db.Categories
-        .Where(c => c.UserId == user.Id && c.IsActive)
-        .AsNoTracking()
-        .Select(c => new CategoryDto(
-            c.Id,
-            c.Name,
-            c.Description,
-            c.Color,
-            c.IsIncome,
-            c.IsActive,
-            c.CreatedAt,
-            c.UpdatedAt
-        ))
-        .ToListAsync();
-
+    var categories = await categoryService.GetCategoriesForUserAsync(user.Id);
     return Results.Ok(categories);
 }).RequireAuthorization();
 
@@ -287,37 +275,20 @@ app.MapPost("/users", async (UserRecord rec, WnabContext db) =>
     return Results.Created($"/users/{user.Id}", new { user.Id, user.FirstName, user.LastName, user.Email });
 }).RequireAuthorization();
 
-app.MapPost("/categories", async (HttpContext context, CategoryRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    using var transaction = await db.Database.BeginTransactionAsync();
     try
     {
-        var category = new Category { Name = rec.Name, UserId = user.Id };
-        db.Categories.Add(category);
-        await db.SaveChangesAsync();
+        var category = await categoryService.CreateCategoryWithValidationAsync(user.Id, rec);
 
-        // CHANGE: Return a DTO instead of the entity
-        var categoryDto = new CategoryDto(
-            category.Id,
-            category.Name,
-            category.Description,
-            category.Color,
-            category.IsIncome,
-            category.IsActive,
-            category.CreatedAt,
-            category.UpdatedAt
-        );
-
-        await transaction.CommitAsync();
-        return Results.Created($"/categories/{category.Id}", categoryDto);
+        return Results.Created($"/categories/{category.Id}", new CategoryDto(category.Id, category.Name, category.Color, category.IsActive));
     }
-    catch
+    catch (Exception ex)
     {
-        await transaction.RollbackAsync();
-        throw;
+        return Results.BadRequest(new { Error = ex.Message });
     }
 
 }).RequireAuthorization();
@@ -521,9 +492,40 @@ app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id,
     return Results.NoContent();
 }).RequireAuthorization();
 
+app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryRequest rec, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
+    if (user is null) return Results.Unauthorized();
 
+    try
+    {
+        var category = await categoryService.UpdateCategoryWithValidationAsync(user.Id, id, rec);
 
-///
+        return Results.NoContent();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { Error = ex.Message });
+    }
+
+}).RequireAuthorization();
+
+app.MapDelete("/categories/{id}", async (HttpContext context, int id, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    try
+    {
+        await categoryService.DeleteCategoryWithValidationAsync(user.Id, id);
+        return Results.Ok();
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { Error = ex.Message });
+    }
+}).RequireAuthorization();
+
 // Apply EF Core migrations at startup so the database schema is up to date.
 using (var scope = app.Services.CreateScope())
 {
