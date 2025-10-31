@@ -4,7 +4,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h1>Transactions</h1>
+        <h1>Transaction Splits</h1>
     </div>
     <div>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal" @onclick="OnAddTransactionClick">
@@ -39,20 +39,20 @@
 }
 
 <div class="responsive-panel">
-    @if (ViewModel.Model.Items == null)
+    @if (ViewModel.Model.Splits == null)
     {
         <div class="text-center p-4">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2 text-muted">Loading transactions...</p>
+            <p class="mt-2 text-muted">Loading transaction splits...</p>
         </div>
     }
-    else if (ViewModel.Model.Items.Count == 0)
+    else if (ViewModel.Model.Splits.Count == 0)
     {
         <div class="text-center p-4">
             <i class="bi bi-receipt fs-1 text-muted"></i>
-            <p class="mt-2">No transactions found. Click "Create Transaction" to add your first transaction.</p>
+            <p class="mt-2">No transaction splits found. Click "Create Transaction" to add your first transaction.</p>
         </div>
     }
     else
@@ -61,38 +61,38 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Payee</th>
+                        <th>Transaction ID</th>
+                        <th>Category</th>
                         <th>Description</th>
-                        <th>Account</th>
-                        <th>Categories</th>
+                        <th>Type</th>
                         <th class="text-end">Amount</th>
                         <th width="120">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var t in ViewModel.Model.Items)
+                    @foreach (var split in ViewModel.Model.Splits)
                     {
                         <tr>
-                            <td class="text-muted">@t.Date.ToString("MMM dd, yyyy")</td>
-                            <td class="fw-semibold">@t.Payee</td>
-                            <td>@t.Description</td>
+                            <td class="text-muted">#@split.TransactionId</td>
                             <td>
-                                <span class="badge bg-secondary">@t.AccountName</span>
+                                <span class="badge bg-primary">@split.CategoryName</span>
                             </td>
+                            <td>@(split.Description ?? "-")</td>
                             <td>
-                                <span class="badge bg-info">@t.Categories</span>
+                                <span class="badge @(split.IsIncome ? "bg-success" : "bg-warning")">
+                                    @(split.IsIncome ? "Income" : "Expense")
+                                </span>
                             </td>
                             <td class="text-end">
-                                <span class="@(t.Amount >= 0 ? "text-success" : "text-danger")">
-                                    @t.Amount.ToString("C")
+                                <span class="@(split.Amount >= 0 ? "text-success" : "text-danger")">
+                                    @split.Amount.ToString("C")
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewTransaction(t.Id)">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewSplit(split.Id)">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(t.Id)">
+                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteSplit(split.Id)">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
@@ -108,14 +108,14 @@
 <CreateTransactionModal OnTransactionCreated="OnTransactionCreated" />
 
 @code {
-    // LLM-Dev:v6 Refactored to use WNAB.MVM ViewModels and Models for shared business logic
+    // LLM-Dev:v7 Updated to display transaction splits instead of transactions
     // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
-    
+
     protected override async Task OnInitializedAsync()
     {
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
-        
+
         await ViewModel.InitializeAsync();
     }
 
@@ -143,12 +143,12 @@
     }
 
     // Placeholder action handlers
-    private void ViewTransaction(int transactionId)
+    private void ViewSplit(int splitId)
     {
         // Future: open view/edit modal
     }
 
-    private async Task DeleteTransaction(int transactionId)
+    private async Task DeleteSplit(int splitId)
     {
         // Future: implement delete with confirmation
     }

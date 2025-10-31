@@ -67,7 +67,7 @@ public partial class StepDefinitions
 				TransactionId = splitRecord.TransactionId,
 				Amount = splitRecord.Amount,
 				IsIncome = splitRecord.IsIncome,
-				Notes = splitRecord.Notes,
+				Description = splitRecord.Notes,
 				CategoryAllocation = new CategoryAllocation { Id = splitRecord.CategoryAllocationId, CategoryId = category.Id, Category = category },
 				Transaction = transaction
 			};
@@ -125,7 +125,7 @@ public partial class StepDefinitions
 
             // Assert
             actualRecord.Splits.Count.ShouldBe(expectedSplits.Count);
-            for (int i = 0; i < expectedSplits.Count; i++)
+            for (int i =0; i < expectedSplits.Count; i++)
             {
                 var expectedSplit = expectedSplits[i];
                 var actualSplit = actualRecord.Splits[i];

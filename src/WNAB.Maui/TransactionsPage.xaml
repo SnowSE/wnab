@@ -1,85 +1,80 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+          xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
-             x:Class="WNAB.Maui.TransactionsPage"
-             x:DataType="local:TransactionsViewModel"
-             Title="Transactions">
+       xmlns:dto="clr-namespace:WNAB.SharedDTOs;assembly=WNAB.SharedDTOs"
+     x:Class="WNAB.Maui.TransactionsPage"
+    x:DataType="local:TransactionsViewModel"
+             Title="Transaction Splits">
     
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Home"
-                     Priority="1"
-                     Order="Primary"
-                     Command="{Binding NavigateToHomeCommand}" />
+  <ToolbarItem Text="Home"
+   Priority="1"
+    Order="Primary"
+    Command="{Binding NavigateToHomeCommand}" />
         <ToolbarItem Text="Add Transaction"
-                     Priority="0"
-                     Order="Primary"
-                     Command="{Binding AddTransactionCommand}"
-                     IsEnabled="{Binding Model.IsLoggedIn}" />
+                Priority="0"
+           Order="Primary"
+           Command="{Binding AddTransactionCommand}"
+  IsEnabled="{Binding Model.IsLoggedIn}" />
     </ContentPage.ToolbarItems>
     
-    <!-- LLM-Dev: Transactions page following same pattern as AccountsPage -->
+    <!-- LLM-Dev:v7 Updated to display transaction splits -->
     <VerticalStackLayout Padding="16" Spacing="12">
-        
+    
         <!-- Status and refresh section -->
         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
             <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
-            <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
+<Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
         </Grid>
 
         <!-- Login prompt when not logged in -->
-        <Label Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+      <Label Text="Please use the Login page to sign in first." 
+     IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                HorizontalOptions="Center" 
-               TextColor="Orange"
+         TextColor="Orange"
                Margin="0,20" />
 
         <!-- Loading indicator -->
-        <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
-        
-        <!-- Transactions list -->
-        <CollectionView ItemsSource="{Binding Model.Items}" IsVisible="{Binding Model.IsLoggedIn}">
-            <CollectionView.EmptyView>
-                <Label Text="No transactions found." HorizontalOptions="Center" VerticalOptions="Center" />
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="local:TransactionItem">
-                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="8,6" ColumnSpacing="8">
-                        <!-- Date and Amount on first row -->
-                        <Label Text="{Binding Date, StringFormat='{0:MMM dd, yyyy}'}" 
-                               FontSize="Small" 
-                               TextColor="Gray" />
-                        <Label Grid.Column="1" 
-                               Text="{Binding Amount, StringFormat='{0:C}'}" 
-                               FontAttributes="Bold"
-                               HorizontalOptions="End" />
-                        
-                        <!-- Payee on second row -->
-                        <Label Grid.Row="1" 
-                               Text="{Binding Payee}" 
-                               FontAttributes="Bold" />
-                        
-                        <!-- Description, Account, and Categories on third row -->
-                        <VerticalStackLayout Grid.Row="2" Spacing="2">
-                            <Label Text="{Binding Description}" 
-                                   FontSize="Small" 
-                                   TextColor="Gray" 
-                                   IsVisible="{Binding Description, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
-                            <HorizontalStackLayout Spacing="8">
-                                <Label Text="{Binding AccountName}" 
-                                       FontSize="Small" 
-                                       TextColor="Blue" />
-                                <Label Text="|" 
-                                       FontSize="Small" 
-                                       TextColor="Gray" />
-                                <Label Text="{Binding Categories}" 
-                                       FontSize="Small" 
-                                       TextColor="Green" />
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </Grid>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
+      <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
+  
+        <!-- Transaction Splits list -->
+        <CollectionView ItemsSource="{Binding Model.Splits}" IsVisible="{Binding Model.IsLoggedIn}">
+     <CollectionView.EmptyView>
+         <Label Text="No transaction splits found." HorizontalOptions="Center" VerticalOptions="Center" />
+   </CollectionView.EmptyView>
+  <CollectionView.ItemTemplate>
+      <DataTemplate x:DataType="dto:TransactionSplitResponse">
+    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="8,6" ColumnSpacing="8">
+     <!-- Transaction ID and Amount on first row -->
+       <Label Text="{Binding TransactionId, StringFormat='Transaction #{0}'}" 
+ FontSize="Small" 
+      TextColor="Gray" />
+          <Label Grid.Column="1" 
+      Text="{Binding Amount, StringFormat='{0:C}'}" 
+        FontAttributes="Bold"
+          HorizontalOptions="End" />
+         
+  <!-- Category on second row -->
+         <Label Grid.Row="1" 
+    Text="{Binding CategoryName}" 
+                    FontAttributes="Bold"
+        TextColor="Blue" />
+          
+     <!-- Description and Type on third row -->
+              <HorizontalStackLayout Grid.Row="2" Spacing="8">
+ <Label Text="{Binding Description}" 
+          FontSize="Small" 
+           TextColor="Gray"
+  IsVisible="{Binding Description, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+ <Label Text="{Binding IsIncome, Converter={StaticResource IncomeExpenseConverter}}" 
+     FontSize="Small" 
+      TextColor="{Binding IsIncome, Converter={StaticResource IncomeExpenseColorConverter}}"
+ FontAttributes="Italic" />
+              </HorizontalStackLayout>
+  </Grid>
+   </DataTemplate>
+   </CollectionView.ItemTemplate>
         </CollectionView>
-    </VerticalStackLayout>
+  </VerticalStackLayout>
 </ContentPage>
