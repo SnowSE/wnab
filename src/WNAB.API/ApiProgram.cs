@@ -271,6 +271,29 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
     return Results.Created($"/accounts/{account.Id}", new { account.Id });
 }).RequireAuthorization();
 
+app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    // Validate that the ID in the route matches the ID in the request body
+    if (id != req.Id) return Results.BadRequest("Account ID mismatch between route and request body.");
+
+    try
+    {
+        var updatedAccount = await accountsService.UpdateAccountAsync(req.Id, user.Id, req.NewName, req.NewAccountType);
+        
+        if (updatedAccount is null)
+            return Results.NotFound("Account not found or does not belong to the current user.");
+
+        return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.UpdatedAt });
+    }
+    catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
+    {
+        return Results.Conflict(new { error = ex.Message });
+    }
+}).RequireAuthorization();
+
 
 // create allocation
 app.MapPost("/allocations", async (CategoryAllocationRecord rec, WnabContext db) =>

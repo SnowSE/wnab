@@ -19,15 +19,13 @@
                            FontAttributes="Bold" />
                     <Label Text="Manage your financial accounts" 
                            FontSize="14" 
-                           TextColor="Gray" />
+                           />
                 </VerticalStackLayout>
                 
                 <Button Grid.Column="1" 
                         Text="+ Add Account"
                         Command="{Binding AddAccountCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}"
-                        BackgroundColor="#1a1a1a"
-                        TextColor="White"
                         CornerRadius="8"
                         Padding="16,12"
                         VerticalOptions="Center" />
@@ -37,7 +35,6 @@
             <Label Text="Please use the Login page to sign in first." 
                    IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
                    HorizontalOptions="Center" 
-                   TextColor="Orange"
                    Margin="0,20" />
 
             <!-- Loading indicator -->
@@ -48,9 +45,7 @@
             <VerticalStackLayout Spacing="24" IsVisible="{Binding Model.IsLoggedIn}">
                 
                 <!-- Total Balance Card -->
-                <Border BackgroundColor="White"
-                        Stroke="LightGray"
-                        StrokeThickness="1"
+                <Border StrokeThickness="1"
                         Padding="24"
                         Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
                     <Border.StrokeShape>
@@ -59,7 +54,7 @@
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Total Balance" 
                                FontSize="14" 
-                               TextColor="Gray" />
+                                />
                         <Label FontSize="36" 
                                FontAttributes="Bold">
                             <Label.Text>
@@ -98,9 +93,7 @@
                     
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="data:Account">
-                            <Border BackgroundColor="White"
-                                    Stroke="LightGray"
-                                    StrokeThickness="1"
+                            <Border StrokeThickness="1"
                                     Padding="20"
                                     Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
                                 <Border.StrokeShape>
@@ -135,8 +128,7 @@
                                     
                                     <!-- Account Type Badge -->
                                     <HorizontalStackLayout Grid.Row="1" Spacing="8">
-                                        <Border BackgroundColor="#e8e8ff"
-                                                Stroke="Transparent"
+                                        <Border Stroke="Transparent"
                                                 Padding="12,6">
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="6" />
@@ -144,8 +136,7 @@
                                             <HorizontalStackLayout Spacing="6">
                                                 <Label Text="💳" FontSize="14" />
                                                 <Label Text="{Binding AccountType}" 
-                                                       FontSize="12"
-                                                       TextColor="#4a4a8a" />
+                                                       FontSize="12" />
                                             </HorizontalStackLayout>
                                         </Border>
                                     </HorizontalStackLayout>
@@ -157,7 +148,7 @@
                                                FontAttributes="Bold" />
                                         <Label Text="USD" 
                                                FontSize="12" 
-                                               TextColor="Gray" />
+                                                />
                                     </VerticalStackLayout>
                                     
                                 </Grid>

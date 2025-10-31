@@ -52,4 +52,41 @@ public class AccountDBService
     {
         return _db.Accounts.AnyAsync(a => a.Id == accountId && a.UserId == userId, cancellationToken);
     }
+
+    public async Task<Account?> UpdateAccountAsync(int accountId, int userId, string newName, string newAccountType, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(newName)) throw new ArgumentException("Account name is required", nameof(newName));
+        if (string.IsNullOrWhiteSpace(newAccountType)) throw new ArgumentException("Account type is required", nameof(newAccountType));
+
+        // Guard: prevent saving unrelated pending changes in this context
+        if (_db.ChangeTracker.HasChanges())
+            throw new InvalidOperationException("Context has pending changes; aborting account update.");
+
+        // Verify the account exists and belongs to the user
+        var account = await _db.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId, cancellationToken);
+
+        if (account is null)
+            return null; // Account not found or doesn't belong to user
+
+        // Check for duplicate account names for this user (excluding the current account)
+        var duplicateExists = await _db.Accounts
+            .AnyAsync(a => a.UserId == userId && a.Id != accountId && a.AccountName == newName, cancellationToken);
+
+        if (duplicateExists)
+            throw new InvalidOperationException($"An account with the name '{newName}' already exists for this user.");
+
+        // Update the account
+        account.AccountName = newName;
+        account.AccountType = newAccountType;
+        account.UpdatedAt = DateTime.UtcNow;
+
+        var affected = await _db.SaveChangesAsync(cancellationToken);
+
+        // Postcondition: ensure only the account was updated
+        if (affected != 1)
+            throw new InvalidOperationException($"Expected to update exactly 1 entry, but updated {affected}.");
+
+        return account;
+    }
 }
