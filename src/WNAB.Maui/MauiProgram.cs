@@ -81,14 +81,10 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CategoriesViewModel>();
 		builder.Services.AddSingleton<CategoriesPage>();
 
-		builder.Services.AddSingleton<UsersModel>();
-		builder.Services.AddSingleton<UsersViewModel>();
-		builder.Services.AddSingleton<UsersPage>();
         // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
         builder.Services.AddSingleton<AccountsModel>();
         builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
         builder.Services.AddSingleton<AccountsPage>();
-		
 		// LLM-Dev: Register Transactions page and view model
 		builder.Services.AddSingleton<TransactionsModel>();
 		builder.Services.AddSingleton<TransactionsViewModel>();
@@ -100,7 +96,6 @@ public static class MauiProgram
 			sp.GetRequiredService<TransactionManagementService>(),
 			sp.GetRequiredService<IAuthenticationService>()));
 		builder.Services.AddSingleton<PlanBudgetViewModel>();
-		builder.Services.AddSingleton<PlanBudgetPage>();
 
 #if DEBUG
 	builder.Logging.AddDebug();

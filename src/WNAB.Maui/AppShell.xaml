@@ -13,7 +13,24 @@
             ContentTemplate="{DataTemplate local:MainPage}"
             Route="MainPage" />
     </FlyoutItem>
-
+    <FlyoutItem Title="Accounts" Icon="accounts.png">
+        <ShellContent
+            Title="Accounts"
+            ContentTemplate="{DataTemplate local:AccountsPage}"
+            Route="AccountsPage" />
+    </FlyoutItem>
+    <FlyoutItem Title="Categories">
+        <ShellContent
+            Title="Categories"
+            ContentTemplate="{DataTemplate local:CategoriesPage}"
+            Route="CategoriesPage" />
+    </FlyoutItem>
+    <FlyoutItem Title ="Transactions">
+        <ShellContent
+            Title="Transactions"
+            ContentTemplate="{DataTemplate local:TransactionsPage}"
+            Route="TransactionsPage" />
+    </FlyoutItem>
     
 
 </Shell>
