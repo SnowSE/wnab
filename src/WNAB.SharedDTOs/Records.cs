@@ -25,6 +25,25 @@ public record TransactionSplitRecord(
  string? Notes
 );
 
+// Edit/Update DTOs
+public record EditTransactionRequest(
+    int Id,
+    int AccountId,
+    string Payee,
+    string Description,
+    decimal Amount,
+    DateTime TransactionDate,
+    bool IsReconciled
+);
+
+public record EditTransactionSplitRequest(
+    int Id,
+    int CategoryAllocationId,
+  decimal Amount,
+    bool IsIncome,
+    string? Description
+);
+
 // Create the transaction. 
 public record CreateTransactionRequest(
     string Name, 
@@ -58,10 +77,10 @@ public record TransactionResponse(
     int AccountId,
     string AccountName,
     string Payee,
-    string Description,
+ string Description,
     decimal Amount,
     DateTime TransactionDate,
-    bool IsReconciled,
+ bool IsReconciled,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
