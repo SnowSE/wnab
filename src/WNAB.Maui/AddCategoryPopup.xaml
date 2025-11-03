@@ -29,56 +29,80 @@
         <StackLayout Spacing="8">
             <Label Text="Color" TextColor="Black" FontSize="16" />
             <HorizontalStackLayout Spacing="8">
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#ef4444" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#ef4444"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#f59e0b" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#f59e0b"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#10b981" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#10b981"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#3b82f6" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#3b82f6"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#ef4444}"
+                        BackgroundColor="#ef4444"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#ef4444" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#f59e0b}"
+                        BackgroundColor="#f59e0b"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#f59e0b" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#10b981}"
+                        BackgroundColor="#10b981"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#10b981" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#3b82f6}"
+                        BackgroundColor="#3b82f6"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#3b82f6" />
+                    </Border.GestureRecognizers>
+                </Border>
             </HorizontalStackLayout>
             <HorizontalStackLayout Spacing="8">
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#6366f1" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#6366f1"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#7c3aed" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#7c3aed"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#ec4899" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#ec4899"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
-                <Button Text="●" FontSize="24" 
-                        BackgroundColor="#14b8a6" 
-                        Command="{Binding SelectColorCommand}" 
-                        CommandParameter="#14b8a6"
-                        WidthRequest="40" HeightRequest="40" 
-                        CornerRadius="20" Padding="0" />
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#6366f1}"
+                        BackgroundColor="#6366f1"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#6366f1" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#7c3aed}"
+                        BackgroundColor="#7c3aed"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#7c3aed" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#ec4899}"
+                        BackgroundColor="#ec4899"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#ec4899" />
+                    </Border.GestureRecognizers>
+                </Border>
+                <Border StrokeThickness="3" 
+                        Stroke="{Binding Model.SelectedColor, Converter={StaticResource ColorMatchToBorderConverter}, ConverterParameter=#14b8a6}"
+                        BackgroundColor="#14b8a6"
+                        WidthRequest="40" HeightRequest="40"
+                        StrokeShape="RoundRectangle 20">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding SelectColorCommand}" CommandParameter="#14b8a6" />
+                    </Border.GestureRecognizers>
+                </Border>
             </HorizontalStackLayout>
         </StackLayout>
 

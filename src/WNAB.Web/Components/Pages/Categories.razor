@@ -69,10 +69,10 @@
                             <div class="fw-semibold">@c.Name</div>
                         </div>
                         <div class="category-actions">
-                            <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => EditCategory(c.Id)">
+                            <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => EditCategory(c)">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => DeleteCategory(c.Id)">
+                            <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => DeleteCategory(c)">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -139,21 +139,19 @@
     {
         // Called by modal when category is updated - refresh the list and close modal
         await ViewModel.Model.RefreshAsync();
-        await JS.InvokeVoidAsync("eval", "$('#editCategoryModal').modal('hide')");
+        await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'))?.hide()");
     }
 
-    private async Task EditCategory(int categoryId)
+    private async Task EditCategory(Category category)
     {
-        var category = ViewModel.Model.Items.FirstOrDefault(c => c.Id == categoryId);
         if (category == null) return;
 
         editCategoryModal?.Initialize(category.Id, category.Name, category.Color, category.IsActive);
         await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('editCategoryModal')).show()");
     }
 
-    private async Task DeleteCategory(int categoryId)
+    private async Task DeleteCategory(Category category)
     {
-        var category = ViewModel.Model.Items.FirstOrDefault(c => c.Id == categoryId);
         if (category == null) return;
 
         var confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.");
@@ -161,7 +159,7 @@
 
         try
         {
-            await CategoryService.DeleteCategoryAsync(categoryId);
+            await CategoryService.DeleteCategoryAsync(category.Id);
             await ViewModel.Model.RefreshAsync();
         }
         catch (Exception ex)

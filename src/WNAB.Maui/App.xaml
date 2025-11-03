@@ -17,6 +17,7 @@
             <converters:MonthToIndexConverter x:Key="MonthToIndexConverter" />
             <converters:IncomeExpenseConverter x:Key="IncomeExpenseConverter" />
             <converters:IncomeExpenseColorConverter x:Key="IncomeExpenseColorConverter" />
+            <converters:ColorMatchToBorderConverter x:Key="ColorMatchToBorderConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

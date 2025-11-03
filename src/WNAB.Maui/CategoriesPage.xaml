@@ -5,8 +5,7 @@
              xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.CategoriesPage"
              x:DataType="local:CategoriesViewModel"
-             Title="Categories"
-             BackgroundColor="#F5F5F5">
+             Title="Categories">
     
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Home"
@@ -21,16 +20,15 @@
             <VerticalStackLayout Spacing="8">
                 <Label Text="Categories" 
                        FontSize="32" 
-                       FontAttributes="Bold"
-                       TextColor="#000000" />
+                       FontAttributes="Bold" />
                 <Label Text="Organize your transactions into categories" 
                        FontSize="14" 
-                       TextColor="#666666" />
+                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
             </VerticalStackLayout>
 
             <!-- Add Category Button -->
             <Button Text="+ Add Category"
-                    BackgroundColor="#000000"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                     TextColor="White"
                     FontAttributes="Bold"
                     FontSize="14"
@@ -51,7 +49,7 @@
             <!-- Loading indicator -->
             <ActivityIndicator IsRunning="{Binding Model.IsBusy}" 
                              IsVisible="{Binding Model.IsBusy}"
-                             Color="#000000" />
+                             Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}" />
 
             <!-- Categories List -->
             <VerticalStackLayout IsVisible="{Binding Model.IsLoggedIn}" Spacing="16">
@@ -61,13 +59,14 @@
                         <Label Text="No categories yet." 
                                HorizontalOptions="Center" 
                                VerticalOptions="Center"
-                               TextColor="#666666" />
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="data:Category">
                             <!-- Category Card -->
-                            <Border BackgroundColor="White"
-                                    StrokeThickness="0"
+                            <Border BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="1"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}"
                                     Margin="0,0,0,12"
                                     Padding="16">
                                 <Border.StrokeShape>
@@ -78,9 +77,10 @@
                                     <!-- Category Name Row -->
                                     <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
                                         <!-- Color Dot -->
-                                        <Ellipse Fill="{Binding Color, TargetNullValue=#FF6B6B}"
+                                        <BoxView Color="{Binding Color}"
                                                  WidthRequest="12"
                                                  HeightRequest="12"
+                                                 CornerRadius="6"
                                                  VerticalOptions="Center" />
                                         
                                         <!-- Category Name -->
@@ -88,43 +88,41 @@
                                                Text="{Binding Name}"
                                                FontSize="16"
                                                FontAttributes="Bold"
-                                               TextColor="#000000"
                                                VerticalOptions="Center" />
                                         
-                                        <!-- Edit Icon -->
-                                        <Image Grid.Column="2"
-                                               Source="edit_icon.png"
-                                               WidthRequest="20"
-                                               HeightRequest="20"
-                                               VerticalOptions="Center">
-                                            <Image.GestureRecognizers>
+                                        <!-- Edit Button -->
+                                        <Label Grid.Column="2"
+                                               Text="✏️"
+                                               FontSize="20"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center">
+                                            <Label.GestureRecognizers>
                                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=EditCategoryCommand}"
                                                                     CommandParameter="{Binding .}" />
-                                            </Image.GestureRecognizers>
-                                        </Image>
+                                            </Label.GestureRecognizers>
+                                        </Label>
                                         
-                                        <!-- Delete Icon -->
-                                        <Image Grid.Column="3"
-                                               Source="delete_icon.png"
-                                               WidthRequest="20"
-                                               HeightRequest="20"
-                                               VerticalOptions="Center">
-                                            <Image.GestureRecognizers>
+                                        <!-- Delete Button -->
+                                        <Label Grid.Column="3"
+                                               Text="🗑️"
+                                               FontSize="20"
+                                               VerticalOptions="Center"
+                                               HorizontalOptions="Center">
+                                            <Label.GestureRecognizers>
                                                 <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=DeleteCategoryCommand}"
                                                                     CommandParameter="{Binding .}" />
-                                            </Image.GestureRecognizers>
-                                        </Image>
+                                            </Label.GestureRecognizers>
+                                        </Label>
                                     </Grid>
                                     
                                     <!-- Amount Section -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">
                                         <Label Text="$0.00"
                                                FontSize="24"
-                                               FontAttributes="Bold"
-                                               TextColor="#000000" />
+                                               FontAttributes="Bold" />
                                         <Label Text="Total spent"
                                                FontSize="12"
-                                               TextColor="#666666" />
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
                                     </VerticalStackLayout>
                                 </Grid>
                             </Border>

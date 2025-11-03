@@ -501,7 +501,7 @@ app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryR
     {
         var category = await categoryService.UpdateCategoryWithValidationAsync(user.Id, id, rec);
 
-        return Results.NoContent(); //TODO: Make this a Results.Created instead because you are a cool person
+        return Results.Created($"/categories/{category.Id}", new CategoryDto(category.Id, category.Name, category.Color, category.IsActive));
     }
     catch (Exception ex)
     {

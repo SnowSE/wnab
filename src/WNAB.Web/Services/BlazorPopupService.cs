@@ -6,7 +6,7 @@ namespace WNAB.Web.Services;
 /// so this service is a lightweight stub that doesn't do anything.
 /// The actual modal triggering is done via data-bs-toggle or JavaScript in the Razor pages.
 /// </summary>
-public class BlazorPopupService : WNAB.MVM.IMVMPopupService
+public class BlazorPopupService :   WNAB.MVM.IMVMPopupService
 {
     private readonly ILogger<BlazorPopupService> _logger;
 
@@ -32,6 +32,16 @@ public class BlazorPopupService : WNAB.MVM.IMVMPopupService
     public Task ShowAddCategoryAsync()
     {
         _logger.LogDebug("ShowAddCategoryAsync called - Blazor handles modals declaratively");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// In Blazor, edit category modal is triggered via Bootstrap data attributes in the UI.
+    /// This method is called by ViewModels but doesn't need to do anything.
+    /// </summary>
+    public Task ShowEditCategoryAsync(int categoryId, string name, string? color, bool isActive)
+    {
+        _logger.LogDebug("ShowEditCategoryAsync called for category {CategoryId} - Blazor handles modals declaratively", categoryId);
         return Task.CompletedTask;
     }
 
