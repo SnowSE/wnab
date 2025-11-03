@@ -307,17 +307,18 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    // Validate that the ID in the route matches the ID in the request body
-    if (id != req.Id) return Results.BadRequest("Account ID mismatch between route and request body.");
-
     try
     {
-        var updatedAccount = await accountsService.UpdateAccountAsync(req.Id, user.Id, req.NewName, req.NewAccountType);
+        var updatedAccount = await accountsService.UpdateAccountAsync(id, user.Id, req.NewName, req.NewAccountType, req.Id);
         
         if (updatedAccount is null)
             return Results.NotFound("Account not found or does not belong to the current user.");
 
         return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.UpdatedAt });
+    }
+    catch (ArgumentException ex) when (ex.Message.Contains("mismatch"))
+    {
+        return Results.BadRequest(ex.Message);
     }
     catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
     {
