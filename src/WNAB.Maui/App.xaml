@@ -11,12 +11,13 @@
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
             
-            <!-- LLM-Dev: v1 Added converters for data binding -->
+            <!-- LLM-Dev: v2 Added converters for data binding -->
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:MonthToIndexConverter x:Key="MonthToIndexConverter" />
             <converters:IncomeExpenseConverter x:Key="IncomeExpenseConverter" />
             <converters:IncomeExpenseColorConverter x:Key="IncomeExpenseColorConverter" />
+            <converters:AmountColorConverter x:Key="AmountColorConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -108,6 +108,12 @@ builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
     sp.GetRequiredService<WNAB.MVM.IAuthenticationService>()));
 builder.Services.AddScoped<UsersModel>();
 
+// Register Modal/Popup Models
+builder.Services.AddScoped<AddAccountModel>();
+builder.Services.AddScoped<AddCategoryModel>();
+builder.Services.AddScoped<AddUserModel>();
+builder.Services.AddScoped<AddTransactionModel>();
+
 // Register all ViewModels (UI coordination layer)
 builder.Services.AddScoped<AccountsViewModel>();
 builder.Services.AddScoped<CategoriesViewModel>();
@@ -115,9 +121,16 @@ builder.Services.AddScoped<TransactionsViewModel>();
 builder.Services.AddScoped<PlanBudgetViewModel>();
 builder.Services.AddScoped<UsersViewModel>();
 
+// Register Modal/Popup ViewModels
+builder.Services.AddScoped<AddAccountViewModel>();
+builder.Services.AddScoped<AddCategoryViewModel>();
+builder.Services.AddScoped<AddUserViewModel>();
+builder.Services.AddScoped<AddTransactionViewModel>();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
 
 var app = builder.Build();
 

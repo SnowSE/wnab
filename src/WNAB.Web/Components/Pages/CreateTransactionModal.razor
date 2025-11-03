@@ -1,394 +1,170 @@
-@inject TransactionManagementService TransactionsService
-@inject AccountManagementService AccountsService
-@inject CategoryManagementService CategoriesService
+@using WNAB.MVM
+@inject AddTransactionViewModel ViewModel
+@inject IJSRuntime JSRuntime
 
 <!-- Create Transaction Modal -->
 <div class="modal fade" id="createTransactionModal" tabindex="-1" aria-labelledby="createTransactionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createTransactionModalLabel">Create Transaction</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       <h5 class="modal-title" id="createTransactionModalLabel">Create Transaction</h5>
+   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+       </div>
+    <EditForm Model="ViewModel.Model" OnValidSubmit="@HandleSave">
+            <div class="modal-body">
+            @if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
+       {
+           <div class="alert @GetAlertClass(ViewModel.Model.StatusMessage)">@ViewModel.Model.StatusMessage</div>
+    }
+     
+               <div class="row">
+    <div class="col-md-6">
+             <div class="mb-3">
+               <label class="form-label">Account</label>
+         <select class="form-select" @bind="ViewModel.Model.AccountId" required>
+        <option value="0">Select an account...</option>
+       @foreach (var account in ViewModel.Model.AvailableAccounts)
+            {
+        <option value="@account.Id">@account.AccountName</option>
+            }
+        </select>
+             </div>
+     </div>
+      <div class="col-md-6">
+      <div class="mb-3">
+             <label class="form-label">Transaction Date</label>
+              <input type="date" class="form-control" @bind="ViewModel.Model.TransactionDate" required />
+      </div>
+        </div>
+     </div>
+  
+  <div class="row">
+        <div class="col-md-6">
+             <div class="mb-3">
+   <label class="form-label">Payee</label>
+       <input class="form-control" @bind="ViewModel.Model.Payee" required />
+       </div>
+               </div>
+                  <div class="col-md-6">
+          <div class="mb-3">
+         <label class="form-label">Amount</label>
+ <input type="number" step="0.01" class="form-control" @bind="ViewModel.Model.Amount" required />
+                 </div>
+ </div>
+                </div>
+      
+    <div class="mb-3">
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <label class="form-label mb-0">Category</label>
+          <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ViewModel.ToggleSplitTransactionCommand.Execute">
+      @(ViewModel.Model.IsSplitTransaction ? "Single Category" : "Split Transaction")
+     </button>
+       </div>
+     
+         @if (!ViewModel.Model.IsSplitTransaction)
+   {
+      <select class="form-select" @bind="ViewModel.Model.CategoryId" required>
+          <option value="0">Select a category...</option>
+      @foreach (var category in ViewModel.Model.AvailableCategories)
+         {
+        <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+            }
+   </select>
+            }
+              else
+           {
+     <div class="border rounded p-3 bg-light">
+          @foreach (var split in ViewModel.Model.Splits)
+     {
+       <div class="row g-2 mb-2 align-items-center">
+      <div class="col-md-6">
+           <InputSelect class="form-select form-select-sm" @bind-Value="split.Model.SelectedCategory">
+          <option value="">Select category...</option>
+    @foreach (var category in ViewModel.Model.AvailableCategories)
+    {
+     <option value="@category">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+        }
+         </InputSelect>
+   </div>
+       <div class="col-md-4">
+  <input type="number" step="0.01" class="form-control form-control-sm" 
+       @bind="split.Model.Amount" placeholder="0.00" />
+   </div>
+    <div class="col-md-2">
+   <button type="button" class="btn btn-sm btn-danger w-100" 
+        @onclick="() => ViewModel.RemoveSplitCommand.Execute(split)"
+       disabled="@(ViewModel.Model.Splits.Count <= 1)">
+       ✕
+          </button>
+     </div>
+        </div>
+    }
+      
+        <button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddSplitCommand.Execute">
+        + Add Split
+         </button>
+    
+             <div class="d-flex align-items-center gap-2 mt-2">
+      <small class="text-muted">Balance:</small>
+  <small class="fw-bold @(ViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
+      @ViewModel.Model.RemainingAmount.ToString("C")
+           </small>
+             <small class="text-muted">remaining</small>
+      </div>
+     </div>
+       }
             </div>
-            <EditForm Model="this" OnValidSubmit="Create">
-                <div class="modal-body">
-                    @if (!string.IsNullOrWhiteSpace(_statusMessage))
-                    {
-                        <div class="alert alert-info">@_statusMessage</div>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(_error))
-                    {
-                        <div class="alert alert-danger">@_error</div>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(_result))
-                    {
-                        <div class="alert alert-success">@_result</div>
-                    }
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Account</label>
-                                <select class="form-select" @bind="_accountId" required>
-                                    <option value="0">Select an account...</option>
-                                    @if (_accounts != null)
-                                    {
-                                        @foreach (var account in _accounts)
-                                        {
-                                            <option value="@account.Id">@account.AccountName</option>
-                                        }
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Transaction Date</label>
-                                <input type="date" class="form-control" @bind="_transactionDate" required />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Payee</label>
-                                <input class="form-control" @bind="_payee" required />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Amount</label>
-                                <input type="number" step="0.01" class="form-control" @bind="_amount" required />
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input class="form-control" @bind="_description" required />
-                    </div>
-                    
-                    <div class="mb-3">
-                        <!-- LLM-Dev:v3 Category section with split transaction toggle -->
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <label class="form-label mb-0">Category</label>
-                            <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ToggleSplitTransaction">
-                                @(_isSplitTransaction ? "Single Category" : "Split Transaction")
-                            </button>
-                        </div>
-                        
-                        @if (!_isSplitTransaction)
-                        {
-                            <!-- LLM-Dev:v3 Single category mode -->
-                            <select class="form-select" @bind="_categoryId" required>
-                                <option value="0">Select a category...</option>
-                                @if (_categories != null)
-                                {
-                                    @foreach (var category in _categories)
-                                    {
-                                        <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
-                                    }
-                                }
-                            </select>
-                        }
-                        else
-                        {
-                            <!-- LLM-Dev:v3 Split transaction mode -->
-                            <div class="border rounded p-3 bg-light">
-                                @if (_splits.Any())
-                                {
-                                    @foreach (var split in _splits)
-                                    {
-                                        <div class="row g-2 mb-2 align-items-center">
-                                            <div class="col-md-6">
-                                                <select class="form-select form-select-sm" @bind="split.CategoryId">
-                                                    <option value="0">Select category...</option>
-                                                    @if (_categories != null)
-                                                    {
-                                                        @foreach (var category in _categories)
-                                                        {
-                                                            <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
-                                                        }
-                                                    }
-                                                </select>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <input type="number" step="0.01" class="form-control form-control-sm" 
-                                                       @bind="split.Amount" placeholder="0.00" @oninput="@(() => StateHasChanged())" />
-                                            </div>
-                                            <div class="col-md-2">
-                                                <button type="button" class="btn btn-sm btn-danger w-100" 
-                                                        @onclick="@(() => RemoveSplit(split))"
-                                                        disabled="@(_splits.Count <= 1)">
-                                                    ✕
-                                                </button>
-                                            </div>
-                                        </div>
-                                    }
-                                }
-                                
-                                <button type="button" class="btn btn-sm btn-success mb-2" @onclick="AddSplit">
-                                    + Add Split
-                                </button>
-                                
-                                <!-- LLM-Dev:v3 Balance indicator -->
-                                <div class="d-flex align-items-center gap-2 mt-2">
-                                    <small class="text-muted">Balance:</small>
-                                    <small class="fw-bold @(AreSplitsBalanced ? "text-success" : "text-danger")">
-                                        @RemainingAmount.ToString("C")
-                                    </small>
-                                    <small class="text-muted">remaining</small>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Notes (Optional)</label>
-                        <textarea class="form-control" rows="2" @bind="_notes"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" type="submit" disabled="@_isCreating">
-                        @if (_isCreating)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        }
-                        Create Transaction
-                    </button>
-                </div>
+        <div class="mb-3">
+           <label class="form-label">Memo (Optional)</label>
+       <textarea class="form-control" rows="2" @bind="ViewModel.Model.Memo"></textarea>
+       </div>
+          </div>
+  <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="ViewModel.CancelCommand.Execute">Cancel</button>
+          <button class="btn btn-primary" type="submit" disabled="@ViewModel.Model.IsBusy">
+ @if (ViewModel.Model.IsBusy)
+               {
+         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+     }
+            Create Transaction
+         </button>
+    </div>
             </EditForm>
         </div>
     </div>
 </div>
 
 @code {
-    // LLM-Dev:v3 Modal popup component for creating transactions with split support
-    private int _accountId;
-    private string _payee = string.Empty;
-    private string _description = string.Empty;
-    private decimal _amount;
-    private DateTime _transactionDate = DateTime.Today;
-    private int _categoryId;
-    private string _notes = string.Empty;
-
-    // LLM-Dev:v3 Split transaction support
-    private bool _isSplitTransaction = false;
-    private List<TransactionSplitModel> _splits = new List<TransactionSplitModel>();
-
-    private bool _isCreating;
-    private string? _result;
-    private string? _error;
-    private string? _statusMessage;
-
-    private List<Account>? _accounts;
-    private List<Category>? _categories;
-
     [Parameter] public EventCallback OnTransactionCreated { get; set; }
-
-    // LLM-Dev:v3 Calculate remaining amount to allocate across splits
-    private decimal RemainingAmount => _amount - (_splits?.Sum(s => s.Amount) ?? 0);
-
-    // LLM-Dev:v3 Check if splits are balanced with transaction amount
-    private bool AreSplitsBalanced => Math.Abs(RemainingAmount) < 0.01m;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAccountsAndCategoriesAsync();
+     await ViewModel.InitializeAsync();
     }
 
-    private async Task LoadAccountsAndCategoriesAsync()
+    private async Task HandleSave()
     {
-        try
-        {
-            // Load user's accounts (userId comes from authentication token)
-            _accounts = await AccountsService.GetAccountsForUserAsync();
-
-            // Load all categories (userId comes from authentication token)
-            _categories = await CategoriesService.GetCategoriesForUserAsync();
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            _error = $"Error loading accounts and categories: {ex.Message}";
-        }
-    }
-
-    // LLM-Dev:v3 Toggle between single and split transaction modes
-    private void ToggleSplitTransaction()
-    {
-        _isSplitTransaction = !_isSplitTransaction;
-
-        // LLM-Dev:v4 Ensure splits list is initialized
-        if (_splits == null)
-        {
-            _splits = new List<TransactionSplitModel>();
-        }
-
-        if (_isSplitTransaction && _splits.Count == 0)
-        {
-            // Initialize with one split containing the full amount
-            AddSplit();
-        }
-    }
-
-    // LLM-Dev:v3 Add a new split to the list
-    private void AddSplit()
-    {
-        // LLM-Dev:v4 Ensure splits list is initialized
-        if (_splits == null)
-        {
-            _splits = new List<TransactionSplitModel>();
-        }
-
-        _splits.Add(new TransactionSplitModel
-        {
-            Amount = RemainingAmount > 0 ? RemainingAmount : 0,
-            CategoryId = 0
-        });
-    }
-
-    // LLM-Dev:v3 Remove a split from the list
-    private void RemoveSplit(TransactionSplitModel split)
-    {
-        // LLM-Dev:v4 Null check for safety
-        if (_splits != null && _splits.Count > 1)
-        {
-            _splits.Remove(split);
-        }
-    }
-
-    private async Task Create()
-    {
-        _result = _error = null;
-
-        if (_accountId <= 0)
-        {
-            _error = "Please select an account";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_payee))
-        {
-            _error = "Please enter a payee";
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(_description))
-        {
-            _error = "Please enter a description";
-            return;
-        }
-
-        if (_amount == 0)
-        {
-            _error = "Please enter a non-zero amount";
-            return;
-        }
-
-        // LLM-Dev:v4 Only validate single category if NOT in split mode
-        if (!_isSplitTransaction && _categoryId <= 0)
-        {
-            _error = "Please select a category";
-            return;
-        }
-
-        // LLM-Dev:v3 Validate splits if in split mode
-        if (_isSplitTransaction)
-        {
-            if (_splits.Count == 0)
-            {
-                _error = "Please add at least one split";
-                return;
-            }
-
-            if (!AreSplitsBalanced)
-            {
-                _error = $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
-                return;
-            }
-
-            // Validate each split has a category
-            if (_splits.Any(s => s.CategoryId <= 0))
-            {
-                _error = "Please select a category for all splits";
-                return;
-            }
-        }
-
-        try
-        {
-            _isCreating = true;
-            StateHasChanged();
-
-			//TODO: Pull this code into a service method to avoid duplication with MAUI
-            // LLM-Dev:v3 Create transaction with splits or single category
-            var record = new TransactionRecord(_accountId, _payee, _description, _amount, _transactionDate, []);
-
-            if (_isSplitTransaction)
-            {
-                // LLM-Dev:v5 Create transaction with multiple splits using CategoryAllocationId and IsIncome
-                // Note: Currently using CategoryId as CategoryAllocationId - UI needs updating to create allocations
-                var splitRecords = _splits.Select(s => 
-                    new TransactionSplitRecord(s.CategoryId, -1, s.Amount, false, string.IsNullOrWhiteSpace(s.Notes) ? null : s.Notes)
-                ).ToList();
-
-                record = record with { Splits = splitRecords };
-            }
-
-            var id = await TransactionsService.CreateTransactionAsync(record);
-            _result = $"Transaction '{_description}' created successfully with ID {id}";
-            
-
-            // Clear the form for next use (matching MAUI pattern)
-            ClearForm();
-
-            // Notify parent component to refresh the transactions list
-            await OnTransactionCreated.InvokeAsync();
-        }
-        catch (Exception ex)
-        {
-            _error = $"Error creating transaction: {ex.Message}";
-        }
-        finally
-        {
-            _isCreating = false;
-            StateHasChanged();
-        }
-
-
-    }
-
-    private void ClearForm()
-    {
-        _accountId = 0;
-        _payee = string.Empty;
-        _description = string.Empty;
-        _amount = 0;
-        _transactionDate = DateTime.Today;
-        _categoryId = 0;
-        _notes = string.Empty;
-        _isSplitTransaction = false;
+     await ViewModel.SaveCommand.ExecuteAsync(null);
         
-        // LLM-Dev:v4 Safely clear splits list
-        if (_splits == null)
-        {
-            _splits = new List<TransactionSplitModel>();
-        }
-        else
-        {
-            _splits.Clear();
-        }
+  // Notify parent to refresh list
+        await OnTransactionCreated.InvokeAsync();
+        
+        // Close modal via JavaScript
+ await CloseModalAsync();
     }
 
-    // LLM-Dev:v3 Model for individual transaction splits in Blazor
-    private class TransactionSplitModel
+    private async Task CloseModalAsync()
     {
-        public int CategoryId { get; set; }
-        public decimal Amount { get; set; }
-        public string? Notes { get; set; }
+        await JSRuntime.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('createTransactionModal'))?.hide()");
+    }
+
+    private string GetAlertClass(string message)
+    {
+        if (message.Contains("Error") || message.Contains("Please") || message.Contains("Missing") || message.Contains("No "))
+ return "alert-danger";
+      if (message.Contains("success"))
+            return "alert-success";
+ return "alert-info";
     }
 }
