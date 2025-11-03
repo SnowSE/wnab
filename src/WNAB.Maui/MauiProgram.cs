@@ -55,10 +55,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<EditCategoryViewModel>();
 		builder.Services.AddSingleton<EditCategoryPopup>();
 
-		builder.Services.AddSingleton<AddUserModel>();
-		builder.Services.AddSingleton<AddUserViewModel>();
-		builder.Services.AddSingleton<AddUserPopup>();
-
 		builder.Services.AddSingleton<AddAccountModel>();
 		builder.Services.AddSingleton<AddAccountViewModel>();
 		builder.Services.AddSingleton<AddAccountPopup>();

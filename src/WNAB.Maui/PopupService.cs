@@ -1,6 +1,6 @@
 namespace WNAB.Maui;
 
-public class PopupService(TransactionPopup transactionPopup, AddCategoryPopup addCategoryPopup, EditCategoryPopup editCategoryPopup, AddUserPopup addUserPopup, AddAccountPopup addAccountPopup) : IMVMPopupService
+public class PopupService(TransactionPopup transactionPopup, AddCategoryPopup addCategoryPopup, EditCategoryPopup editCategoryPopup, AddAccountPopup addAccountPopup) : IMVMPopupService
 {
     public async Task ShowNewTransactionAsync()
     {
@@ -28,15 +28,6 @@ public class PopupService(TransactionPopup transactionPopup, AddCategoryPopup ad
         {
             editCategoryPopup.Initialize(categoryId, name, color, isActive);
             await page.ShowPopupAsync(editCategoryPopup);
-        }
-    }
-
-    public async Task ShowAddUserAsync()
-    {
-        var page = Application.Current?.Windows.FirstOrDefault()?.Page;
-        if (page is not null)
-        {
-            await page.ShowPopupAsync(addUserPopup);
         }
     }
 

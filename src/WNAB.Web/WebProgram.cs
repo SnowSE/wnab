@@ -108,7 +108,11 @@ builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
     sp.GetRequiredService<CategoryAllocationManagementService>(),
     sp.GetRequiredService<TransactionManagementService>(),
     sp.GetRequiredService<WNAB.MVM.IAuthenticationService>()));
-builder.Services.AddScoped<UsersModel>();
+
+// Register Modal/Popup Models
+builder.Services.AddScoped<AddAccountModel>();
+builder.Services.AddScoped<AddCategoryModel>();
+builder.Services.AddScoped<AddTransactionModel>();
 
 // Register all ViewModels (UI coordination layer)
 builder.Services.AddScoped<AccountsViewModel>();
@@ -117,11 +121,16 @@ builder.Services.AddScoped<EditCategoryViewModel>();
 builder.Services.AddScoped<CategoriesViewModel>();
 builder.Services.AddScoped<TransactionsViewModel>();
 builder.Services.AddScoped<PlanBudgetViewModel>();
-builder.Services.AddScoped<UsersViewModel>();
 
+// Register Modal/Popup ViewModels
+builder.Services.AddScoped<AddAccountViewModel>();
+builder.Services.AddScoped<AddCategoryViewModel>();
+builder.Services.AddScoped<AddTransactionViewModel>();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+
 
 var app = builder.Build();
 
@@ -151,7 +160,7 @@ app.MapGet("/login", () => Results.Challenge(new Microsoft.AspNetCore.Authentica
     RedirectUri = "/"
 }, new[] { OpenIdConnectDefaults.AuthenticationScheme }));
 
-app.MapPost("/logout", async (HttpContext context) =>
+app.MapGet("/logout", async (HttpContext context) =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme, new Microsoft.AspNetCore.Authentication.AuthenticationProperties

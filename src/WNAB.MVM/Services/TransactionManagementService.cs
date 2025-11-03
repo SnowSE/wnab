@@ -52,6 +52,19 @@ public class TransactionManagementService
         return result?.Transactions ?? new();
     }
 
+    // Update a transaction
+    public async Task<TransactionResponse> UpdateTransactionAsync(EditTransactionRequest request, CancellationToken ct = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var response = await _http.PutAsJsonAsync($"transactions/{request.Id}", request, ct);
+        response.EnsureSuccessStatusCode();
+
+        var updated = await response.Content.ReadFromJsonAsync<TransactionResponse>(cancellationToken: ct);
+        if (updated is null) throw new InvalidOperationException("API returned no content when updating transaction.");
+        return updated;
+    }
+
     // Create a transaction split
     public async Task<int> CreateTransactionSplitAsync(TransactionSplitRecord record, CancellationToken ct = default)
     {
@@ -78,6 +91,19 @@ public class TransactionManagementService
     {
         var result = await _http.GetFromJsonAsync<GetTransactionSplitsResponse>("transactionsplits", ct);
         return result?.TransactionSplits ?? new();
+    }
+
+    // Update a transaction split
+    public async Task<TransactionSplitResponse> UpdateTransactionSplitAsync(EditTransactionSplitRequest request, CancellationToken ct = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var response = await _http.PutAsJsonAsync($"transactionsplits/{request.Id}", request, ct);
+        response.EnsureSuccessStatusCode();
+
+        var updated = await response.Content.ReadFromJsonAsync<TransactionSplitResponse>(cancellationToken: ct);
+        if (updated is null) throw new InvalidOperationException("API returned no content when updating transaction split.");
+        return updated;
     }
 
     // Delete endpoints

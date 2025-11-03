@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
           xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+      xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
        xmlns:dto="clr-namespace:WNAB.SharedDTOs;assembly=WNAB.SharedDTOs"
      x:Class="WNAB.Maui.TransactionsPage"
     x:DataType="local:TransactionsViewModel"
-             Title="Transaction Splits">
+             Title="Transactions">
     
     <ContentPage.ToolbarItems>
   <ToolbarItem Text="Home"
@@ -13,68 +13,122 @@
     Order="Primary"
     Command="{Binding NavigateToHomeCommand}" />
         <ToolbarItem Text="Add Transaction"
-                Priority="0"
+           Priority="0"
            Order="Primary"
-           Command="{Binding AddTransactionCommand}"
+Command="{Binding AddTransactionCommand}"
   IsEnabled="{Binding Model.IsLoggedIn}" />
     </ContentPage.ToolbarItems>
     
-    <!-- LLM-Dev:v7 Updated to display transaction splits -->
-    <VerticalStackLayout Padding="16" Spacing="12">
-    
-        <!-- Status and refresh section -->
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
-<Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
-        </Grid>
+  <!-- LLM-Dev:v8 Updated to display both transactions and transaction splits -->
+    <ScrollView>
+  <VerticalStackLayout Padding="16" Spacing="12">
+        
+            <!-- Status and refresh section -->
+  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
+        <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
+                <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
+            </Grid>
 
-        <!-- Login prompt when not logged in -->
-      <Label Text="Please use the Login page to sign in first." 
-     IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
-               HorizontalOptions="Center" 
-         TextColor="Orange"
-               Margin="0,20" />
+     <!-- Login prompt when not logged in -->
+         <Label Text="Please use the Login page to sign in first." 
+       IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+      HorizontalOptions="Center" 
+        TextColor="Orange"
+              Margin="0,20" />
 
-        <!-- Loading indicator -->
-      <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
-  
-        <!-- Transaction Splits list -->
-        <CollectionView ItemsSource="{Binding Model.Splits}" IsVisible="{Binding Model.IsLoggedIn}">
-     <CollectionView.EmptyView>
-         <Label Text="No transaction splits found." HorizontalOptions="Center" VerticalOptions="Center" />
-   </CollectionView.EmptyView>
-  <CollectionView.ItemTemplate>
-      <DataTemplate x:DataType="dto:TransactionSplitResponse">
-    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" Padding="8,6" ColumnSpacing="8">
-     <!-- Transaction ID and Amount on first row -->
-       <Label Text="{Binding TransactionId, StringFormat='Transaction #{0}'}" 
+   <!-- Loading indicator -->
+    <ActivityIndicator IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
+
+   <!-- Transactions Section -->
+     <VerticalStackLayout Spacing="8" IsVisible="{Binding Model.IsLoggedIn}">
+             <Label Text="Transactions" FontSize="Large" FontAttributes="Bold" Margin="0,8,0,0" />
+            <CollectionView ItemsSource="{Binding Model.Items}">
+   <CollectionView.EmptyView>
+        <Label Text="No transactions found." HorizontalOptions="Center" VerticalOptions="Center" />
+     </CollectionView.EmptyView>
+   <CollectionView.ItemTemplate>
+           <DataTemplate x:DataType="local:TransactionItem">
+     <Frame Padding="12" Margin="0,4" CornerRadius="8" BorderColor="LightGray">
+ <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+       <!-- ID and Amount on first row -->
+          <Label Text="{Binding Id, StringFormat='Transaction #{0}'}" 
+       FontSize="Small" 
+          TextColor="Gray" />
+      <Label Grid.Column="1" 
+          Text="{Binding Amount, StringFormat='{0:C}'}" 
+       FontAttributes="Bold"
+      TextColor="{Binding Amount, Converter={StaticResource AmountColorConverter}}"
+ HorizontalOptions="End" />
+        
+          <!-- Date and Payee on second row -->
+     <HorizontalStackLayout Grid.Row="1" Spacing="8">
+  <Label Text="{Binding Date, StringFormat='{0:MM/dd/yyyy}'}" 
  FontSize="Small" 
+    TextColor="Gray" />
+     <Label Text="{Binding Payee}" 
+        FontAttributes="Bold" />
+     </HorizontalStackLayout>
+           
+  <!-- Description and Account on third row -->
+  <HorizontalStackLayout Grid.Row="2" Spacing="8">
+                 <Label Text="{Binding Description}" 
+            FontSize="Small" 
       TextColor="Gray" />
+        <Label Text="{Binding AccountName, StringFormat='({0})'}" 
+              FontSize="Small" 
+            TextColor="Blue"
+      FontAttributes="Italic" />
+             </HorizontalStackLayout>
+    </Grid>
+   </Frame>
+          </DataTemplate>
+         </CollectionView.ItemTemplate>
+      </CollectionView>
+            </VerticalStackLayout>
+
+    <!-- Transaction Splits Section -->
+        <VerticalStackLayout Spacing="8" IsVisible="{Binding Model.IsLoggedIn}" Margin="0,16,0,0">
+           <Label Text="Transaction Splits" FontSize="Large" FontAttributes="Bold" />
+   <CollectionView ItemsSource="{Binding Model.Splits}">
+       <CollectionView.EmptyView>
+    <Label Text="No transaction splits found." HorizontalOptions="Center" VerticalOptions="Center" />
+     </CollectionView.EmptyView>
+ <CollectionView.ItemTemplate>
+          <DataTemplate x:DataType="dto:TransactionSplitResponse">
+ <Frame Padding="12" Margin="0,4" CornerRadius="8" BorderColor="LightGray">
+         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+             <!-- Transaction ID and Amount on first row -->
+      <Label Text="{Binding TransactionId, StringFormat='Transaction #{0}'}" 
+      FontSize="Small" 
+   TextColor="Gray" />
           <Label Grid.Column="1" 
-      Text="{Binding Amount, StringFormat='{0:C}'}" 
-        FontAttributes="Bold"
-          HorizontalOptions="End" />
-         
-  <!-- Category on second row -->
-         <Label Grid.Row="1" 
-    Text="{Binding CategoryName}" 
-                    FontAttributes="Bold"
-        TextColor="Blue" />
+          Text="{Binding Amount, StringFormat='{0:C}'}" 
+   FontAttributes="Bold"
+                HorizontalOptions="End" />
           
-     <!-- Description and Type on third row -->
-              <HorizontalStackLayout Grid.Row="2" Spacing="8">
- <Label Text="{Binding Description}" 
-          FontSize="Small" 
-           TextColor="Gray"
-  IsVisible="{Binding Description, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
- <Label Text="{Binding IsIncome, Converter={StaticResource IncomeExpenseConverter}}" 
-     FontSize="Small" 
-      TextColor="{Binding IsIncome, Converter={StaticResource IncomeExpenseColorConverter}}"
- FontAttributes="Italic" />
-              </HorizontalStackLayout>
-  </Grid>
-   </DataTemplate>
-   </CollectionView.ItemTemplate>
-        </CollectionView>
-  </VerticalStackLayout>
+             <!-- Category on second row -->
+     <Label Grid.Row="1" 
+      Text="{Binding CategoryName}" 
+           FontAttributes="Bold"
+      TextColor="Blue" />
+             
+   <!-- Description and Type on third row -->
+     <HorizontalStackLayout Grid.Row="2" Spacing="8">
+     <Label Text="{Binding Description}" 
+    FontSize="Small" 
+      TextColor="Gray"
+          IsVisible="{Binding Description, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+       <Label Text="{Binding IsIncome, Converter={StaticResource IncomeExpenseConverter}}" 
+         FontSize="Small" 
+ TextColor="{Binding IsIncome, Converter={StaticResource IncomeExpenseColorConverter}}"
+     FontAttributes="Italic" />
+    </HorizontalStackLayout>
+          </Grid>
+      </Frame>
+  </DataTemplate>
+             </CollectionView.ItemTemplate>
+             </CollectionView>
+     </VerticalStackLayout>
+        </VerticalStackLayout>
+</ScrollView>
 </ContentPage>
