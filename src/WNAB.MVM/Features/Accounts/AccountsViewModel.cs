@@ -55,4 +55,60 @@ public partial class AccountsViewModel : ObservableObject
     {
         await Shell.Current.GoToAsync("//MainPage");
     }
+
+    /// <summary>
+    /// Start editing an account - sets the item into edit mode.
+    /// </summary>
+    [RelayCommand]
+    private void EditAccount(AccountItemViewModel accountItem)
+    {
+        // Cancel any other account that might be in edit mode
+        foreach (var item in Model.Items)
+        {
+            if (item.IsEditing && item != accountItem)
+            {
+                item.CancelEditing();
+            }
+        }
+        
+        accountItem.StartEditing();
+    }
+
+    /// <summary>
+    /// Save the edited account - calls the API and updates the model.
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveAccount(AccountItemViewModel accountItem)
+    {
+        if (string.IsNullOrWhiteSpace(accountItem.EditAccountName) || 
+            string.IsNullOrWhiteSpace(accountItem.EditAccountType))
+        {
+            // Could show an error message via popup service if needed
+            return;
+        }
+
+        var success = await Model.UpdateAccountAsync(
+            accountItem.Id, 
+            accountItem.EditAccountName, 
+            accountItem.EditAccountType);
+
+        if (success)
+        {
+            accountItem.ApplyChanges();
+        }
+        else
+        {
+            // Could show error message via popup service
+            accountItem.CancelEditing();
+        }
+    }
+
+    /// <summary>
+    /// Cancel editing an account - discards changes.
+    /// </summary>
+    [RelayCommand]
+    private void CancelEditAccount(AccountItemViewModel accountItem)
+    {
+        accountItem.CancelEditing();
+    }
 }

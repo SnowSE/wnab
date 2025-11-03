@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Globalization;
+using WNAB.MVM;
 
 namespace WNAB.Maui.Converters;
 
@@ -12,7 +13,11 @@ public class TotalBalanceConverter : IValueConverter
             decimal total = 0;
             foreach (var item in enumerable)
             {
-                if (item is WNAB.Data.Account account)
+                if (item is AccountItemViewModel accountViewModel)
+                {
+                    total += accountViewModel.CachedBalance;
+                }
+                else if (item is WNAB.Data.Account account)
                 {
                     total += account.CachedBalance;
                 }

@@ -37,4 +37,16 @@ public class AccountManagementService
 		var list = await _http.GetFromJsonAsync<List<Account>>("accounts", ct);
 		return list ?? new();
 	}
+
+	/// <summary>
+	/// Update an existing account's name and type for the current authenticated user.
+	/// Returns true on success, false if account not found or update failed.
+	/// </summary>
+	public async Task<bool> UpdateAccountAsync(int accountId, string newName, string newAccountType, CancellationToken ct = default)
+	{
+		var request = new EditAccountRequest(accountId, newName, newAccountType);
+		var response = await _http.PutAsJsonAsync($"accounts/{accountId}", request, ct);
+		
+		return response.IsSuccessStatusCode;
+	}
 }
