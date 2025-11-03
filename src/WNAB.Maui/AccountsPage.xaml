@@ -98,8 +98,8 @@
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <Grid RowDefinitions="Auto,*,Auto" 
-                                      RowSpacing="12">
+                                <Grid RowDefinitions="Auto,Auto,Auto" 
+                                      RowSpacing="16">
                                     
                                     <!-- Account Name with Edit/Delete buttons (View Mode) -->
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
@@ -132,7 +132,8 @@
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
                                           IsVisible="{Binding IsEditing}">
                                         <Entry Text="{Binding EditAccountName}" 
-                                               FontSize="16" 
+                                               FontSize="14" 
+                                               HeightRequest="40"
                                                VerticalOptions="Center"
                                                Placeholder="Account Name" />
                                         <Label Grid.Column="1"
@@ -177,6 +178,8 @@
                                     <Picker Grid.Row="1" 
                                             SelectedItem="{Binding EditAccountTypeString}"
                                             FontSize="14"
+                                            HeightRequest="40"
+                                            VerticalOptions="Center"
                                             IsVisible="{Binding IsEditing}">
                                         <Picker.ItemsSource>
                                             <x:Array Type="{x:Type x:String}">
