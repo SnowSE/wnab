@@ -10,27 +10,37 @@ namespace WNAB.Data.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<int>(
-                name: "AccountType",
-                table: "Accounts",
-                type: "integer",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "character varying(50)",
-                oldMaxLength: 50);
+            // Convert string values to integer enum values using SQL USING clause
+            migrationBuilder.Sql(@"
+        ALTER TABLE ""Accounts"" 
+    ALTER COLUMN ""AccountType"" TYPE integer 
+        USING (
+            CASE ""AccountType""
+      WHEN 'Checking' THEN 0
+              WHEN 'Savings' THEN 1
+              WHEN 'Misc' THEN 2
+              ELSE 0
+            END
+                );
+    ");
         }
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
+  /// <inheritdoc />
+   protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "AccountType",
-                table: "Accounts",
-                type: "character varying(50)",
-                maxLength: 50,
-                nullable: false,
-                oldClrType: typeof(int),
-                oldType: "integer");
+            // Convert integer enum values back to string
+         migrationBuilder.Sql(@"
+ ALTER TABLE ""Accounts"" 
+       ALTER COLUMN ""AccountType"" TYPE character varying(50) 
+            USING (
+      CASE ""AccountType""
+        WHEN 0 THEN 'Checking'
+   WHEN 1 THEN 'Savings'
+     WHEN 2 THEN 'Misc'
+       ELSE 'Checking'
+   END
+         );
+            ");
         }
-    }
+}
 }
