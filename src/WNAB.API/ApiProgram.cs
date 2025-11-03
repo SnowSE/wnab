@@ -467,7 +467,7 @@ app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, Wnab
     db.Transactions.Remove(transaction);
     await db.SaveChangesAsync();
 
-    return Results.NoContent();
+    return Results.Ok();
 }).RequireAuthorization();
 
 // delete transaction split by id (must belong to current user via transaction->account)
@@ -489,7 +489,7 @@ app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id,
     db.TransactionSplits.Remove(split);
     await db.SaveChangesAsync();
 
-    return Results.NoContent();
+    return Results.Ok();
 }).RequireAuthorization();
 
 app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryRequest rec, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>

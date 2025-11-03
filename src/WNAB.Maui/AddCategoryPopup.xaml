@@ -15,7 +15,7 @@
                TextColor="Black" 
                FontSize="18" />
                
-        <!-- LLM-Dev:v4 Simplified to just category name - removed User ID field -->
+        <!-- Category Name -->
         <StackLayout Spacing="8">
             <Label Text="Name" TextColor="Black" FontSize="16" />
             <Entry Text="{Binding Model.Name}" 
@@ -23,6 +23,63 @@
                    BackgroundColor="LightGray"
                    TextColor="Black"
                    PlaceholderColor="Gray" />
+        </StackLayout>
+
+        <!-- Color Picker -->
+        <StackLayout Spacing="8">
+            <Label Text="Color" TextColor="Black" FontSize="16" />
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#ef4444" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#ef4444"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#f59e0b" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#f59e0b"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#10b981" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#10b981"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#3b82f6" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#3b82f6"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#6366f1" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#6366f1"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#7c3aed" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#7c3aed"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#ec4899" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#ec4899"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#14b8a6" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#14b8a6"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+            </HorizontalStackLayout>
         </StackLayout>
 
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">

@@ -28,6 +28,15 @@ public partial class AddCategoryViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Select color command - updates the selected color in the model.
+    /// </summary>
+    [RelayCommand]
+    private void SelectColor(string color)
+    {
+        Model.SelectedColor = color;
+    }
+
+    /// <summary>
     /// Create command - delegates to Model then closes popup on success.
     /// </summary>
     [RelayCommand]

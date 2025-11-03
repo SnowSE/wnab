@@ -99,6 +99,7 @@ builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 
 // Register all Models (business logic layer)
 builder.Services.AddScoped<AccountsModel>();
+builder.Services.AddScoped<AddCategoryModel>();
 builder.Services.AddScoped<CategoriesModel>();
 builder.Services.AddScoped<TransactionsModel>();
 builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
@@ -110,6 +111,7 @@ builder.Services.AddScoped<UsersModel>();
 
 // Register all ViewModels (UI coordination layer)
 builder.Services.AddScoped<AccountsViewModel>();
+builder.Services.AddScoped<AddCategoryViewModel>();
 builder.Services.AddScoped<CategoriesViewModel>();
 builder.Services.AddScoped<TransactionsViewModel>();
 builder.Services.AddScoped<PlanBudgetViewModel>();
