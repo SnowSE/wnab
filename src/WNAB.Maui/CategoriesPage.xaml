@@ -5,46 +5,133 @@
              xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              x:Class="WNAB.Maui.CategoriesPage"
              x:DataType="local:CategoriesViewModel"
-             Title="Categories">
+             Title="Categories"
+             BackgroundColor="#F5F5F5">
     
     <ContentPage.ToolbarItems>
         <ToolbarItem Text="Home"
                      Priority="1"
                      Order="Primary"
                      Command="{Binding NavigateToHomeCommand}" />
-        <ToolbarItem Text="Add Category"
-                     Priority="0"
-                     Order="Primary"
-                     Command="{Binding AddCategoryCommand}"
-                     IsEnabled="{Binding Model.IsLoggedIn}" />
     </ContentPage.ToolbarItems>
     
-    <Grid Padding="16" RowDefinitions="Auto,Auto,*" RowSpacing="12">
-        <!-- Status and refresh section -->
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" VerticalOptions="Center">
-            <Label Text="{Binding Model.StatusMessage}" VerticalOptions="Center" />
-            <Button Grid.Column="1" Text="Refresh" Command="{Binding RefreshCommand}" />
-        </Grid>
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+            <!-- Header Section -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Categories" 
+                       FontSize="32" 
+                       FontAttributes="Bold"
+                       TextColor="#000000" />
+                <Label Text="Organize your transactions into categories" 
+                       FontSize="14" 
+                       TextColor="#666666" />
+            </VerticalStackLayout>
 
-        <!-- Login prompt when not logged in -->
-        <Label Grid.Row="1" Text="Please use the Login page to sign in first." 
-               IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
-               HorizontalOptions="Center" 
-               TextColor="Orange"
-               Margin="0,10" />
-        
-        <ActivityIndicator Grid.Row="2" IsRunning="{Binding Model.IsBusy}" IsVisible="{Binding Model.IsBusy}" />
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Model.Items}" IsVisible="{Binding Model.IsLoggedIn}">
-            <CollectionView.EmptyView>
-                <Label Text="No categories yet." HorizontalOptions="Center" VerticalOptions="Center" />
-            </CollectionView.EmptyView>
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="data:Category">
-                    <HorizontalStackLayout Padding="8,6">
-                        <Label Text="{Binding Name}" FontSize="16" />
-                    </HorizontalStackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-    </Grid>
+            <!-- Add Category Button -->
+            <Button Text="+ Add Category"
+                    BackgroundColor="#000000"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    FontSize="14"
+                    CornerRadius="8"
+                    HeightRequest="44"
+                    HorizontalOptions="End"
+                    Command="{Binding AddCategoryCommand}"
+                    IsEnabled="{Binding Model.IsLoggedIn}"
+                    Margin="0,0,0,8" />
+
+            <!-- Login prompt when not logged in -->
+            <Label Text="Please use the Login page to sign in first." 
+                   IsVisible="{Binding Model.IsLoggedIn, Converter={StaticResource InvertedBoolConverter}}"
+                   HorizontalOptions="Center" 
+                   TextColor="Orange"
+                   Margin="0,10" />
+
+            <!-- Loading indicator -->
+            <ActivityIndicator IsRunning="{Binding Model.IsBusy}" 
+                             IsVisible="{Binding Model.IsBusy}"
+                             Color="#000000" />
+
+            <!-- Categories List -->
+            <VerticalStackLayout IsVisible="{Binding Model.IsLoggedIn}" Spacing="16">
+                <!-- Categories Collection -->
+                <CollectionView ItemsSource="{Binding Model.Items}">
+                    <CollectionView.EmptyView>
+                        <Label Text="No categories yet." 
+                               HorizontalOptions="Center" 
+                               VerticalOptions="Center"
+                               TextColor="#666666" />
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="data:Category">
+                            <!-- Category Card -->
+                            <Border BackgroundColor="White"
+                                    StrokeThickness="0"
+                                    Margin="0,0,0,12"
+                                    Padding="16">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                
+                                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                                    <!-- Category Name Row -->
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                                        <!-- Color Dot -->
+                                        <Ellipse Fill="{Binding Color, TargetNullValue=#FF6B6B}"
+                                                 WidthRequest="12"
+                                                 HeightRequest="12"
+                                                 VerticalOptions="Center" />
+                                        
+                                        <!-- Category Name -->
+                                        <Label Grid.Column="1"
+                                               Text="{Binding Name}"
+                                               FontSize="16"
+                                               FontAttributes="Bold"
+                                               TextColor="#000000"
+                                               VerticalOptions="Center" />
+                                        
+                                        <!-- Edit Icon -->
+                                        <Image Grid.Column="2"
+                                               Source="edit_icon.png"
+                                               WidthRequest="20"
+                                               HeightRequest="20"
+                                               VerticalOptions="Center">
+                                            <Image.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=EditCategoryCommand}"
+                                                                    CommandParameter="{Binding .}" />
+                                            </Image.GestureRecognizers>
+                                        </Image>
+                                        
+                                        <!-- Delete Icon -->
+                                        <Image Grid.Column="3"
+                                               Source="delete_icon.png"
+                                               WidthRequest="20"
+                                               HeightRequest="20"
+                                               VerticalOptions="Center">
+                                            <Image.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=DeleteCategoryCommand}"
+                                                                    CommandParameter="{Binding .}" />
+                                            </Image.GestureRecognizers>
+                                        </Image>
+                                    </Grid>
+                                    
+                                    <!-- Amount Section -->
+                                    <VerticalStackLayout Grid.Row="2" Spacing="4">
+                                        <Label Text="$0.00"
+                                               FontSize="24"
+                                               FontAttributes="Bold"
+                                               TextColor="#000000" />
+                                        <Label Text="Total spent"
+                                               FontSize="12"
+                                               TextColor="#666666" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

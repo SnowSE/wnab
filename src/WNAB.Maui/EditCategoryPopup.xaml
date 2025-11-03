@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+               x:Class="WNAB.Maui.EditCategoryPopup"
+               x:DataType="local:EditCategoryViewModel"
+               >
+    
+    <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
+        <Label Text="Edit Category" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" 
+               TextColor="Black" 
+               FontSize="18" />
+               
+        <!-- Category Name -->
+        <StackLayout Spacing="8">
+            <Label Text="Name" TextColor="Black" FontSize="16" />
+            <Entry Text="{Binding Model.Name}" 
+                   Placeholder="Category name"
+                   BackgroundColor="LightGray"
+                   TextColor="Black"
+                   PlaceholderColor="Gray" />
+        </StackLayout>
+
+        <!-- Color Picker -->
+        <StackLayout Spacing="8">
+            <Label Text="Color" TextColor="Black" FontSize="16" />
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#ef4444" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#ef4444"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#f59e0b" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#f59e0b"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#10b981" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#10b981"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#3b82f6" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#3b82f6"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#6366f1" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#6366f1"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#7c3aed" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#7c3aed"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#ec4899" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#ec4899"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+                <Button Text="●" FontSize="24" 
+                        BackgroundColor="#14b8a6" 
+                        Command="{Binding SelectColorCommand}" 
+                        CommandParameter="#14b8a6"
+                        WidthRequest="40" HeightRequest="40" 
+                        CornerRadius="20" Padding="0" />
+            </HorizontalStackLayout>
+        </StackLayout>
+
+        <!-- Is Active Toggle -->
+        <HorizontalStackLayout Spacing="12">
+            <Label Text="Active" TextColor="Black" FontSize="16" VerticalOptions="Center" />
+            <Switch IsToggled="{Binding Model.IsActive}" />
+        </HorizontalStackLayout>
+
+        <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
+            <Button Text="Cancel" 
+                    Command="{Binding CloseCommand}"
+                    BackgroundColor="LightGray"
+                    TextColor="Black" />
+            <Button Text="Update" 
+                    Command="{Binding UpdateCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White" />
+        </HorizontalStackLayout>
+    </VerticalStackLayout>
+</toolkit:Popup>

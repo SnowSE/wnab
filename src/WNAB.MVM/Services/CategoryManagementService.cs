@@ -44,6 +44,20 @@ public class CategoryManagementService
     return dtos?.Select(MapToEntity).ToList() ?? new();
   }
 
+  public async Task UpdateCategoryAsync(int id, EditCategoryRequest request, CancellationToken ct = default)
+  {
+    if (request is null) throw new ArgumentNullException(nameof(request));
+
+    var response = await _http.PutAsJsonAsync($"categories/{id}", request, ct);
+    response.EnsureSuccessStatusCode();
+  }
+
+  public async Task DeleteCategoryAsync(int id, CancellationToken ct = default)
+  {
+    var response = await _http.DeleteAsync($"categories/{id}", ct);
+    response.EnsureSuccessStatusCode();
+  }
+
   // Helper method to map DTO to entity
   private static Category MapToEntity(CategoryDto dto) => new()
   {

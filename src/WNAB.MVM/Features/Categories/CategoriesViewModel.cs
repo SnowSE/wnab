@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WNAB.Data;
 
 namespace WNAB.MVM;
 
@@ -10,13 +11,15 @@ namespace WNAB.MVM;
 public partial class CategoriesViewModel : ObservableObject
 {
     private readonly IMVMPopupService _popupService;
+    private readonly CategoryManagementService _categoryService;
 
     public CategoriesModel Model { get; }
 
-    public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService)
+    public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService, CategoryManagementService categoryService)
     {
         Model = model;
         _popupService = popupService;
+        _categoryService = categoryService;
     }
 
     /// <summary>
@@ -45,6 +48,45 @@ public partial class CategoriesViewModel : ObservableObject
     {
         await _popupService.ShowAddCategoryAsync();
         await Model.RefreshAsync();
+    }
+
+    /// <summary>
+    /// Edit Category command - shows edit popup then refreshes the list.
+    /// </summary>
+    [RelayCommand]
+    private async Task EditCategory(Category category)
+    {
+        if (category == null) return;
+
+        await _popupService.ShowEditCategoryAsync(category.Id, category.Name, category.Color, category.IsActive);
+        await Model.RefreshAsync();
+    }
+
+    /// <summary>
+    /// Delete Category command - confirms deletion then calls API.
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteCategory(Category category)
+    {
+        if (category == null) return;
+
+        var confirmed = await Shell.Current.DisplayAlertAsync(
+            "Delete Category",
+            $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.",
+            "Delete",
+            "Cancel");
+
+        if (!confirmed) return;
+
+        try
+        {
+            await _categoryService.DeleteCategoryAsync(category.Id);
+            await Model.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to delete category: {ex.Message}", "OK");
+        }
     }
 
     /// <summary>
