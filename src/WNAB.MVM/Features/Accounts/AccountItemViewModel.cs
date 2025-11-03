@@ -19,7 +19,8 @@ public partial class AccountItemViewModel : ObservableObject
     // Expose Account properties for display
     public int Id => _account.Id;
     public string AccountName => _account.AccountName;
-    public string AccountType => _account.AccountType;
+    public AccountType AccountType => _account.AccountType;
+    public string AccountTypeDisplay => _account.AccountType.ToString();
     public decimal CachedBalance => _account.CachedBalance;
     public DateTime UpdatedAt => _account.UpdatedAt;
 
@@ -30,7 +31,15 @@ public partial class AccountItemViewModel : ObservableObject
     private string editAccountName = string.Empty;
 
     [ObservableProperty]
-    private string editAccountType = string.Empty;
+    private string editAccountTypeString = string.Empty;
+
+    public AccountType EditAccountType
+    {
+        get => Enum.TryParse<AccountType>(EditAccountTypeString, out var result) ? result : AccountType.Checking;
+        set => EditAccountTypeString = value.ToString();
+    }
+
+    public static string[] AccountTypeOptions => new[] { "Checking", "Savings", "Misc" };
 
     public AccountItemViewModel(Account account)
     {
@@ -43,7 +52,7 @@ public partial class AccountItemViewModel : ObservableObject
     public void StartEditing()
     {
         EditAccountName = _account.AccountName;
-        EditAccountType = _account.AccountType;
+        EditAccountTypeString = _account.AccountType.ToString();
         IsEditing = true;
     }
 
@@ -54,7 +63,7 @@ public partial class AccountItemViewModel : ObservableObject
     {
         IsEditing = false;
         EditAccountName = string.Empty;
-        EditAccountType = string.Empty;
+        EditAccountTypeString = string.Empty;
     }
 
     /// <summary>
@@ -69,5 +78,6 @@ public partial class AccountItemViewModel : ObservableObject
         // Notify UI of property changes
         OnPropertyChanged(nameof(AccountName));
         OnPropertyChanged(nameof(AccountType));
+        OnPropertyChanged(nameof(AccountTypeDisplay));
     }
 }

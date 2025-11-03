@@ -1,10 +1,12 @@
+using WNAB.Data;
+
 namespace WNAB.SharedDTOs;
 
 // Request DTOs for POST endpoints
 public record UserRecord(string FirstName, string LastName, string Email);
 public record CategoryRecord(string Name);
-public record AccountRecord(string Name);
-public record EditAccountRequest(int Id, string NewName, string NewAccountType);
+public record AccountRecord(string Name, AccountType AccountType = AccountType.Checking);
+public record EditAccountRequest(int Id, string NewName, AccountType NewAccountType);
 public record CategoryAllocationRecord(int CategoryId, decimal BudgetedAmount, int Month, int Year, string? EditorName = null, decimal? PercentageAllocation = null, decimal? OldAmount = null, string? EditedMemo = null);
 
 // Transaction creation with splits

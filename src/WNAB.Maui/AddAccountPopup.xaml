@@ -30,6 +30,21 @@
                    PlaceholderColor="Gray" />
         </StackLayout>
         
+        <StackLayout Spacing="8">
+            <Label Text="Account Type" TextColor="Black" FontSize="16" />
+            <Picker SelectedItem="{Binding Model.AccountTypeString}" 
+                    BackgroundColor="LightGray"
+                    TextColor="Black">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Checking</x:String>
+                        <x:String>Savings</x:String>
+                        <x:String>Misc</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+        </StackLayout>
+        
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" 
                     Command="{Binding CloseCommand}"

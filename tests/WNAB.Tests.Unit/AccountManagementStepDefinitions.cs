@@ -22,15 +22,16 @@ public partial class StepDefinitions
 		// Inputs: parse account data from table
 		var row = dataTable.Rows[0];
 		var accountName = row["AccountName"];
-		var accountType = row["AccountType"];
+		var accountTypeStr = row["AccountType"];
+		var accountType = Enum.TryParse<AccountType>(accountTypeStr, true, out var parsedType) ? parsedType : AccountType.Checking;
 		var openingBalance = decimal.Parse(row["OpeningBalance"]);
 		
 		// Get user from context
 		var user = context.Get<User>("User");
 		
 		// Act: Create account record
-		var accountRecord = new AccountRecord(accountName);
-		// Note: OpeningBalance and AccountType aren't in the service method, so we'll set them after creation
+		var accountRecord = new AccountRecord(accountName, accountType);
+		// Note: OpeningBalance isn't in the service method, so we'll set it after creation
 		
 		// Store the account record
 		context["AccountRecord"] = accountRecord;
@@ -42,13 +43,14 @@ public partial class StepDefinitions
 		// Inputs (expected)
 		var row = dataTable.Rows.Single();
 		var accountName = row["AccountName"];
-		var accountType = dataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
+		var accountTypeStr = dataTable.Header.Contains("AccountType") ? row["AccountType"] : "Checking";
+		var accountType = Enum.TryParse<AccountType>(accountTypeStr, true, out var parsedType) ? parsedType : AccountType.Checking;
 		
 		// Actual
 		var user = context.Get<User>("User");
 		
 		// Act: Create account record
-		var accountRecord = new AccountRecord(accountName);
+		var accountRecord = new AccountRecord(accountName, accountType);
 		
 		// LLM-Dev:v3 Store record and temporarily store account data table for When step to access
 		context["AccountRecord"] = accountRecord;
@@ -77,7 +79,7 @@ public partial class StepDefinitions
 			AccountName = accountRecord.Name,
 			UserId = user.Id,
 			User = user,
-			AccountType = "bank",
+			AccountType = accountRecord.AccountType,
 			CachedBalance = 0
 		};
 		
@@ -102,10 +104,6 @@ public partial class StepDefinitions
 		var accountDataTable = context.Get<DataTable>("AccountDataTable");
 		var accounts = context.ContainsKey("Accounts") ? context.Get<List<Account>>("Accounts") : new List<Account>();
 
-		// LLM-Dev:v4 Extract AccountType from the original data table to properly set it on the Account
-		var row = accountDataTable.Rows.Single();
-		var accountType = accountDataTable.Header.Contains("AccountType") ? row["AccountType"] : "bank";
-
 		// Act
 		var account = new Account
 		{
@@ -113,7 +111,7 @@ public partial class StepDefinitions
 			AccountName = record.Name,
 			UserId = user.Id,
 			User = user,
-			AccountType = accountType,
+			AccountType = record.AccountType,
 			CachedBalance = 0
 		};
 		accounts.Add(account);
@@ -138,7 +136,9 @@ public partial class StepDefinitions
 			var row = expectedRows[i];
 			var match = accounts.FirstOrDefault(a => a.AccountName == row["AccountName"]);
 			match.ShouldNotBeNull();
-			match!.AccountType.ShouldBe(row["AccountType"]); // this is a dumb way to test this.
+			var expectedAccountTypeStr = row["AccountType"];
+			var expectedAccountType = Enum.TryParse<AccountType>(expectedAccountTypeStr, true, out var parsedType) ? parsedType : AccountType.Checking;
+			match!.AccountType.ShouldBe(expectedAccountType);
 			if (dataTable.Header.Contains("CachedBalance"))
 			{
 				match.CachedBalance.ShouldBe(decimal.Parse(row["CachedBalance"]));
@@ -162,8 +162,11 @@ public partial class StepDefinitions
 		foreach (var row in dataTable.Rows)
 		{
 			var name = row["AccountName"].ToString()!;
+			var accountTypeStr = dataTable.Header.Contains("AccountType") ? row["AccountType"] : "Checking";
+			var accountType = Enum.TryParse<AccountType>(accountTypeStr, true, out var parsedType) ? parsedType : AccountType.Checking;
+			
 			// Act: Create account record
-			var record = new AccountRecord(name);
+			var record = new AccountRecord(name, accountType);
 			
 			// Convert to account object immediately
 			var account = new Account
@@ -172,7 +175,7 @@ public partial class StepDefinitions
 				AccountName = record.Name,
 				UserId = user.Id == 0 ? 1 : user.Id,
 				User = user,
-				AccountType = "bank",
+				AccountType = record.AccountType,
 				CachedBalance = 0
 			};
 			

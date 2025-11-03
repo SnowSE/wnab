@@ -80,8 +80,7 @@ public partial class AccountsViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAccount(AccountItemViewModel accountItem)
     {
-        if (string.IsNullOrWhiteSpace(accountItem.EditAccountName) || 
-            string.IsNullOrWhiteSpace(accountItem.EditAccountType))
+        if (string.IsNullOrWhiteSpace(accountItem.EditAccountName))
         {
             // Could show an error message via popup service if needed
             return;

@@ -298,7 +298,7 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
 
-    var account = await accountsService.CreateAccountAsync(user, rec.Name);
+    var account = await accountsService.CreateAccountAsync(user, rec.Name, rec.AccountType);
     return Results.Created($"/accounts/{account.Id}", new { account.Id });
 }).RequireAuthorization();
 

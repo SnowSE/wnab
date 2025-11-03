@@ -13,8 +13,7 @@ public class Account
     public string AccountName { get; set; } = null!;
     
     [Required]
-    [MaxLength(50)]
-    public string AccountType { get; set; } = null!;
+    public AccountType AccountType { get; set; }
     
     [Required]
     [Range(0, double.MaxValue)]

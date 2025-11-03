@@ -42,7 +42,7 @@ public class AccountManagementService
 	/// Update an existing account's name and type for the current authenticated user.
 	/// Returns true on success, false if account not found or update failed.
 	/// </summary>
-	public async Task<bool> UpdateAccountAsync(int accountId, string newName, string newAccountType, CancellationToken ct = default)
+	public async Task<bool> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType, CancellationToken ct = default)
 	{
 		var request = new EditAccountRequest(accountId, newName, newAccountType);
 		var response = await _http.PutAsJsonAsync($"accounts/{accountId}", request, ct);

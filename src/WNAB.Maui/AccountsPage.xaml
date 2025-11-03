@@ -167,18 +167,25 @@
                                             </Border.StrokeShape>
                                             <HorizontalStackLayout Spacing="6">
                                                 <Label Text="💳" FontSize="14" />
-                                                <Label Text="{Binding AccountType}" 
+                                                <Label Text="{Binding AccountTypeDisplay}" 
                                                        FontSize="12" />
                                             </HorizontalStackLayout>
                                         </Border>
                                     </HorizontalStackLayout>
                                     
                                     <!-- Account Type Edit Mode -->
-                                    <Entry Grid.Row="1" 
-                                           Text="{Binding EditAccountType}"
-                                           FontSize="14"
-                                           Placeholder="Account Type"
-                                           IsVisible="{Binding IsEditing}" />
+                                    <Picker Grid.Row="1" 
+                                            SelectedItem="{Binding EditAccountTypeString}"
+                                            FontSize="14"
+                                            IsVisible="{Binding IsEditing}">
+                                        <Picker.ItemsSource>
+                                            <x:Array Type="{x:Type x:String}">
+                                                <x:String>Checking</x:String>
+                                                <x:String>Savings</x:String>
+                                                <x:String>Misc</x:String>
+                                            </x:Array>
+                                        </Picker.ItemsSource>
+                                    </Picker>
                                     
                                     <!-- Balance -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">

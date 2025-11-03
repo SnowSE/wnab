@@ -102,7 +102,7 @@ public partial class AccountsModel : ObservableObject
     /// <summary>
     /// Update an account with new name and type.
     /// </summary>
-    public async Task<bool> UpdateAccountAsync(int accountId, string newName, string newAccountType)
+    public async Task<bool> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
     {
         try
         {
