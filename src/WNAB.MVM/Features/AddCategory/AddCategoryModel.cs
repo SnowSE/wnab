@@ -16,6 +16,9 @@ public partial class AddCategoryModel : ObservableObject
     private string name = string.Empty;
 
     [ObservableProperty]
+    private string selectedColor = "#ef4444"; // Default red
+
+    [ObservableProperty]
     private bool isBusy;
 
     [ObservableProperty]
@@ -23,6 +26,18 @@ public partial class AddCategoryModel : ObservableObject
 
     [ObservableProperty]
     private bool isSuccessful;
+
+    public List<string> ColorOptions { get; } = new()
+    {
+        "#ef4444", // red
+        "#f59e0b", // orange
+        "#10b981", // green
+        "#3b82f6", // blue
+        "#6366f1", // indigo
+        "#7c3aed", // purple
+        "#ec4899", // pink
+        "#14b8a6"  // teal
+    };
 
     public AddCategoryModel(CategoryManagementService categories, IAuthenticationService authService)
     {
@@ -89,8 +104,8 @@ public partial class AddCategoryModel : ObservableObject
                 return false;
 
             // Build DTO and send via service (userId comes from auth token)
-            var record = new CategoryRecord(Name);
-            await _categories.CreateCategoryAsync(record);
+            var request = new CreateCategoryRequest(Name, SelectedColor);
+            await _categories.CreateCategoryAsync(request);
 
             IsSuccessful = true;
             return true;
@@ -113,6 +128,7 @@ public partial class AddCategoryModel : ObservableObject
     public void Reset()
     {
         Name = string.Empty;
+        SelectedColor = ColorOptions.First();
         ErrorMessage = null;
         IsSuccessful = false;
         IsBusy = false;

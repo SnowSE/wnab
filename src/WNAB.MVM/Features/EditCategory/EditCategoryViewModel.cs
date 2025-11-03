@@ -4,18 +4,26 @@ using CommunityToolkit.Mvvm.Input;
 namespace WNAB.MVM;
 
 /// <summary>
-/// ViewModel for Add Category popup - thin coordination layer between View and Model.
+/// ViewModel for Edit Category popup - thin coordination layer between View and Model.
 /// Handles UI-specific concerns like popup closing, delegates business logic to Model.
 /// </summary>
-public partial class AddCategoryViewModel : ObservableObject
+public partial class EditCategoryViewModel : ObservableObject
 {
     public event EventHandler? RequestClose;
 
-    public AddCategoryModel Model { get; }
+    public EditCategoryModel Model { get; }
 
-    public AddCategoryViewModel(AddCategoryModel model)
+    public EditCategoryViewModel(EditCategoryModel model)
     {
         Model = model;
+    }
+
+    /// <summary>
+    /// Initialize the ViewModel with category data.
+    /// </summary>
+    public void Initialize(int id, string name, string? color, bool isActive)
+    {
+        Model.Initialize(id, name, color, isActive);
     }
 
     /// <summary>
@@ -37,15 +45,16 @@ public partial class AddCategoryViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Create command - delegates to Model then closes popup on success.
+    /// Update command - delegates to Model then closes popup on success.
     /// </summary>
     [RelayCommand]
-    private async Task CreateAsync()
+    private async Task UpdateAsync()
     {
-        var success = await Model.CreateCategoryAsync();
+        var success = await Model.UpdateCategoryAsync();
         if (!success)
         {
-            await Shell.Current.DisplayAlertAsync("Error", "Something went wrong and we were unable to create the category.", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", Model.ErrorMessage ?? "Something went wrong and we were unable to update the category.", "OK");
+            return;
         }
 
         RequestClose?.Invoke(this, EventArgs.Empty);

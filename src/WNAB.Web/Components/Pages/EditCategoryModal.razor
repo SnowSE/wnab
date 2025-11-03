@@ -1,24 +1,21 @@
 @using WNAB.MVM
-@inject AddCategoryViewModel ViewModel
+@using Microsoft.AspNetCore.Components.Forms
+@inject EditCategoryViewModel ViewModel
 @implements IDisposable
 
-<!-- Create Category Modal -->
-<div class="modal fade" id="createCategoryModal" tabindex="-1" aria-labelledby="createCategoryModalLabel" aria-hidden="true">
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="createCategoryModalLabel">Create Category</h5>
+                <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <EditForm Model="ViewModel.Model" OnValidSubmit="Create">
+            <EditForm Model="ViewModel.Model" OnValidSubmit="Update">
                 <div class="modal-body">
                     @if (!string.IsNullOrWhiteSpace(ViewModel.Model.ErrorMessage))
                     {
                         <div class="alert alert-danger">@ViewModel.Model.ErrorMessage</div>
-                    }
-                    @if (ViewModel.Model.IsSuccessful)
-                    {
-                        <div class="alert alert-success">Category created successfully!</div>
                     }
                     
                     <div class="mb-3">
@@ -28,24 +25,29 @@
 
                     <div class="mb-3">
                         <label class="form-label">Color</label>
-                        <div class="d-flex gap-2 align-items-center">
-                            @foreach (var c in ViewModel.Model.ColorOptions)
+                        <div class="d-flex gap-2 flex-wrap">
+                            @foreach (var c in colorOptions)
                             {
-                                <button type="button" class="color-swatch btn btn-sm p-0" style="background-color:@c; border: none;" @onclick="() => ViewModel.SelectColorCommand.Execute(c)">
-                                    <div class="swatch-inner @(c == ViewModel.Model.SelectedColor ? "swatch-selected" : "")" style="background-color:@c"></div>
+                                <button type="button" 
+                                        class="btn btn-sm p-0" 
+                                        style="width: 40px; height: 40px; background-color:@c; border: 3px solid @(c == ViewModel.Model.SelectedColor ? "#000" : "transparent"); border-radius: 50%;" 
+                                        @onclick="() => ViewModel.SelectColorCommand.Execute(c)">
                                 </button>
                             }
                         </div>
                     </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isActiveCheck" @bind="ViewModel.Model.IsActive" />
+                        <label class="form-check-label" for="isActiveCheck">
+                            Active
+                        </label>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="OnCancel">Cancel</button>
-                    <button class="btn btn-primary" type="submit" disabled="@ViewModel.Model.IsBusy">
-                        @if (ViewModel.Model.IsBusy)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        }
-                        Create Category
+                    <button class="btn btn-primary" type="submit">
+                        Update Category
                     </button>
                 </div>
             </EditForm>
@@ -54,10 +56,13 @@
 </div>
 
 @code {
-    // LLM-Dev:v7 Refactored to use WNAB.MVM AddCategoryViewModel for shared business logic
-    // Blazor modal now uses same ViewModel/Model as MAUI popup
-    
-    [Parameter] public EventCallback OnCategoryCreated { get; set; }
+    [Parameter] public EventCallback OnCategoryUpdated { get; set; }
+
+    private List<string> colorOptions = new()
+    {
+        "#ef4444", "#f59e0b", "#10b981", "#3b82f6",
+        "#6366f1", "#7c3aed", "#ec4899", "#14b8a6"
+    };
 
     protected override void OnInitialized()
     {
@@ -71,23 +76,25 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task Create()
+    public void Initialize(int id, string name, string? color, bool isActive)
     {
-        var success = await ViewModel.Model.CreateCategoryAsync();
+        ViewModel.Initialize(id, name, color, isActive);
+    }
+
+    private async Task Update()
+    {
+        var success = await ViewModel.Model.UpdateCategoryAsync();
         
         if (success)
         {
             // Notify parent component to refresh the categories list
-            await OnCategoryCreated.InvokeAsync();
-            
-            // Reset the form for next use
-            ViewModel.Model.Reset();
+            await OnCategoryUpdated.InvokeAsync();
         }
     }
 
     private void OnCancel()
     {
-        ViewModel.Model.Reset();
+        ViewModel.Model.ErrorMessage = null;
     }
 
     public void Dispose()

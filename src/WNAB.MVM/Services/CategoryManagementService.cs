@@ -17,11 +17,11 @@ public class CategoryManagementService
     _http = http ?? throw new ArgumentNullException(nameof(http));
   }
 
-  public async Task<int> CreateCategoryAsync(CategoryRecord record, CancellationToken ct = default)
+  public async Task<int> CreateCategoryAsync(CreateCategoryRequest request, CancellationToken ct = default)
   {
-    if (record is null) throw new ArgumentNullException(nameof(record));
+    if (request is null) throw new ArgumentNullException(nameof(request));
 
-    var response = await _http.PostAsJsonAsync("categories", record, ct);
+    var response = await _http.PostAsJsonAsync("categories", request, ct);
     response.EnsureSuccessStatusCode();
 
     // CHANGE: Receive DTO instead of entity
@@ -42,6 +42,20 @@ public class CategoryManagementService
     // CHANGE: Receive DTOs and map to entities for backward compatibility
     var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct);
     return dtos?.Select(MapToEntity).ToList() ?? new();
+  }
+
+  public async Task UpdateCategoryAsync(int id, EditCategoryRequest request, CancellationToken ct = default)
+  {
+    if (request is null) throw new ArgumentNullException(nameof(request));
+
+    var response = await _http.PutAsJsonAsync($"categories/{id}", request, ct);
+    response.EnsureSuccessStatusCode();
+  }
+
+  public async Task DeleteCategoryAsync(int id, CancellationToken ct = default)
+  {
+    var response = await _http.DeleteAsync($"categories/{id}", ct);
+    response.EnsureSuccessStatusCode();
   }
 
   // Helper method to map DTO to entity

@@ -3,13 +3,12 @@
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
-               x:Class="WNAB.Maui.AddCategoryPopup"
-               x:DataType="local:AddCategoryViewModel"
+               x:Class="WNAB.Maui.EditCategoryPopup"
+               x:DataType="local:EditCategoryViewModel"
                >
     
-    <!-- LLM-Dev:v4 Updated styling to match improved popup design with better contrast and removed User ID field -->
     <VerticalStackLayout Padding="20" Spacing="16" WidthRequest="320" BackgroundColor="White">
-        <Label Text="Add Category" 
+        <Label Text="Edit Category" 
                FontAttributes="Bold" 
                HorizontalOptions="Center" 
                TextColor="Black" 
@@ -106,13 +105,19 @@
             </HorizontalStackLayout>
         </StackLayout>
 
+        <!-- Is Active Toggle -->
+        <HorizontalStackLayout Spacing="12">
+            <Label Text="Active" TextColor="Black" FontSize="16" VerticalOptions="Center" />
+            <Switch IsToggled="{Binding Model.IsActive}" />
+        </HorizontalStackLayout>
+
         <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
             <Button Text="Cancel" 
                     Command="{Binding CloseCommand}"
                     BackgroundColor="LightGray"
                     TextColor="Black" />
-            <Button Text="Create" 
-                    Command="{Binding CreateCommand}"
+            <Button Text="Update" 
+                    Command="{Binding UpdateCommand}"
                     BackgroundColor="DodgerBlue"
                     TextColor="White" />
         </HorizontalStackLayout>

@@ -1,5 +1,7 @@
 @page "/categories"
 @inject CategoriesViewModel ViewModel
+@inject CategoryManagementService CategoryService
+@inject IJSRuntime JS
 @implements IDisposable
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -67,10 +69,10 @@
                             <div class="fw-semibold">@c.Name</div>
                         </div>
                         <div class="category-actions">
-                            <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => EditCategory(c.Id)">
+                            <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => EditCategory(c)">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => DeleteCategory(c.Id)">
+                            <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => DeleteCategory(c)">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
@@ -93,9 +95,14 @@
 <!-- Include the Create Category Modal -->
 <CreateCategoryModal OnCategoryCreated="OnCategoryCreated" />
 
+<!-- Include the Edit Category Modal -->
+<EditCategoryModal @ref="editCategoryModal" OnCategoryUpdated="OnCategoryUpdated" />
+
 @code {
     // LLM-Dev:v6 Refactored to use WNAB.MVM ViewModels and Models for shared business logic
     // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
+    
+    private EditCategoryModal? editCategoryModal;
     
     protected override async Task OnInitializedAsync()
     {
@@ -128,15 +135,37 @@
         await ViewModel.Model.RefreshAsync();
     }
 
-    // Placeholder action handlers
-    private void EditCategory(int categoryId)
+    private async Task OnCategoryUpdated()
     {
-        // Future: open edit modal
+        // Called by modal when category is updated - refresh the list and close modal
+        await ViewModel.Model.RefreshAsync();
+        await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'))?.hide()");
     }
 
-    private async Task DeleteCategory(int categoryId)
+    private async Task EditCategory(Category category)
     {
-        // Future: implement delete with confirmation
+        if (category == null) return;
+
+        editCategoryModal?.Initialize(category.Id, category.Name, category.Color, category.IsActive);
+        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('editCategoryModal')).show()");
+    }
+
+    private async Task DeleteCategory(Category category)
+    {
+        if (category == null) return;
+
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.");
+        if (!confirmed) return;
+
+        try
+        {
+            await CategoryService.DeleteCategoryAsync(category.Id);
+            await ViewModel.Model.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Failed to delete category: {ex.Message}");
+        }
     }
 
     public void Dispose()
