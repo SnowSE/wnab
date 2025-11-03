@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WNAB.Data;
 using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
@@ -14,6 +15,17 @@ public partial class AddAccountModel : ObservableObject
 
     [ObservableProperty]
     private string name = string.Empty;
+
+    [ObservableProperty]
+    private string accountTypeString = "Checking";
+
+    public AccountType AccountType
+    {
+        get => Enum.TryParse<AccountType>(AccountTypeString, out var result) ? result : AccountType.Checking;
+        set => AccountTypeString = value.ToString();
+    }
+
+    public static string[] AccountTypeOptions => new[] { "Checking", "Savings", "Misc" };
 
     [ObservableProperty]
     private string statusMessage = "Ready to create account";
@@ -95,7 +107,7 @@ public partial class AddAccountModel : ObservableObject
             StatusMessage = "Creating account...";
             
             // API derives user from token; pass 0 for UserId
-            var record = new AccountRecord(Name);
+            var record = new AccountRecord(Name, AccountType);
             await _accounts.CreateAccountAsync(record);
             
             StatusMessage = "Account created successfully!";
@@ -119,5 +131,6 @@ public partial class AddAccountModel : ObservableObject
     public void ResetForm()
     {
         Name = string.Empty;
+        AccountTypeString = "Checking";
     }
 }

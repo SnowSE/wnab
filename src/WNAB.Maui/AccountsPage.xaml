@@ -2,7 +2,6 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
-             xmlns:data="clr-namespace:WNAB.Data;assembly=WNAB.Data"
              xmlns:converters="clr-namespace:WNAB.Maui.Converters"
              x:Class="WNAB.Maui.AccountsPage"
              x:DataType="vm:AccountsViewModel"
@@ -92,18 +91,19 @@
                     </CollectionView.ItemsLayout>
                     
                     <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="data:Account">
+                        <DataTemplate x:DataType="vm:AccountItemViewModel">
                             <Border StrokeThickness="1"
                                     Padding="20"
                                     Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <Grid RowDefinitions="Auto,*,Auto" 
-                                      RowSpacing="12">
+                                <Grid RowDefinitions="Auto,Auto,Auto" 
+                                      RowSpacing="16">
                                     
-                                    <!-- Account Name with Edit/Delete buttons -->
-                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+                                    <!-- Account Name with Edit/Delete buttons (View Mode) -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+                                          IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
                                         <Label Text="{Binding AccountName}" 
                                                FontSize="16" 
                                                FontAttributes="Bold"
@@ -113,7 +113,9 @@
                                                FontSize="18"
                                                VerticalOptions="Center">
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer />
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=EditAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
                                         <Label Grid.Column="2"
@@ -126,8 +128,39 @@
                                         </Label>
                                     </Grid>
                                     
-                                    <!-- Account Type Badge -->
-                                    <HorizontalStackLayout Grid.Row="1" Spacing="8">
+                                    <!-- Account Name Edit Mode (with Save/Cancel) -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+                                          IsVisible="{Binding IsEditing}">
+                                        <Entry Text="{Binding EditAccountName}" 
+                                               FontSize="14" 
+                                               HeightRequest="40"
+                                               VerticalOptions="Center"
+                                               Placeholder="Account Name" />
+                                        <Label Grid.Column="1"
+                                               Text="✅"
+                                               FontSize="18"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=SaveAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        <Label Grid.Column="2"
+                                               Text="❌"
+                                               FontSize="18"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=CancelEditAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
+                                    
+                                    <!-- Account Type Badge (View Mode) -->
+                                    <HorizontalStackLayout Grid.Row="1" Spacing="8"
+                                                          IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
                                         <Border Stroke="Transparent"
                                                 Padding="12,6">
                                             <Border.StrokeShape>
@@ -135,11 +168,27 @@
                                             </Border.StrokeShape>
                                             <HorizontalStackLayout Spacing="6">
                                                 <Label Text="💳" FontSize="14" />
-                                                <Label Text="{Binding AccountType}" 
+                                                <Label Text="{Binding AccountTypeDisplay}" 
                                                        FontSize="12" />
                                             </HorizontalStackLayout>
                                         </Border>
                                     </HorizontalStackLayout>
+                                    
+                                    <!-- Account Type Edit Mode -->
+                                    <Picker Grid.Row="1" 
+                                            SelectedItem="{Binding EditAccountTypeString}"
+                                            FontSize="14"
+                                            HeightRequest="40"
+                                            VerticalOptions="Center"
+                                            IsVisible="{Binding IsEditing}">
+                                        <Picker.ItemsSource>
+                                            <x:Array Type="{x:Type x:String}">
+                                                <x:String>Checking</x:String>
+                                                <x:String>Savings</x:String>
+                                                <x:String>Misc</x:String>
+                                            </x:Array>
+                                        </Picker.ItemsSource>
+                                    </Picker>
                                     
                                     <!-- Balance -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">

@@ -12,7 +12,7 @@ public class AccountDBService
         _db = db;
     }
 
-    public async Task<Account> CreateAccountAsync(User user, string name, string accountType = "bank", CancellationToken cancellationToken = default)
+    public async Task<Account> CreateAccountAsync(User user, string name, AccountType accountType = AccountType.Checking, CancellationToken cancellationToken = default)
     {
         if (user is null) throw new ArgumentNullException(nameof(user));
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Account name is required", nameof(name));
@@ -53,10 +53,13 @@ public class AccountDBService
         return _db.Accounts.AnyAsync(a => a.Id == accountId && a.UserId == userId, cancellationToken);
     }
 
-    public async Task<Account?> UpdateAccountAsync(int accountId, int userId, string newName, string newAccountType, CancellationToken cancellationToken = default)
+    public async Task<Account?> UpdateAccountAsync(int accountId, int userId, string newName, AccountType newAccountType, int? requestAccountId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(newName)) throw new ArgumentException("Account name is required", nameof(newName));
-        if (string.IsNullOrWhiteSpace(newAccountType)) throw new ArgumentException("Account type is required", nameof(newAccountType));
+
+        // Validate that the route ID matches the request body ID (if provided)
+        if (requestAccountId.HasValue && accountId != requestAccountId.Value)
+            throw new ArgumentException($"Account ID mismatch: route ID {accountId} does not match request body ID {requestAccountId.Value}.", nameof(requestAccountId));
 
         // Guard: prevent saving unrelated pending changes in this context
         if (_db.ChangeTracker.HasChanges())

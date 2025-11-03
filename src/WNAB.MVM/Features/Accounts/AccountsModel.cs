@@ -13,7 +13,7 @@ public partial class AccountsModel : ObservableObject
     private readonly AccountManagementService _accounts;
     private readonly IAuthenticationService _authService;
 
-    public ObservableCollection<Account> Items { get; } = new();
+    public ObservableCollection<AccountItemViewModel> Items { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -85,7 +85,7 @@ public partial class AccountsModel : ObservableObject
 
             var list = await _accounts.GetAccountsForUserAsync();
             foreach (var account in list)
-                Items.Add(account);
+                Items.Add(new AccountItemViewModel(account));
 
             StatusMessage = list.Count == 0 ? "No accounts found" : $"Loaded {list.Count} accounts";
         }
@@ -96,6 +96,23 @@ public partial class AccountsModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Update an account with new name and type.
+    /// </summary>
+    public async Task<bool> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
+    {
+        try
+        {
+            var success = await _accounts.UpdateAccountAsync(accountId, newName, newAccountType);
+            return success;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error updating account: {ex.Message}";
+            return false;
         }
     }
 
