@@ -46,8 +46,10 @@ public partial class AddCategoryViewModel : ObservableObject
         if (!success)
         {
             await Shell.Current.DisplayAlertAsync("Error", "Something went wrong and we were unable to create the category.", "OK");
+            return; // Keep the modal open so user can fix the error
         }
 
+        Model.Reset(); // Clear the form for next use
         RequestClose?.Invoke(this, EventArgs.Empty);
     }
 }
