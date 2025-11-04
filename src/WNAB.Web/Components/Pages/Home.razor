@@ -194,6 +194,7 @@
 @code {
     private HashSet<int> _expandedCategories = new();
     private bool _isInitialized = false;
+    private bool _shouldNavigateToLanding = false;
     
     protected override async Task OnInitializedAsync()
     {
@@ -205,7 +206,7 @@
 
             if (!isAuthenticated || isTokenExpired)
             {
-                Navigation.NavigateTo("/landing");
+                _shouldNavigateToLanding = true;
                 return; // Stop execution immediately
             }
         }
@@ -223,6 +224,18 @@
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             // Token expired during initialization
+            _shouldNavigateToLanding = true;
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        base.OnAfterRender(firstRender);
+        
+        // Navigate after rendering is complete to avoid NavigationException
+        if (_shouldNavigateToLanding)
+        {
+            _shouldNavigateToLanding = false; // Reset flag
             Navigation.NavigateTo("/landing");
         }
     }

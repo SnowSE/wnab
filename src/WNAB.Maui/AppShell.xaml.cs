@@ -15,21 +15,38 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("Landing", typeof(LandingPage));
 
 		_authService = ServiceHelper.GetService<IAuthenticationService>();
+		
+		// Subscribe to Navigating event to check auth before navigation completes
+		this.Navigating += OnNavigating;
 	}
 
-	protected override async void OnNavigated(ShellNavigatedEventArgs args)
+	private async void OnNavigating(object? sender, ShellNavigatingEventArgs e)
 	{
-		base.OnNavigated(args);
-		
-		// Check authentication after shell has navigated
-		if (args.Current.Location.OriginalString == "//Landing")
+		var isAuthenticated = await _authService.IsAuthenticatedAsync();
+		var targetLocation = e.Target.Location.OriginalString;
+
+		// If navigating to Landing page while authenticated, redirect to MainPage
+		if (targetLocation == "//Landing" && isAuthenticated)
 		{
-			var isAuthenticated = await _authService.IsAuthenticatedAsync();
-			if (isAuthenticated)
+			e.Cancel(); // Cancel the navigation to Landing
+			// Defer the redirect to MainPage
+			Dispatcher.Dispatch(async () =>
 			{
-				// User is logged in, navigate to main page
 				await Shell.Current.GoToAsync("//MainPage");
-			}
+			});
+			return;
+		}
+
+		// If navigating to any protected page while NOT authenticated, redirect to Landing
+		var protectedPages = new[] { "//MainPage", "//Categories", "//Accounts", "//Transactions" };
+		if (protectedPages.Contains(targetLocation) && !isAuthenticated)
+		{
+			e.Cancel(); // Cancel the navigation to protected page
+			// Defer the redirect to Landing
+			Dispatcher.Dispatch(async () =>
+			{
+				await Shell.Current.GoToAsync("//Landing");
+			});
 		}
 	}
 
