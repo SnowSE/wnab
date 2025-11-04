@@ -21,11 +21,6 @@
                         Command="{Binding ToggleEditModeCommand}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                         WidthRequest="100" />
-                <Button Text="Login"
-                        IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
-                        Command="{Binding LoginCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                        WidthRequest="80" />
                 <Button Text="Add Allocation"
                         IsVisible="{Binding Model.IsEditMode}"
                         Command="{Binding ToggleCategoriesVisibilityCommand}"

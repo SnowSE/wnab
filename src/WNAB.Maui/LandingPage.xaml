@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WNAB.Maui.LandingPage"
+      Shell.NavBarIsVisible="False"
+         Shell.FlyoutBehavior="Disabled"
+        BackgroundColor="#667eea">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="40" Spacing="30" VerticalOptions="Center">
+            
+   <!-- Logo/Icon -->
+      <Border BackgroundColor="White"
+  StrokeThickness="0"
+        HeightRequest="120"
+      WidthRequest="120"
+        StrokeShape="RoundRectangle 60"
+      HorizontalOptions="Center"
+         Margin="0,0,0,20">
+         <Label Text="??"
+     FontSize="60"
+        HorizontalOptions="Center"
+       VerticalOptions="Center"/>
+     </Border>
+
+            <!-- Hero Section -->
+ <VerticalStackLayout Spacing="15">
+     <Label Text="Welcome to WNAB"
+      FontSize="36"
+             FontAttributes="Bold"
+  TextColor="White"
+        HorizontalTextAlignment="Center"/>
+   <Label Text="You Need A Budget. We Made It Easy."
+            FontSize="20"
+       TextColor="#E8EAFC"
+   HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+    <!-- Marketing Content -->
+            <VerticalStackLayout Spacing="15" Padding="20,20,20,0">
+                <Label TextColor="White"
+         FontSize="16"
+           HorizontalTextAlignment="Center">
+     <Label.FormattedText>
+             <FormattedString>
+     <Span Text="WNAB is the best budgeting app ever created. Take control of your finances with our intuitive, powerful budget planning tools that help you allocate every dollar with purpose."/>
+       </FormattedString>
+     </Label.FormattedText>
+    </Label>
+    
+        <Label TextColor="#E8EAFC"
+   FontSize="14"
+  HorizontalTextAlignment="Center">
+      <Label.FormattedText>
+    <FormattedString>
+                <Span Text="Unlike other budgeting apps, WNAB empowers you to plan ahead, track spending in real-time, and visualize your financial goals with stunning clarity."/>
+        </FormattedString>
+        </Label.FormattedText>
+       </Label>
+    </VerticalStackLayout>
+
+    <!-- Features Grid -->
+            <VerticalStackLayout Spacing="20" Padding="0,20,0,0">
+     
+              <!-- Smart Budgeting -->
+            <Border BackgroundColor="#FFFFFF20"
+         StrokeThickness="0"
+       Padding="20"
+StrokeShape="RoundRectangle 10">
+           <VerticalStackLayout Spacing="8">
+            <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+          <Label Text="Smart Budgeting"
+        FontSize="16"
+    FontAttributes="Bold"
+          TextColor="White"
+              HorizontalTextAlignment="Center"/>
+        <Label Text="Allocate your income across categories with ease"
+    FontSize="12"
+           TextColor="#E8EAFC"
+HorizontalTextAlignment="Center"/>
+   </VerticalStackLayout>
+      </Border>
+
+        <!-- Transaction Tracking -->
+    <Border BackgroundColor="#FFFFFF20"
+     StrokeThickness="0"
+          Padding="20"
+           StrokeShape="RoundRectangle 10">
+       <VerticalStackLayout Spacing="8">
+   <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+          <Label Text="Transaction Tracking"
+   FontSize="16"
+     FontAttributes="Bold"
+          TextColor="White"
+    HorizontalTextAlignment="Center"/>
+     <Label Text="Monitor every dollar you spend, automatically"
+              FontSize="12"
+           TextColor="#E8EAFC"
+     HorizontalTextAlignment="Center"/>
+              </VerticalStackLayout>
+    </Border>
+
+           <!-- Visual Insights -->
+          <Border BackgroundColor="#FFFFFF20"
+             StrokeThickness="0"
+  Padding="20"
+   StrokeShape="RoundRectangle 10">
+               <VerticalStackLayout Spacing="8">
+             <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+      <Label Text="Visual Insights"
+             FontSize="16"
+       FontAttributes="Bold"
+  TextColor="White"
+     HorizontalTextAlignment="Center"/>
+         <Label Text="See your spending patterns at a glance"
+   FontSize="12"
+    TextColor="#E8EAFC"
+        HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+         </Border>
+
+                <!-- Secure & Private -->
+  <Border BackgroundColor="#FFFFFF20"
+       StrokeThickness="0"
+Padding="20"
+    StrokeShape="RoundRectangle 10">
+     <VerticalStackLayout Spacing="8">
+                   <Label Text="???" FontSize="32" HorizontalOptions="Center"/>
+         <Label Text="Secure &amp; Private"
+ FontSize="16"
+           FontAttributes="Bold"
+  TextColor="White"
+        HorizontalTextAlignment="Center"/>
+   <Label Text="Your financial data is protected with enterprise-grade security"
+    FontSize="12"
+ TextColor="#E8EAFC"
+    HorizontalTextAlignment="Center"/>
+              </VerticalStackLayout>
+  </Border>
+            </VerticalStackLayout>
+
+     <!-- Call to Action -->
+            <VerticalStackLayout Spacing="15" Padding="0,30,0,0">
+              <Button Text="Get Started - Login Now"
+     BackgroundColor="White"
+            TextColor="#667eea"
+       FontSize="18"
+     FontAttributes="Bold"
+    HeightRequest="60"
+            CornerRadius="30"
+   Clicked="OnLoginClicked"
+         HorizontalOptions="Fill"/>
+    
+       <Label Text="Secure authentication powered by Keycloak"
+   FontSize="12"
+       TextColor="#E8EAFC"
+    HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+   </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

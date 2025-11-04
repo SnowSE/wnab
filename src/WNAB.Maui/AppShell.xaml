@@ -7,6 +7,13 @@
     Shell.FlyoutBehavior="Flyout"
     Title="WNAB">
 
+    <!-- LLM-Dev: Landing page as initial route (hidden from flyout) -->
+    <ShellContent
+        Title="Landing"
+        ContentTemplate="{DataTemplate local:LandingPage}"
+   Route="Landing"
+     Shell.FlyoutItemIsVisible="False" />
+
     <FlyoutItem Title="Budget" Icon="home.png">
         <ShellContent
             Title="Monthly Budget"
@@ -32,6 +39,14 @@
             ContentTemplate="{DataTemplate local:TransactionsPage}"
             Route="TransactionsPage" />
     </FlyoutItem>
-    
+    <!-- Logout MenuItem -->
+    <MenuItem Text="Logout" Clicked="OnLogoutClicked">
+        <MenuItem.IconImageSource>
+            <FontImageSource 
+ Glyph="🚪"
+         FontFamily="OpenSansRegular"
+      Size="20" />
+        </MenuItem.IconImageSource>
+  </MenuItem>
 
 </Shell>

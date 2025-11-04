@@ -106,26 +106,28 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            if (_loginResult != null)
-            {
-                await _oidcClient.LogoutAsync(new LogoutRequest
-                {
-                    IdTokenHint = _loginResult.IdentityToken
-                });
-            }
-
-            // Clear stored tokens
-            SecureStorage.Remove("access_token");
+          // Simple logout - just clear local tokens
+            // (No need to call server logout which opens a browser)
+          
+            // Clear stored tokens from SecureStorage
+    SecureStorage.Remove("access_token");
             SecureStorage.Remove("refresh_token");
-            SecureStorage.Remove("id_token");
+SecureStorage.Remove("id_token");
 
+            // Clear in-memory state
             _loginResult = null;
-            _currentAccessToken = null;
-            _tokenExpiration = DateTimeOffset.MinValue;
+     _currentAccessToken = null;
+   _tokenExpiration = DateTimeOffset.MinValue;
+
+            _logger.LogInformation("User logged out successfully (local tokens cleared)");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Logout exception: {ex.Message}");
+         _logger.LogError(ex, "Logout exception: {Message}", ex.Message);
+          // Even if there's an error, try to clear what we can
+    _loginResult = null;
+            _currentAccessToken = null;
+    _tokenExpiration = DateTimeOffset.MinValue;
         }
     }
 

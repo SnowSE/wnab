@@ -43,6 +43,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 
+		// LLM-Dev: Register LandingPage
+		builder.Services.AddSingleton<LandingPage>();
+
 		builder.Services.AddSingleton<AddTransactionModel>();
 		builder.Services.AddSingleton<AddTransactionViewModel>();
 		builder.Services.AddSingleton<TransactionPopup>();
