@@ -117,6 +117,33 @@ public partial class AccountsModel : ObservableObject
     }
 
     /// <summary>
+    /// Delete an account by ID.
+    /// </summary>
+    public async Task<bool> DeleteAccountAsync(int accountId)
+    {
+        try
+        {
+            var success = await _accounts.DeleteAccountAsync(accountId);
+            if (success)
+            {
+                // Remove from local collection
+                var item = Items.FirstOrDefault(i => i.Id == accountId);
+                if (item != null)
+                {
+                    Items.Remove(item);
+                }
+                StatusMessage = $"Account deleted successfully";
+            }
+            return success;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error deleting account: {ex.Message}";
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Refresh accounts by checking session and reloading data.
     /// </summary>
     public async Task RefreshAsync()

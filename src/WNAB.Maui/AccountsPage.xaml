@@ -123,7 +123,9 @@
                                                FontSize="18"
                                                VerticalOptions="Center">
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer />
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=DeleteAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>

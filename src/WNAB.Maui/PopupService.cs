@@ -39,4 +39,11 @@ public class PopupService(TransactionPopup transactionPopup, AddCategoryPopup ad
             await page.ShowPopupAsync(addAccountPopup);
         }
     }
+
+    public Task ShowAddUserAsync()
+    {
+        // TODO: Implement user management popup when needed
+        // For now, this is a placeholder to satisfy the interface
+        return Task.CompletedTask;
+    }
 }

@@ -110,4 +110,36 @@ public partial class AccountsViewModel : ObservableObject
     {
         accountItem.CancelEditing();
     }
+
+    /// <summary>
+    /// Delete an account - prompts for confirmation then removes it.
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteAccount(AccountItemViewModel accountItem)
+    {
+        // Show confirmation dialog
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+      return;
+
+        bool confirm = await mainPage.DisplayAlert(
+          "Delete Account",
+     $"Are you sure you want to delete '{accountItem.AccountName}'?",
+  "Delete",
+ "Cancel");
+
+        if (!confirm)
+      return;
+
+        var success = await Model.DeleteAccountAsync(accountItem.Id);
+
+        if (!success)
+     {
+      // Could show error message via popup service or alert
+            await mainPage.DisplayAlert(
+         "Error",
+         "Failed to delete account. Please try again.",
+     "OK");
+      }
+    }
 }

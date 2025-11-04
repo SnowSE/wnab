@@ -49,4 +49,14 @@ public class AccountManagementService
 		
 		return response.IsSuccessStatusCode;
 	}
+
+	/// <summary>
+	/// Delete an account for the current authenticated user.
+	/// Returns true on success, false if account not found or delete failed.
+	/// </summary>
+	public async Task<bool> DeleteAccountAsync(int accountId, CancellationToken ct = default)
+	{
+		var response = await _http.DeleteAsync($"accounts/{accountId}", ct);
+		return response.IsSuccessStatusCode;
+	}
 }
