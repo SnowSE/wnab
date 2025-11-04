@@ -1,0 +1,24 @@
+@inherits ErrorBoundary
+@inject ILogger<TelemetryErrorBoundary> Logger
+
+@if (CurrentException is null)
+{
+    @ChildContent
+}
+else
+{
+    @ErrorContent(CurrentException)
+}
+
+@code {
+    protected override Task OnErrorAsync(Exception exception)
+    {
+        // Log to ILogger - Aspire automatically captures this
+        Logger.LogError(exception, 
+  "Unhandled exception in Blazor component. Type: {ExceptionType}, Message: {Message}", 
+            exception.GetType().FullName, 
+       exception.Message);
+
+   return base.OnErrorAsync(exception);
+ }
+}

@@ -193,6 +193,7 @@
 
 @code {
     private HashSet<int> _expandedCategories = new();
+    private bool _isInitialized = false;
     
     protected override async Task OnInitializedAsync()
     {
@@ -205,15 +206,25 @@
             if (!isAuthenticated || isTokenExpired)
             {
                 Navigation.NavigateTo("/landing");
-                return;
+                return; // Stop execution immediately
             }
         }
 
-        // Subscribe to property changes to trigger UI updates
-        ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
-        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-        
-        await ViewModel.InitializeAsync();
+        // Only proceed if authentication is valid
+        try
+        {
+            // Subscribe to property changes to trigger UI updates
+            ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+     
+            await ViewModel.InitializeAsync();
+            _isInitialized = true;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            // Token expired during initialization
+            Navigation.NavigateTo("/landing", forceLoad: true);
+        }
     }
 
     private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

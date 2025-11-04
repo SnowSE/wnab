@@ -1,6 +1,26 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using WNAB.Web.Components.Shared
+
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        <TelemetryErrorBoundary>
+  <ChildContent>
+    <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+   <FocusOnNavigate RouteData="routeData" Selector="h1" />
+         </ChildContent>
+            <ErrorContent Context="error">
+          @if (error is Microsoft.AspNetCore.Components.NavigationException)
+       {
+  @* Navigation exceptions are expected when redirecting, just ignore them *@
+                }
+            else
+    {
+          <div class="alert alert-danger m-3">
+ <h4>An error occurred</h4>
+         <p>@error.Message</p>
+    <a href="/landing" class="btn btn-primary">Return to Login</a>
+          </div>
+        }
+  </ErrorContent>
+        </TelemetryErrorBoundary>
     </Found>
 </Router>
