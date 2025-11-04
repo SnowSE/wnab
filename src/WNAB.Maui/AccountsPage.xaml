@@ -116,30 +116,33 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Accounts using FlexLayout for true responsive wrapping -->
-                <FlexLayout BindableLayout.ItemsSource="{Binding Model.Items}"
-                           Wrap="Wrap"
-                           JustifyContent="Start"
-                           AlignItems="Start"
-                           AlignContent="Start"
-                           MinimumHeightRequest="100">
-                    <BindableLayout.EmptyView>
+                <!-- Accounts presented with a responsive grid to prevent overlap -->
+                <CollectionView x:Name="AccountsCollection"
+                                ItemsSource="{Binding Model.Items}"
+                                SelectionMode="None"
+                                HorizontalScrollBarVisibility="Never"
+                                VerticalScrollBarVisibility="Default"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                Padding="12,0,14,0">
+                    <CollectionView.ItemsLayout>
+                        <!-- Span is set dynamically in code-behind based on available width -->
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="1"
+                                         HorizontalItemSpacing="12"
+                                         VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.EmptyView>
                         <Label Text="No accounts found." 
                                HorizontalOptions="Center" 
                                VerticalOptions="Center"
                                Margin="0,40" />
-                    </BindableLayout.EmptyView>
-                    <BindableLayout.ItemTemplate>
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:AccountItemViewModel">
                             <Border StrokeThickness="1"
                                     Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}"
-                                    Margin="0,0,16,16"
-                                    WidthRequest="320"
-                                    MinimumWidthRequest="280"
-                                    MaximumWidthRequest="400"
-                                    FlexLayout.Grow="1"
-                                    FlexLayout.Shrink="1"
-                                    FlexLayout.Basis="320">
+                                    Margin="0"
+                                    HorizontalOptions="FillAndExpand">
                                 <Border.Padding>
                                     <OnIdiom x:TypeArguments="Thickness" 
                                              Phone="12" 
@@ -156,7 +159,7 @@
                                                  Tablet="14" 
                                                  Desktop="16" />
                                     </Grid.RowSpacing>
-                                    
+
                                     <!-- Account Name with Edit/Delete buttons (View Mode) -->
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
                                           IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
@@ -202,7 +205,7 @@
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>
-                                    
+
                                     <!-- Account Name Edit Mode (with Save/Cancel) -->
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
                                           IsVisible="{Binding IsEditing}">
@@ -253,7 +256,7 @@
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>
-                                    
+
                                     <!-- Account Type Badge (View Mode) -->
                                     <HorizontalStackLayout Grid.Row="1" Spacing="8"
                                                           IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
@@ -287,7 +290,7 @@
                                             </HorizontalStackLayout>
                                         </Border>
                                     </HorizontalStackLayout>
-                                    
+
                                     <!-- Account Type Edit Mode -->
                                     <Picker Grid.Row="1" 
                                             SelectedItem="{Binding EditAccountTypeString}"
@@ -313,7 +316,7 @@
                                             </x:Array>
                                         </Picker.ItemsSource>
                                     </Picker>
-                                    
+
                                     <!-- Balance -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">
                                         <Label Text="{Binding CachedBalance, StringFormat='{0:C}'}" 
@@ -334,12 +337,12 @@
                                             </Label.FontSize>
                                         </Label>
                                     </VerticalStackLayout>
-                                    
+
                                 </Grid>
                             </Border>
                         </DataTemplate>
-                    </BindableLayout.ItemTemplate>
-                </FlexLayout>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
                 
             </VerticalStackLayout>
             
