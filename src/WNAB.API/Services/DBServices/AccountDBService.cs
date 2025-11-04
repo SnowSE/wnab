@@ -92,4 +92,35 @@ public class AccountDBService
 
         return account;
     }
+
+    public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId, int userId, CancellationToken cancellationToken = default)
+    {
+        // Validate account ID
+        if (accountId <= 0)
+            return (false, "Invalid account ID.");
+
+        // Guard: prevent saving unrelated pending changes in this context
+        if (_db.ChangeTracker.HasChanges())
+            throw new InvalidOperationException("Context has pending changes; aborting account deletion.");
+
+        // Verify the account exists and belongs to the user
+        var account = await _db.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId, cancellationToken);
+
+        if (account is null)
+            return (false, "Account not found.");
+
+        if (account.UserId != userId)
+            return (false, "Account does not belong to the current user.");
+
+        // Remove the account
+        _db.Accounts.Remove(account);
+        var affected = await _db.SaveChangesAsync(cancellationToken);
+
+        // Postcondition: ensure only the account was deleted
+        if (affected != 1)
+            throw new InvalidOperationException($"Expected to delete exactly 1 entry, but deleted {affected}.");
+
+        return (true, null);
+    }
 }

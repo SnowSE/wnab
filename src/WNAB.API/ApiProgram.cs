@@ -512,6 +512,35 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
     }
 }).RequireAuthorization();
 
+// Delete account by id (must belong to current user)
+app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    try
+    {
+        var (success, errorMessage) = await accountsService.DeleteAccountAsync(id, user.Id);
+
+        if (!success)
+        {
+            return errorMessage switch
+            {
+                "Invalid account ID." => Results.BadRequest(errorMessage),
+                "Account not found." => Results.NotFound(errorMessage),
+                "Account does not belong to the current user." => Results.Forbid(),
+                _ => Results.BadRequest("An error occurred while deleting the account.")
+            };
+        }
+
+        return Results.NoContent();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.Problem(ex.Message, statusCode: 500);
+    }
+}).RequireAuthorization();
+
 // Update transaction by id (must belong to current user)
 app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransactionRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
