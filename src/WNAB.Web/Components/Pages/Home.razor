@@ -39,22 +39,65 @@
                 </div>
             </div>
 
-            <!-- Month/Year Selector -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-3">
-                    <label class="form-label small text-muted">Month</label>
-                    <select class="form-select" @bind="ViewModel.SelectedMonthName" @bind:after="OnMonthYearChanged" disabled="@ViewModel.Model.IsEditMode">
-                        @foreach (var month in ViewModel.MonthOptions)
-                        {
-                            <option value="@month">@month</option>
-                        }
-                    </select>
+            <!-- Compact Month/Year Navigator -->
+            <div class="month-navigator mb-4">
+                <button class="nav-arrow" 
+                        @onclick="OnPreviousMonthClick"
+                        disabled="@ViewModel.Model.IsEditMode">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                
+                <div class="month-display" @onclick="OnToggleMonthYearPicker">
+                    <span class="month-name">@ViewModel.CurrentMonthAbbreviation</span>
+                    <span class="year-name">@ViewModel.Model.CurrentYear</span>
+                    <i class="bi bi-chevron-down ms-2"></i>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted">Year</label>
-                    <input type="number" class="form-control" @bind="ViewModel.Model.CurrentYear" @bind:after="OnMonthYearChanged" min="2000" max="2100" disabled="@ViewModel.Model.IsEditMode" />
-                </div>
+                
+                <button class="nav-arrow" 
+                        @onclick="OnNextMonthClick"
+                        disabled="@ViewModel.Model.IsEditMode">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
+
+            <!-- Month/Year Picker Dropdown (Hidden by default) -->
+            @if (ViewModel.IsMonthYearPickerVisible)
+            {
+                <div class="month-year-picker-overlay" @onclick="OnCloseMonthYearPicker">
+                    <div class="month-year-picker-popup" @onclick:stopPropagation="true">
+                        <!-- Year Navigation -->
+                        <div class="year-header">
+                            <button class="btn btn-sm btn-link text-decoration-none" 
+                                    @onclick="OnPreviousYearClick"
+                                    disabled="@(ViewModel.Model.IsEditMode || ViewModel.Model.CurrentYear <= 2000)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <h5 class="mb-0 fw-bold">@ViewModel.Model.CurrentYear</h5>
+                            <button class="btn btn-sm btn-link text-decoration-none" 
+                                    @onclick="OnNextYearClick"
+                                    disabled="@(ViewModel.Model.IsEditMode || ViewModel.Model.CurrentYear >= 2100)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Month Grid -->
+                        <div class="month-grid">
+                            @for (int i = 0; i < 12; i++)
+                            {
+                                var monthIndex = i + 1;
+                                var isSelected = monthIndex == ViewModel.Model.CurrentMonth;
+                                var monthName = ViewModel.MonthAbbreviations[i];
+                                
+                                <button class="month-button @(isSelected ? "selected" : "")"
+                                        @onclick="() => OnSelectMonthFromPicker(monthIndex)"
+                                        disabled="@ViewModel.Model.IsEditMode">
+                                    @monthName
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
 
             <!-- Monthly Limit Section -->
             <div class="monthly-limit-card">
@@ -196,6 +239,31 @@
     private bool _isInitialized = false;
     private bool _shouldNavigateToLanding = false;
     
+    private async Task OnToggleMonthYearPicker()
+    {
+        ViewModel.ToggleMonthYearPickerCommand.Execute(null);
+    }
+    
+    private async Task OnCloseMonthYearPicker()
+    {
+        ViewModel.CloseMonthYearPickerCommand.Execute(null);
+    }
+    
+    private async Task OnPreviousMonthClick()
+    {
+        await ViewModel.PreviousMonthCommand.ExecuteAsync(null);
+    }
+    
+    private async Task OnNextMonthClick()
+    {
+        await ViewModel.NextMonthCommand.ExecuteAsync(null);
+    }
+    
+    private async Task OnSelectMonthFromPicker(int month)
+    {
+        await ViewModel.SelectMonthFromPickerCommand.ExecuteAsync(month);
+    }
+    
     protected override async Task OnInitializedAsync()
     {
         // Check if user is authenticated and token is valid
@@ -253,6 +321,21 @@
     private async Task OnMonthYearChanged()
     {
         await ViewModel.SetMonthYearCommand.ExecuteAsync(null);
+    }
+    
+    private async Task OnMonthClick(int month)
+    {
+        await ViewModel.SelectMonthCommand.ExecuteAsync(month);
+    }
+    
+    private async Task OnNextYearClick()
+    {
+        await ViewModel.NextYearCommand.ExecuteAsync(null);
+    }
+    
+    private async Task OnPreviousYearClick()
+    {
+        await ViewModel.PreviousYearCommand.ExecuteAsync(null);
     }
 
     private void OnEditBudgetClick()

@@ -22,6 +22,13 @@ public partial class PlanBudgetViewModel : ObservableObject
         "July", "August", "September", "October", "November", "December"
     };
 
+    // Month abbreviations for grid display
+    public List<string> MonthAbbreviations { get; } = new()
+    {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
     // Selected month name for picker binding
     public string SelectedMonthName
     {
@@ -34,6 +41,150 @@ public partial class PlanBudgetViewModel : ObservableObject
                 Model.CurrentMonth = index + 1;
                 OnPropertyChanged();
             }
+        }
+    }
+    
+    /// <summary>
+    /// Gets the month abbreviation for the current month.
+    /// </summary>
+    public string CurrentMonthAbbreviation => MonthAbbreviations[Model.CurrentMonth - 1];
+    
+    /// <summary>
+    /// Gets or sets whether the month/year picker is visible.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isMonthYearPickerVisible;
+    
+    /// <summary>
+    /// Toggle the month/year picker visibility.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleMonthYearPicker()
+    {
+        if (!Model.IsEditMode)
+        {
+            IsMonthYearPickerVisible = !IsMonthYearPickerVisible;
+        }
+    }
+    
+    /// <summary>
+    /// Close the month/year picker.
+    /// </summary>
+    [RelayCommand]
+    private void CloseMonthYearPicker()
+    {
+        IsMonthYearPickerVisible = false;
+    }
+    
+    /// <summary>
+    /// Select a specific month by index (1-12) and auto-load budget.
+    /// </summary>
+    [RelayCommand]
+    private async Task SelectMonth(object? parameter)
+    {
+        // Handle both int and string parameters from XAML
+        int month = 0;
+        if (parameter is int intMonth)
+        {
+            month = intMonth;
+        }
+        else if (parameter is string strMonth && int.TryParse(strMonth, out int parsedMonth))
+        {
+            month = parsedMonth;
+        }
+        
+        if (month >= 1 && month <= 12 && Model.CurrentMonth != month)
+        {
+            Model.CurrentMonth = month;
+            OnPropertyChanged(nameof(SelectedMonthName));
+            OnPropertyChanged(nameof(CurrentMonthAbbreviation));
+            await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
+        }
+    }
+    
+    /// <summary>
+    /// Select a month from the picker and close it.
+    /// </summary>
+    [RelayCommand]
+    private async Task SelectMonthFromPicker(object? parameter)
+    {
+        await SelectMonth(parameter);
+        IsMonthYearPickerVisible = false;
+    }
+    
+    /// <summary>
+    /// Increment the current year and auto-load budget.
+    /// </summary>
+    [RelayCommand]
+    private async Task NextYear()
+    {
+        if (Model.CurrentYear < 2100)
+        {
+            Model.CurrentYear++;
+            await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
+        }
+    }
+    
+    /// <summary>
+    /// Decrement the current year and auto-load budget.
+    /// </summary>
+    [RelayCommand]
+    private async Task PreviousYear()
+    {
+        if (Model.CurrentYear > 2000)
+        {
+            Model.CurrentYear--;
+            await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
+        }
+    }
+    
+    /// <summary>
+    /// Navigate to the previous month and auto-load budget.
+    /// </summary>
+    [RelayCommand]
+    private async Task PreviousMonth()
+    {
+        var newMonth = Model.CurrentMonth - 1;
+        var newYear = Model.CurrentYear;
+        
+        if (newMonth < 1)
+        {
+            newMonth = 12;
+            newYear--;
+        }
+        
+        if (newYear >= 2000)
+        {
+            Model.CurrentMonth = newMonth;
+            Model.CurrentYear = newYear;
+            OnPropertyChanged(nameof(SelectedMonthName));
+            OnPropertyChanged(nameof(CurrentMonthAbbreviation));
+            await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
+        }
+    }
+    
+    /// <summary>
+    /// Navigate to the next month and auto-load budget.
+    /// </summary>
+    [RelayCommand]
+    private async Task NextMonth()
+    {
+        var newMonth = Model.CurrentMonth + 1;
+        var newYear = Model.CurrentYear;
+        
+        if (newMonth > 12)
+        {
+            newMonth = 1;
+            newYear++;
+        }
+        
+        if (newYear <= 2100)
+        {
+            Model.CurrentMonth = newMonth;
+            Model.CurrentYear = newYear;
+            OnPropertyChanged(nameof(SelectedMonthName));
+            OnPropertyChanged(nameof(CurrentMonthAbbreviation));
+            await Model.SetMonthYearAsync(Model.CurrentMonth, Model.CurrentYear);
         }
     }
 

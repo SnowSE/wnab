@@ -37,45 +37,60 @@
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
                         WidthRequest="80" />
             </HorizontalStackLayout>
-            
-            <!-- Header Section -->
-            <VerticalStackLayout Spacing="5">
-                <Label Text="Monthly Budget"
-                       FontSize="28"
-                       FontAttributes="Bold" />
-                <Label Text="Allocate your monthly income to categories"
-                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                       FontSize="14" />
-            </VerticalStackLayout>
 
-            <!-- Month/Year Selector -->
-            <Border Padding="15"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+            <!-- Compact Month Navigator -->
+            <Border Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
-                <HorizontalStackLayout Spacing="15">
-                    <VerticalStackLayout Spacing="5" WidthRequest="150">
-                        <Label Text="Month" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Picker ItemsSource="{Binding MonthOptions}"
-                                SelectedItem="{Binding SelectedMonthName, Mode=TwoWay}"
-                                FontSize="14"
-                                IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Spacing="5" WidthRequest="100">
-                        <Label Text="Year" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Entry Text="{Binding Model.CurrentYear, Mode=TwoWay}"
-                               Keyboard="Numeric"
-                               FontSize="14"
-                               IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
-                    </VerticalStackLayout>
-                    <Button Text="Load"
-                            Command="{Binding SetMonthYearCommand}"
-                            VerticalOptions="End"
-                            WidthRequest="80"
-                            HeightRequest="40"
-                            IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
-                </HorizontalStackLayout>
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}"
+                    HorizontalOptions="Center">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="15">
+                    <!-- Previous Month Button -->
+                    <Button Grid.Column="0"
+                            Text="&lt;"
+                            Command="{Binding PreviousMonthCommand}"
+                            IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                            FontSize="20"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                    
+                    <!-- Month/Year Display (tappable) -->
+                    <Border Grid.Column="1"
+                            Padding="12,8"
+                            BackgroundColor="Transparent"
+                            StrokeThickness="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnMonthYearDisplayTapped"/>
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
+                            <Label Text="{Binding CurrentMonthAbbreviation}"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"/>
+                            <Label Text="{Binding Model.CurrentYear}"
+                                   FontSize="18"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                   VerticalOptions="Center"/>
+                            <Label Text="▼"
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </Border>
+                    
+                    <!-- Next Month Button -->
+                    <Button Grid.Column="2"
+                            Text="&gt;"
+                            Command="{Binding NextMonthCommand}"
+                            IsEnabled="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
+                            BackgroundColor="Transparent"
+                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                            FontSize="20"
+                            WidthRequest="40"
+                            HeightRequest="40"/>
+                </Grid>
             </Border>
 
             <!-- Monthly Limit Section -->
