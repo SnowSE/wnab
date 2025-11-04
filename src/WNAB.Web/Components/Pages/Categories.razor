@@ -1,6 +1,8 @@
 @page "/categories"
 @inject CategoriesViewModel ViewModel
 @inject CategoryManagementService CategoryService
+@inject WNAB.MVM.IAuthenticationService AuthService
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -106,6 +108,19 @@
     
     protected override async Task OnInitializedAsync()
     {
+        // Check if user is authenticated and token is valid
+        if (AuthService is WNAB.Web.Services.WebAuthenticationService webAuthService)
+        {
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            var isTokenExpired = await webAuthService.IsTokenExpiredAsync();
+
+            if (!isAuthenticated || isTokenExpired)
+            {
+                Navigation.NavigateTo("/landing");
+                return;
+            }
+        }
+
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
         

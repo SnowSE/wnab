@@ -133,4 +133,44 @@ public class WebAuthenticationService : WNAB.MVM.IAuthenticationService
             return Task.FromResult<string?>(null);
         }
     }
+
+    /// <summary>
+    /// Checks if the current access token is expired by parsing the JWT and checking the 'exp' claim.
+    /// </summary>
+    /// <returns>True if token is expired or invalid, false if token is still valid.</returns>
+    public async Task<bool> IsTokenExpiredAsync()
+    {
+        var accessToken = await GetAccessTokenAsync();
+        
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            _logger.LogWarning("No access token available to check expiration");
+            return true; // Treat missing token as expired
+        }
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(accessToken);
+            
+            // Get the expiration claim
+            var expiration = token.ValidTo;
+            
+            // Check if token is expired (with a small buffer of 30 seconds)
+            var isExpired = expiration <= DateTime.UtcNow.AddSeconds(30);
+            
+            if (isExpired)
+            {
+                _logger.LogInformation("Access token is expired. Expiration: {Expiration}, Current: {Current}", 
+                    expiration, DateTime.UtcNow);
+            }
+            
+            return isExpired;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking token expiration");
+            return true; // Treat invalid token as expired
+        }
+    }
 }

@@ -1,5 +1,7 @@
 @page "/transactions"
 @inject TransactionsViewModel ViewModel
+@inject WNAB.MVM.IAuthenticationService AuthService
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -179,6 +181,19 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Check if user is authenticated and token is valid
+        if (AuthService is WNAB.Web.Services.WebAuthenticationService webAuthService)
+        {
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            var isTokenExpired = await webAuthService.IsTokenExpiredAsync();
+
+            if (!isAuthenticated || isTokenExpired)
+            {
+                Navigation.NavigateTo("/landing");
+                return;
+            }
+        }
+
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
 

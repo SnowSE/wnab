@@ -1,5 +1,7 @@
 ﻿@page "/"
 @inject PlanBudgetViewModel ViewModel
+@inject WNAB.MVM.IAuthenticationService AuthService
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <!-- LLM-Dev: Home page is now the Budgets page, following the design in the screenshots -->
@@ -194,6 +196,19 @@
     
     protected override async Task OnInitializedAsync()
     {
+        // Check if user is authenticated and token is valid
+        if (AuthService is WNAB.Web.Services.WebAuthenticationService webAuthService)
+        {
+            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+            var isTokenExpired = await webAuthService.IsTokenExpiredAsync();
+
+            if (!isAuthenticated || isTokenExpired)
+            {
+                Navigation.NavigateTo("/landing");
+                return;
+            }
+        }
+
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
         ViewModel.PropertyChanged += OnViewModelPropertyChanged;
