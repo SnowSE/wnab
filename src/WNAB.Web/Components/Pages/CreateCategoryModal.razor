@@ -1,5 +1,6 @@
 @using WNAB.MVM
 @inject AddCategoryViewModel ViewModel
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <!-- Create Category Modal -->
@@ -77,6 +78,9 @@
         
         if (success)
         {
+            // Close the modal using Bootstrap's JavaScript API
+            await JSRuntime.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('createCategoryModal')).hide()");
+            
             // Notify parent component to refresh the categories list
             await OnCategoryCreated.InvokeAsync();
             
