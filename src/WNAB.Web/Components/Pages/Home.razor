@@ -223,7 +223,7 @@
         catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
         {
             // Token expired during initialization
-            Navigation.NavigateTo("/landing", forceLoad: true);
+            Navigation.NavigateTo("/landing");
         }
     }
 
