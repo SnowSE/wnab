@@ -22,7 +22,27 @@ public class AccountManagementService
 
 		// LLM-Dev: Use POST to the REST endpoint that accepts AccountRecord for current user.
 		var response = await _http.PostAsJsonAsync("accounts", record, ct);
-		response.EnsureSuccessStatusCode();
+		
+		// Check for bad request and extract the error message from the API
+		if (!response.IsSuccessStatusCode)
+		{
+			if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+			{
+				try
+				{
+					var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(cancellationToken: ct);
+					throw new InvalidOperationException(errorResponse?.Error ?? "Invalid account data");
+				}
+				catch (System.Text.Json.JsonException)
+				{
+					// If the error response isn't JSON with Error property, read as string
+					var errorText = await response.Content.ReadAsStringAsync(ct);
+					throw new InvalidOperationException(errorText);
+				}
+			}
+			// For other errors, use default behavior
+			response.EnsureSuccessStatusCode();
+		}
 
 		var created = await response.Content.ReadFromJsonAsync<IdResponse>(cancellationToken: ct);
 		if (created is null) throw new InvalidOperationException("API returned no content when creating account.");
@@ -30,6 +50,7 @@ public class AccountManagementService
 	}
 
 	private sealed record IdResponse(int Id);
+	private sealed record ErrorResponse(string Error);
 
 	// LLM-Dev:v2 Fetch accounts for the current authenticated user (UI should call this rather than creating HttpClient).
 	public async Task<List<Account>> GetAccountsForUserAsync(CancellationToken ct = default)

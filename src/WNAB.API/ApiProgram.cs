@@ -305,9 +305,15 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
+    try{
+        var account = await accountsService.CreateAccountAsync(user, rec.Name, rec.AccountType);
 
-    var account = await accountsService.CreateAccountAsync(user, rec.Name, rec.AccountType);
-    return Results.Created($"/accounts/{account.Id}", new { account.Id });
+        return Results.Created($"/accounts/{account.Id}", new { account.Id });
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.BadRequest(new { Error = ex.Message });
+    }
 }).RequireAuthorization();
 
 // create allocation
