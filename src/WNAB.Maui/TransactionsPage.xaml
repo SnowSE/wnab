@@ -57,40 +57,52 @@ CornerRadius="8"
  IsVisible="{Binding AddTransactionViewModel.Model.StatusMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
   
   <!-- Account Picker -->
-    <Label Text="Account" FontAttributes="Bold" />
+    <Label Text="Account" FontAttributes="Bold" TextColor="Black" />
      <Picker ItemsSource="{Binding AddTransactionViewModel.Model.AvailableAccounts}"
        ItemDisplayBinding="{Binding AccountName}"
-SelectedItem="{Binding AddTransactionViewModel.Model.SelectedAccount}" />
+SelectedItem="{Binding AddTransactionViewModel.Model.SelectedAccount}"
+TextColor="Black" />
   
      <!-- Date Picker -->
-   <Label Text="Date" FontAttributes="Bold" />
-  <DatePicker Date="{Binding AddTransactionViewModel.Model.TransactionDate}" />
+   <Label Text="Date" FontAttributes="Bold" TextColor="Black" />
+  <DatePicker Date="{Binding AddTransactionViewModel.Model.TransactionDate}"
+TextColor="Black" />
         
 <!-- Payee Entry -->
-     <Label Text="Payee" FontAttributes="Bold" />
-      <Entry Text="{Binding AddTransactionViewModel.Model.Payee}" Placeholder="Enter payee name" />
+     <Label Text="Payee" FontAttributes="Bold" TextColor="Black" />
+      <Entry Text="{Binding AddTransactionViewModel.Model.Payee}" 
+Placeholder="Enter payee name"
+TextColor="Black"
+PlaceholderColor="Gray" />
 
  <!-- Amount Entry -->
-       <Label Text="Amount" FontAttributes="Bold" />
-  <Entry Text="{Binding AddTransactionViewModel.Model.Amount}" Placeholder="0.00" Keyboard="Numeric" />
+       <Label Text="Amount" FontAttributes="Bold" TextColor="Black" />
+  <Entry Text="{Binding AddTransactionViewModel.Model.Amount}" 
+Placeholder="0.00" 
+Keyboard="Numeric"
+TextColor="Black"
+PlaceholderColor="Gray" />
     
 <!-- Split Transaction Toggle -->
     <Button Text="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}"
    Command="{Binding AddTransactionViewModel.ToggleSplitTransactionCommand}"
-       BackgroundColor="LightBlue" />
+       BackgroundColor="LightBlue"
+TextColor="Black" />
 
  <!-- Category Picker (Single) -->
       <Label Text="Category" 
    FontAttributes="Bold" 
+   TextColor="Black"
    IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
      <Picker ItemsSource="{Binding AddTransactionViewModel.Model.AvailableCategories}"
    ItemDisplayBinding="{Binding Name}"
       SelectedItem="{Binding AddTransactionViewModel.Model.SelectedCategory}"
+     TextColor="Black"
      IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
    
     <!-- Splits Section -->
  <VerticalStackLayout IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction}" Spacing="8">
-   <Label Text="Transaction Splits" FontAttributes="Bold" />
+   <Label Text="Transaction Splits" FontAttributes="Bold" TextColor="Black" />
      
  <CollectionView ItemsSource="{Binding AddTransactionViewModel.Model.Splits}">
       <CollectionView.ItemTemplate>
@@ -99,16 +111,20 @@ SelectedItem="{Binding AddTransactionViewModel.Model.SelectedAccount}" />
  <VerticalStackLayout Spacing="4">
  <Picker ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=AddTransactionViewModel.Model.AvailableCategories}"
 ItemDisplayBinding="{Binding Name}"
-  SelectedItem="{Binding Model.SelectedCategory}" />
+  SelectedItem="{Binding Model.SelectedCategory}"
+TextColor="Black" />
      
      <Entry Text="{Binding Model.Amount}" 
   Placeholder="Amount" 
-    Keyboard="Numeric" />
+    Keyboard="Numeric"
+TextColor="Black"
+PlaceholderColor="Gray" />
         
    <Button Text="Remove Split"
    Command="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=AddTransactionViewModel.RemoveSplitCommand}"
     CommandParameter="{Binding .}"
  BackgroundColor="IndianRed"
+TextColor="White"
        IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=AddTransactionViewModel.Model.Splits.Count, Converter={StaticResource GreaterThanOneConverter}}" />
 </VerticalStackLayout>
       </Frame>
@@ -118,7 +134,8 @@ ItemDisplayBinding="{Binding Name}"
       
     <Button Text="+ Add Split" 
     Command="{Binding AddTransactionViewModel.AddSplitCommand}"
- BackgroundColor="LightGreen" />
+ BackgroundColor="LightGreen"
+TextColor="Black" />
    
        <HorizontalStackLayout Spacing="4">
  <Label Text="Balance:" TextColor="Gray" />
@@ -130,20 +147,24 @@ FontAttributes="Bold" />
     </VerticalStackLayout>
  
    <!-- Memo Entry -->
-   <Label Text="Memo (Optional)" FontAttributes="Bold" />
+   <Label Text="Memo (Optional)" FontAttributes="Bold" TextColor="Black" />
      <Editor Text="{Binding AddTransactionViewModel.Model.Memo}" 
       Placeholder="Add a note..." 
-HeightRequest="80" />
+HeightRequest="80"
+TextColor="Black"
+PlaceholderColor="Gray" />
     
    <!-- Action Buttons -->
    <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
      <Button Text="Cancel" 
      Command="{Binding CancelAddTransactionCommand}"
-  BackgroundColor="Gray" />
+  BackgroundColor="Gray"
+TextColor="White" />
     <Button Grid.Column="1"
     Text="Create Transaction" 
        Command="{Binding SaveTransactionInlineCommand}"
         BackgroundColor="Green"
+TextColor="White"
  IsEnabled="{Binding AddTransactionViewModel.Model.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
      </VerticalStackLayout>
@@ -204,6 +225,7 @@ PlaceholderColor="Gray" />
     Text="Update Transaction" 
        Command="{Binding SaveEditTransactionCommand}"
  BackgroundColor="Orange"
+ TextColor="White"
  IsEnabled="{Binding EditTransactionViewModel.Model.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
      </VerticalStackLayout>
@@ -254,6 +276,7 @@ PlaceholderColor="Gray" />
   Text="Update Split" 
     Command="{Binding SaveEditTransactionSplitCommand}"
  BackgroundColor="Purple"
+ TextColor="White"
  IsEnabled="{Binding EditTransactionSplitViewModel.Model.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
      </VerticalStackLayout>
@@ -304,6 +327,7 @@ PlaceholderColor="Gray" />
     Text="Add Split" 
        Command="{Binding SaveAddSplitToTransactionCommand}"
         BackgroundColor="Green"
+ TextColor="White"
  IsEnabled="{Binding AddSplitToTransactionViewModel.Model.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
      </VerticalStackLayout>
@@ -325,7 +349,7 @@ PlaceholderColor="Gray" />
     <!-- Date and Amount on first row -->
    <Label Text="{Binding Date, StringFormat='{0:MM/dd/yyyy}'}" 
        FontSize="Small" 
-     TextColor="Gray" />
+     TextColor="DarkSlateGray" />
   <Label Grid.Column="1" 
     Text="{Binding Amount, StringFormat='{0:C}'}" 
     FontAttributes="Bold"
@@ -359,13 +383,14 @@ PlaceholderColor="Gray" />
    <Label Grid.Row="1" Grid.ColumnSpan="5"
 Text="{Binding Payee}" 
       FontSize="Medium"
-  FontAttributes="Bold" />
+  FontAttributes="Bold"
+  TextColor="Black" />
    
   <!-- Account on third row -->
   <Label Grid.Row="2" Grid.ColumnSpan="5"
 Text="{Binding AccountName, StringFormat='Account: {0}'}" 
  FontSize="Small" 
-    TextColor="Blue"
+    TextColor="DarkBlue"
     FontAttributes="Italic" />
       </Grid>
    </Frame>
