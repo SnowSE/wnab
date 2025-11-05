@@ -2,6 +2,7 @@
 @inject AccountsViewModel ViewModel
 @inject WNAB.MVM.IAuthenticationService AuthService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 @implements IDisposable
 
 <div class="accounts-container">
@@ -272,12 +273,38 @@
 
     private async Task OnDeleteAccountClick(AccountItemViewModel account)
     {
-        await ViewModel.DeleteAccountCommand.ExecuteAsync(account);
+        var confirmed = await JS.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to delete '{account.AccountName}'?");
+        
+        if (!confirmed) return;
+
+        var success = await ViewModel.Model.DeleteAccountAsync(account.Id);
+        
+        if (!success)
+        {
+            await JS.InvokeVoidAsync("alert", "Failed to delete account. Please try again.");
+        }
     }
 
     private async Task OnReactivateAccountClick(AccountItemViewModel account)
     {
-        await ViewModel.ReactivateAccountCommand.ExecuteAsync(account);
+        var confirmed = await JS.InvokeAsync<bool>("confirm", 
+            $"Are you sure you want to reactivate '{account.AccountName}'?");
+        
+        if (!confirmed) return;
+
+        var (success, errorMessage) = await ViewModel.Model.ReactivateAccountAsync(account.Id);
+        
+        if (success)
+        {
+            // Refresh to show the reactivated account in the active list
+            await ViewModel.Model.LoadAccountsAsync();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", 
+                errorMessage ?? "Failed to reactivate account. Please try again.");
+        }
     }
 
     public void Dispose()
