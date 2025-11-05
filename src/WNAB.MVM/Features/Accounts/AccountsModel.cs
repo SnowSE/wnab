@@ -105,29 +105,39 @@ public partial class AccountsModel : ObservableObject
 
     /// <summary>
     /// Update an account with new name and type.
+    /// Returns a tuple with success status and error message (if any).
     /// </summary>
-    public async Task<bool> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
+    public async Task<(bool Success, string? ErrorMessage)> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
     {
         try
         {
-            var success = await _accounts.UpdateAccountAsync(accountId, newName, newAccountType);
-            return success;
+            var (success, errorMessage) = await _accounts.UpdateAccountAsync(accountId, newName, newAccountType);
+            if (success)
+            {
+                StatusMessage = $"Account updated successfully";
+                return (true, null);
+            }
+            
+            StatusMessage = $"Failed to update account: {errorMessage}";
+            return (false, errorMessage);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error updating account: {ex.Message}";
-            return false;
+            var errorMsg = $"Error updating account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
     }
 
     /// <summary>
     /// Delete an account by ID.
+    /// Returns a tuple with success status and error message (if any).
     /// </summary>
-    public async Task<bool> DeleteAccountAsync(int accountId)
+    public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId)
     {
         try
         {
-            var success = await _accounts.DeleteAccountAsync(accountId);
+            var (success, errorMessage) = await _accounts.DeleteAccountAsync(accountId);
             if (success)
             {
                 // Remove from local collection
@@ -137,13 +147,17 @@ public partial class AccountsModel : ObservableObject
                     Items.Remove(item);
                 }
                 StatusMessage = $"Account deleted successfully";
+                return (true, null);
             }
-            return success;
+            
+            StatusMessage = $"Failed to delete account: {errorMessage}";
+            return (false, errorMessage);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error deleting account: {ex.Message}";
-            return false;
+            var errorMsg = $"Error deleting account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
     }
 

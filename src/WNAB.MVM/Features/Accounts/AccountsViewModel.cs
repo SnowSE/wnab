@@ -80,13 +80,20 @@ public partial class AccountsViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAccount(AccountItemViewModel accountItem)
     {
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+            return;
+
         if (string.IsNullOrWhiteSpace(accountItem.EditAccountName))
         {
-            // Could show an error message via popup service if needed
+            await mainPage.DisplayAlert(
+                "Validation Error",
+                "Account name cannot be empty.",
+                "OK");
             return;
         }
 
-        var success = await Model.UpdateAccountAsync(
+        var (success, errorMessage) = await Model.UpdateAccountAsync(
             accountItem.Id, 
             accountItem.EditAccountName, 
             accountItem.EditAccountType);
@@ -97,8 +104,12 @@ public partial class AccountsViewModel : ObservableObject
         }
         else
         {
-            // Could show error message via popup service
-            accountItem.CancelEditing();
+            // Show specific error message and keep user in edit mode so they can correct it
+            await mainPage.DisplayAlert(
+                "Error",
+                errorMessage ?? "Failed to update account. Please try again.",
+                "OK");
+            // DO NOT call CancelEditing() - leave user's input intact so they can fix it
         }
     }
 
@@ -120,27 +131,27 @@ public partial class AccountsViewModel : ObservableObject
         // Show confirmation dialog
         var mainPage = Application.Current?.MainPage;
         if (mainPage == null)
-      return;
+            return;
 
         bool confirm = await mainPage.DisplayAlert(
-          "Delete Account",
-     $"Are you sure you want to delete '{accountItem.AccountName}'?",
-  "Delete",
- "Cancel");
+            "Delete Account",
+            $"Are you sure you want to delete '{accountItem.AccountName}'?",
+            "Delete",
+            "Cancel");
 
         if (!confirm)
-      return;
+            return;
 
-        var success = await Model.DeleteAccountAsync(accountItem.Id);
+        var (success, errorMessage) = await Model.DeleteAccountAsync(accountItem.Id);
 
         if (!success)
-     {
-      // Could show error message via popup service or alert
+        {
+            // Show specific error message from the API
             await mainPage.DisplayAlert(
-         "Error",
-         "Failed to delete account. Please try again.",
-     "OK");
-      }
+                "Error",
+                errorMessage ?? "Failed to delete account. Please try again.",
+                "OK");
+        }
     }
 
     /// <summary>

@@ -548,7 +548,7 @@ app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext 
             };
         }
 
-        return Results.NoContent();
+        return Results.Ok(); // maybe we should change to Results.NoContent?
     }
     catch (InvalidOperationException ex)
     {

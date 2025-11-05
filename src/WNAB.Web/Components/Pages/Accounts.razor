@@ -263,7 +263,28 @@
 
     private async Task OnSaveAccountClick(AccountItemViewModel account)
     {
-        await ViewModel.SaveAccountCommand.ExecuteAsync(account);
+        if (string.IsNullOrWhiteSpace(account.EditAccountName))
+        {
+            await JS.InvokeVoidAsync("alert", "Account name cannot be empty.");
+            return;
+        }
+
+        var (success, errorMessage) = await ViewModel.Model.UpdateAccountAsync(
+            account.Id, 
+            account.EditAccountName, 
+            account.EditAccountType);
+
+        if (success)
+        {
+            account.ApplyChanges();
+        }
+        else
+        {
+            // Show specific error message and keep user in edit mode so they can correct it
+            await JS.InvokeVoidAsync("alert", 
+                errorMessage ?? "Failed to update account. Please try again.");
+            // DO NOT call CancelEditing() - leave user's input intact so they can fix it
+        }
     }
 
     private void OnCancelEditClick(AccountItemViewModel account)
@@ -278,11 +299,12 @@
         
         if (!confirmed) return;
 
-        var success = await ViewModel.Model.DeleteAccountAsync(account.Id);
+        var (success, errorMessage) = await ViewModel.Model.DeleteAccountAsync(account.Id);
         
         if (!success)
         {
-            await JS.InvokeVoidAsync("alert", "Failed to delete account. Please try again.");
+            await JS.InvokeVoidAsync("alert", 
+                errorMessage ?? "Failed to delete account. Please try again.");
         }
     }
 
