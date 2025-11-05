@@ -390,10 +390,22 @@
                                          VerticalItemSpacing="12" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.EmptyView>
-                        <Label Text="No inactive accounts found." 
-                               HorizontalOptions="Center" 
-                               VerticalOptions="Center"
-                               Margin="0,40" />
+                        <VerticalStackLayout HorizontalOptions="Center" 
+                                            VerticalOptions="Center"
+                                            Spacing="12"
+                                            Margin="0,40">
+                            <Label Text="📭" 
+                                   HorizontalOptions="Center"
+                                   FontSize="48" />
+                            <Label Text="No inactive or deleted accounts to show" 
+                                   HorizontalOptions="Center"
+                                   FontSize="16"
+                                   FontAttributes="Bold" />
+                            <Label Text="Deleted accounts will appear here" 
+                                   HorizontalOptions="Center"
+                                   FontSize="14"
+                                   TextColor="Gray" />
+                        </VerticalStackLayout>
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:AccountItemViewModel">
@@ -433,21 +445,32 @@
                                                          Desktop="16" />
                                             </Label.FontSize>
                                         </Label>
-                                        <Label Grid.Column="1"
-                                               Text="♻️"
-                                               VerticalOptions="Center">
-                                            <Label.FontSize>
-                                                <OnIdiom x:TypeArguments="x:Double" 
-                                                         Phone="18" 
-                                                         Tablet="19" 
-                                                         Desktop="20" />
-                                            </Label.FontSize>
-                                            <Label.GestureRecognizers>
+                                        <HorizontalStackLayout Grid.Column="1" 
+                                                              Spacing="6"
+                                                              VerticalOptions="Center">
+                                            <Label Text="♻️">
+                                                <Label.FontSize>
+                                                    <OnIdiom x:TypeArguments="x:Double" 
+                                                             Phone="16" 
+                                                             Tablet="17" 
+                                                             Desktop="18" />
+                                                </Label.FontSize>
+                                            </Label>
+                                            <Label Text="Reactivate Account"
+                                                   VerticalOptions="Center">
+                                                <Label.FontSize>
+                                                    <OnIdiom x:TypeArguments="x:Double" 
+                                                             Phone="12" 
+                                                             Tablet="13" 
+                                                             Desktop="14" />
+                                                </Label.FontSize>
+                                            </Label>
+                                            <HorizontalStackLayout.GestureRecognizers>
                                                 <TapGestureRecognizer 
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=ReactivateAccountCommand}"
                                                     CommandParameter="{Binding .}" />
-                                            </Label.GestureRecognizers>
-                                        </Label>
+                                            </HorizontalStackLayout.GestureRecognizers>
+                                        </HorizontalStackLayout>
                                     </Grid>
 
                                     <!-- Account Type Badge -->
