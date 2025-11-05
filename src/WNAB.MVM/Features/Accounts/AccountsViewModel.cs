@@ -172,7 +172,7 @@ public partial class AccountsViewModel : ObservableObject
         if (!confirm)
             return;
 
-        var success = await Model.ReactivateAccountAsync(accountItem.Id);
+        var (success, errorMessage) = await Model.ReactivateAccountAsync(accountItem.Id);
 
         if (success)
         {
@@ -181,10 +181,10 @@ public partial class AccountsViewModel : ObservableObject
         }
         else
         {
-            // Show error message
+            // Show specific error message from the API
             await mainPage.DisplayAlert(
                 "Error",
-                "Failed to reactivate account. Please try again.",
+                errorMessage ?? "Failed to reactivate account. Please try again.",
                 "OK");
         }
     }

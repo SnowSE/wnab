@@ -197,12 +197,13 @@ public partial class AccountsModel : ObservableObject
 
     /// <summary>
     /// Reactivate an inactive account by ID.
+    /// Returns a tuple with success status and error message (if any).
     /// </summary>
-    public async Task<bool> ReactivateAccountAsync(int accountId)
+    public async Task<(bool Success, string? ErrorMessage)> ReactivateAccountAsync(int accountId)
     {
         try
         {
-            var success = await _accounts.ReactivateAccountAsync(accountId);
+            var (success, errorMessage) = await _accounts.ReactivateAccountAsync(accountId);
             if (success)
             {
                 // Remove from inactive collection
@@ -212,13 +213,17 @@ public partial class AccountsModel : ObservableObject
                     InactiveItems.Remove(item);
                 }
                 StatusMessage = $"Account reactivated successfully";
+                return (true, null);
             }
-            return success;
+            
+            StatusMessage = $"Failed to reactivate account: {errorMessage}";
+            return (false, errorMessage);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error reactivating account: {ex.Message}";
-            return false;
+            var errorMsg = $"Error reactivating account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
     }
 
