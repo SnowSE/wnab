@@ -14,6 +14,7 @@ public partial class AccountsModel : ObservableObject
     private readonly IAuthenticationService _authService;
 
     public ObservableCollection<AccountItemViewModel> Items { get; } = new();
+    public ObservableCollection<AccountItemViewModel> InactiveItems { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -23,6 +24,9 @@ public partial class AccountsModel : ObservableObject
 
     [ObservableProperty]
     private string statusMessage = "Loading...";
+
+    [ObservableProperty]
+    private bool showInactive = false;
 
     public AccountsModel(AccountManagementService accounts, IAuthenticationService authService)
     {
@@ -150,6 +154,86 @@ public partial class AccountsModel : ObservableObject
     {
         await CheckUserSessionAsync();
         if (IsLoggedIn)
+        {
+            if (ShowInactive)
+            {
+                await LoadInactiveAccountsAsync();
+            }
+            else
+            {
+                await LoadAccountsAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Load inactive accounts for the current authenticated user.
+    /// </summary>
+    public async Task LoadInactiveAccountsAsync()
+    {
+        if (IsBusy || !IsLoggedIn) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Loading inactive accounts...";
+            InactiveItems.Clear();
+
+            var list = await _accounts.GetInactiveAccountsAsync();
+            foreach (var account in list)
+                InactiveItems.Add(new AccountItemViewModel(account));
+
+            StatusMessage = list.Count == 0 ? "No inactive accounts found" : $"Loaded {list.Count} inactive accounts";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading inactive accounts: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Reactivate an inactive account by ID.
+    /// </summary>
+    public async Task<bool> ReactivateAccountAsync(int accountId)
+    {
+        try
+        {
+            var success = await _accounts.ReactivateAccountAsync(accountId);
+            if (success)
+            {
+                // Remove from inactive collection
+                var item = InactiveItems.FirstOrDefault(i => i.Id == accountId);
+                if (item != null)
+                {
+                    InactiveItems.Remove(item);
+                }
+                StatusMessage = $"Account reactivated successfully";
+            }
+            return success;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error reactivating account: {ex.Message}";
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Toggle between showing active and inactive accounts.
+    /// </summary>
+    public async Task ToggleShowInactiveAsync()
+    {
+        ShowInactive = !ShowInactive;
+        
+        if (ShowInactive)
+        {
+            await LoadInactiveAccountsAsync();
+        }
+        else
         {
             await LoadAccountsAsync();
         }

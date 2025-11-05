@@ -80,4 +80,24 @@ public class AccountManagementService
 		var response = await _http.DeleteAsync($"accounts/{accountId}", ct);
 		return response.IsSuccessStatusCode;
 	}
+
+	/// <summary>
+	/// Get inactive accounts for the current authenticated user.
+	/// Returns a list of inactive accounts.
+	/// </summary>
+	public async Task<List<Account>> GetInactiveAccountsAsync(CancellationToken ct = default)
+	{
+		var list = await _http.GetFromJsonAsync<List<Account>>("accounts/inactive", ct);
+		return list ?? new();
+	}
+
+	/// <summary>
+	/// Reactivate an inactive account for the current authenticated user.
+	/// Returns true on success, false if account not found or reactivation failed.
+	/// </summary>
+	public async Task<bool> ReactivateAccountAsync(int accountId, CancellationToken ct = default)
+	{
+		var response = await _http.PutAsync($"accounts/{accountId}/reactivate", null, ct);
+		return response.IsSuccessStatusCode;
+	}
 }

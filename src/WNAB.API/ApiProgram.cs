@@ -176,6 +176,15 @@ app.MapGet("/accounts", async (HttpContext context, WnabContext db, WNAB.API.Ser
     return Results.Ok(accounts);
 }).RequireAuthorization();
 
+app.MapGet("/accounts/inactive", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var inactiveAccounts = await accountsService.GetInactiveAccountsForUserAsync(user.Id);
+    return Results.Ok(inactiveAccounts);
+}).RequireAuthorization();
+
 //
 app.MapGet("/categories/allocation", async (int categoryId, WnabContext db) =>
 {
@@ -536,6 +545,36 @@ app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext 
                 "Account not found." => Results.NotFound(errorMessage),
                 "Account does not belong to the current user." => Results.Forbid(),
                 _ => Results.BadRequest("An error occurred while deleting the account.")
+            };
+        }
+
+        return Results.NoContent();
+    }
+    catch (InvalidOperationException ex)
+    {
+        return Results.Problem(ex.Message, statusCode: 500);
+    }
+}).RequireAuthorization();
+
+// Reactivate account by id (must belong to current user)
+app.MapPut("/accounts/{id}/reactivate", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    try
+    {
+        var (success, errorMessage) = await accountsService.ReactivateAccountAsync(id, user.Id);
+
+        if (!success)
+        {
+            return errorMessage switch
+            {
+                "Invalid account ID." => Results.BadRequest(errorMessage),
+                "Inactive account not found." => Results.NotFound(errorMessage),
+                "Account does not belong to the current user." => Results.Forbid(),
+                _ when errorMessage?.Contains("already exists") == true => Results.Conflict(new { error = errorMessage }),
+                _ => Results.BadRequest("An error occurred while reactivating the account.")
             };
         }
 

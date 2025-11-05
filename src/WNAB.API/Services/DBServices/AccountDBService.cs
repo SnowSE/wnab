@@ -148,4 +148,51 @@ public class AccountDBService
 
         return (true, null);
     }
+
+    public async Task<List<Account>> GetInactiveAccountsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Accounts
+            .Where(a => a.UserId == userId && !a.IsActive)
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> ReactivateAccountAsync(int accountId, int userId, CancellationToken cancellationToken = default)
+    {
+        // Validate account ID
+        if (accountId <= 0)
+            return (false, "Invalid account ID.");
+
+        // Guard: prevent saving unrelated pending changes in this context
+        if (_db.ChangeTracker.HasChanges())
+            throw new InvalidOperationException("Context has pending changes; aborting account reactivation.");
+
+        // Verify the account exists and belongs to the user
+        var account = await _db.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsActive, cancellationToken);
+
+        if (account is null)
+            return (false, "Inactive account not found.");
+
+        if (account.UserId != userId)
+            return (false, "Account does not belong to the current user.");
+
+        // Check for duplicate active account names for this user
+        var duplicateExists = await _db.Accounts
+            .AnyAsync(a => a.UserId == userId && a.Id != accountId && a.AccountName == account.AccountName && a.IsActive, cancellationToken);
+
+        if (duplicateExists)
+            return (false, $"An active account with the name '{account.AccountName}' already exists. Please rename it first.");
+
+        // Reactivate: set IsActive to true
+        account.IsActive = true;
+        account.UpdatedAt = DateTime.UtcNow;
+        var affected = await _db.SaveChangesAsync(cancellationToken);
+
+        // Postcondition: ensure only the account was updated
+        if (affected != 1)
+            throw new InvalidOperationException($"Expected to update exactly 1 entry, but updated {affected}.");
+
+        return (true, null);
+    }
 }

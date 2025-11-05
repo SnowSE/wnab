@@ -142,4 +142,50 @@ public partial class AccountsViewModel : ObservableObject
      "OK");
       }
     }
+
+    /// <summary>
+    /// Toggle between showing active and inactive accounts.
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleShowInactive()
+    {
+        await Model.ToggleShowInactiveAsync();
+    }
+
+    /// <summary>
+    /// Reactivate an inactive account - prompts for confirmation then reactivates it.
+    /// </summary>
+    [RelayCommand]
+    private async Task ReactivateAccount(AccountItemViewModel accountItem)
+    {
+        // Show confirmation dialog
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+            return;
+
+        bool confirm = await mainPage.DisplayAlert(
+            "Reactivate Account",
+            $"Are you sure you want to reactivate '{accountItem.AccountName}'?",
+            "Reactivate",
+            "Cancel");
+
+        if (!confirm)
+            return;
+
+        var success = await Model.ReactivateAccountAsync(accountItem.Id);
+
+        if (success)
+        {
+            // Refresh active accounts to show the newly reactivated account
+            await Model.LoadAccountsAsync();
+        }
+        else
+        {
+            // Show error message
+            await mainPage.DisplayAlert(
+                "Error",
+                "Failed to reactivate account. Please try again.",
+                "OK");
+        }
+    }
 }
