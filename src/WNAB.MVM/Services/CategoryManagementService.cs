@@ -25,7 +25,7 @@ public class CategoryManagementService
     response.EnsureSuccessStatusCode();
 
     // CHANGE: Receive DTO instead of entity
-    var created = await response.Content.ReadFromJsonAsync<CategoryDto>(cancellationToken: ct);
+    var created = await response.Content.ReadFromJsonAsync<CategoryResponse>(cancellationToken: ct);
     if (created is null) throw new InvalidOperationException("API returned no content when creating category.");
     return created.Id;
   }
@@ -33,14 +33,14 @@ public class CategoryManagementService
   public async Task<List<Category>> GetCategoriesAsync(CancellationToken ct = default)
   {
     // CHANGE: Receive DTOs and map to entities for backward compatibility
-    var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("all/categories", ct);
+    var dtos = await _http.GetFromJsonAsync<List<CategoryResponse>>("all/categories", ct);
     return dtos?.Select(MapToEntity).ToList() ?? new();
   }
 
   public async Task<List<Category>> GetCategoriesForUserAsync(CancellationToken ct = default)
   {
     // CHANGE: Receive DTOs and map to entities for backward compatibility
-    var dtos = await _http.GetFromJsonAsync<List<CategoryDto>>("categories", ct);
+    var dtos = await _http.GetFromJsonAsync<List<CategoryResponse>>("categories", ct);
     return dtos?.Select(MapToEntity).ToList() ?? new();
   }
 
@@ -59,7 +59,7 @@ public class CategoryManagementService
   }
 
   // Helper method to map DTO to entity
-  private static Category MapToEntity(CategoryDto dto) => new()
+  private static Category MapToEntity(CategoryResponse dto) => new()
   {
     Id = dto.Id,
     Name = dto.Name,

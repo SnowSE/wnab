@@ -78,7 +78,6 @@ public static class MauiProgram
 		.AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
 		// Use the shared Logic services with the same named client
-		builder.Services.AddSingleton(sp => new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 		builder.Services.AddSingleton(sp => new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 		builder.Services.AddSingleton(sp => new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 		builder.Services.AddSingleton(sp => new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));

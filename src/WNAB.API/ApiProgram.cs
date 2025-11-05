@@ -182,7 +182,7 @@ app.MapGet("/allocations", async (HttpContext context, int categoryId, WnabConte
 
     var allocations = await db.Allocations
         .Where(a => a.CategoryId == categoryId)
-        .Select(a => new CategoryAllocationDto(
+        .Select(a => new CategoryAllocationResponse(
             a.Id,
             a.CategoryId,
             a.BudgetedAmount,
@@ -342,7 +342,7 @@ app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec
     {
         var category = await categoryService.CreateCategoryWithValidationAsync(user.Id, rec);
 
-        return Results.Created($"/categories/{category.Id}", new CategoryDto(category.Id, category.Name, category.Color, category.IsActive));
+        return Results.Created($"/categories/{category.Id}", new CategoryResponse(category.Id, category.Name, category.Color, category.IsActive));
     }
     catch (Exception ex)
     {
@@ -546,7 +546,7 @@ app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryR
     {
         var category = await categoryService.UpdateCategoryWithValidationAsync(user.Id, id, rec);
 
-        return Results.Created($"/categories/{category.Id}", new CategoryDto(category.Id, category.Name, category.Color, category.IsActive));
+        return Results.Created($"/categories/{category.Id}", new CategoryResponse(category.Id, category.Name, category.Color, category.IsActive));
     }
     catch (Exception ex)
     {

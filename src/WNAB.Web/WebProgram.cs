@@ -78,8 +78,6 @@ builder.Services.AddTransient<WNAB.Web.AuthenticationDelegatingHandler>();
 builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"))
     .AddHttpMessageHandler<WNAB.Web.AuthenticationDelegatingHandler>();
 
-builder.Services.AddTransient<UserManagementService>(sp =>
-    new UserManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddTransient<CategoryManagementService>(sp =>
     new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddTransient<AccountManagementService>(sp =>
