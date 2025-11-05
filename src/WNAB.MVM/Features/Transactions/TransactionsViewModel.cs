@@ -3,43 +3,94 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace WNAB.MVM;
 
-/// <summary>
-/// ViewModel for TransactionsPage - thin coordination layer between View and Model.
-/// Handles UI-specific concerns like navigation and popups, delegates business logic to Model.
-/// </summary>
 public partial class TransactionsViewModel : ObservableObject
 {
     private readonly IMVMPopupService _popupService;
+    private readonly AddTransactionViewModel _addTransactionViewModel;
+    private readonly EditTransactionViewModel _editTransactionViewModel;
+    private readonly EditTransactionSplitViewModel _editTransactionSplitViewModel;
+    private readonly AddSplitToTransactionViewModel _addSplitToTransactionViewModel;
 
     public TransactionsModel Model { get; }
+    public AddTransactionViewModel AddTransactionViewModel => _addTransactionViewModel;
+    public EditTransactionViewModel EditTransactionViewModel => _editTransactionViewModel;
+    public EditTransactionSplitViewModel EditTransactionSplitViewModel => _editTransactionSplitViewModel;
+    public AddSplitToTransactionViewModel AddSplitToTransactionViewModel => _addSplitToTransactionViewModel;
 
-    public TransactionsViewModel(TransactionsModel model, IMVMPopupService popupService)
+    [ObservableProperty]
+    private bool isAddFormVisible = false;
+
+    [ObservableProperty]
+    private bool isEditFormVisible = false;
+
+    [ObservableProperty]
+    private bool isEditSplitFormVisible = false;
+
+    [ObservableProperty]
+    private bool isAddSplitFormVisible = false;
+
+    public TransactionsViewModel(
+        TransactionsModel model, 
+        IMVMPopupService popupService,
+        AddTransactionViewModel addTransactionViewModel,
+        EditTransactionViewModel editTransactionViewModel,
+        EditTransactionSplitViewModel editTransactionSplitViewModel,
+        AddSplitToTransactionViewModel addSplitToTransactionViewModel)
     {
         Model = model;
         _popupService = popupService;
+        _addTransactionViewModel = addTransactionViewModel;
+        _editTransactionViewModel = editTransactionViewModel;
+        _editTransactionSplitViewModel = editTransactionSplitViewModel;
+        _addSplitToTransactionViewModel = addSplitToTransactionViewModel;
     }
 
-    /// <summary>
-    /// Initialize the ViewModel by delegating to the Model.
-    /// </summary>
     public async Task InitializeAsync()
     {
         await Model.InitializeAsync();
+        await _addTransactionViewModel.InitializeAsync();
+        await _editTransactionViewModel.InitializeAsync();
+        await _editTransactionSplitViewModel.InitializeAsync();
+        await _addSplitToTransactionViewModel.InitializeAsync();
     }
 
-    /// <summary>
-    /// Refresh command - delegates to Model.
-    /// </summary>
     [RelayCommand]
     private async Task RefreshAsync()
     {
         await Model.RefreshAsync();
     }
 
-    /// <summary>
-    /// Add Transaction command - shows popup then refreshes the list.
-    /// Pure UI coordination - shows popup and triggers refresh.
-    /// </summary>
+    [RelayCommand]
+    private void ToggleAddForm()
+    {
+        IsAddFormVisible = !IsAddFormVisible;
+        
+        if (!IsAddFormVisible)
+        {
+            _addTransactionViewModel.Model.Clear();
+        }
+    }
+
+    [RelayCommand]
+    private void CancelAddTransaction()
+    {
+        IsAddFormVisible = false;
+        _addTransactionViewModel.Model.Clear();
+    }
+
+    [RelayCommand]
+    private async Task SaveTransactionInline()
+    {
+        var (success, message) = await _addTransactionViewModel.Model.CreateTransactionAsync();
+        
+        if (success)
+        {
+            _addTransactionViewModel.Model.Clear();
+            IsAddFormVisible = false;
+            await Model.RefreshAsync();
+        }
+    }
+
     [RelayCommand]
     private async Task AddTransaction()
     {
@@ -47,9 +98,99 @@ public partial class TransactionsViewModel : ObservableObject
         await Model.RefreshAsync();
     }
 
-    /// <summary>
-    /// Navigate to Home command - pure navigation logic.
-    /// </summary>
+    [RelayCommand]
+    private async Task DeleteTransaction(int transactionId)
+    {
+        await Model.DeleteTransactionAsync(transactionId);
+    }
+
+    [RelayCommand]
+    private async Task DeleteTransactionSplit(int splitId)
+    {
+        await Model.DeleteTransactionSplitAsync(splitId);
+    }
+
+    [RelayCommand]
+    private async Task ModifyTransaction(int transactionId)
+    {
+        IsEditFormVisible = true;
+        await _editTransactionViewModel.LoadTransactionAsync(transactionId);
+    }
+
+    [RelayCommand]
+    private void CancelEditTransaction()
+    {
+        IsEditFormVisible = false;
+        _editTransactionViewModel.Model.Clear();
+    }
+
+    [RelayCommand]
+    private async Task SaveEditTransaction()
+    {
+        var (success, message) = await _editTransactionViewModel.Model.UpdateTransactionAsync();
+
+        if (success)
+        {
+            _editTransactionViewModel.Model.Clear();
+            IsEditFormVisible = false;
+            await Model.RefreshAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task ModifyTransactionSplit(int splitId)
+    {
+        IsEditSplitFormVisible = true;
+        await _editTransactionSplitViewModel.LoadSplitAsync(splitId);
+    }
+
+    [RelayCommand]
+    private void CancelEditTransactionSplit()
+    {
+        IsEditSplitFormVisible = false;
+        _editTransactionSplitViewModel.Model.Clear();
+    }
+
+    [RelayCommand]
+    private async Task SaveEditTransactionSplit()
+    {
+        var (success, message) = await _editTransactionSplitViewModel.Model.UpdateSplitAsync();
+
+        if (success)
+        {
+            _editTransactionSplitViewModel.Model.Clear();
+            IsEditSplitFormVisible = false;
+            await Model.RefreshAsync();
+        }
+    }
+
+    [RelayCommand]
+    private async Task AddSplitToTransaction(int transactionId)
+    {
+        IsAddSplitFormVisible = true;
+        await _addSplitToTransactionViewModel.LoadTransactionAsync(transactionId);
+    }
+
+    [RelayCommand]
+    private void CancelAddSplitToTransaction()
+    {
+        IsAddSplitFormVisible = false;
+        _addSplitToTransactionViewModel.Model.Clear();
+    }
+
+    [RelayCommand]
+    private async Task SaveAddSplitToTransaction()
+    {
+        var (success, message) = await _addSplitToTransactionViewModel.Model.CreateSplitAsync();
+
+        if (success)
+        {
+            _addSplitToTransactionViewModel.Model.Clear();
+            IsAddSplitFormVisible = false;
+            await Model.RefreshAsync();
+        }
+    }
+
     [RelayCommand]
     private async Task NavigateToHome()
     {

@@ -14,6 +14,7 @@ public partial class AccountsModel : ObservableObject
     private readonly IAuthenticationService _authService;
 
     public ObservableCollection<AccountItemViewModel> Items { get; } = new();
+    public ObservableCollection<AccountItemViewModel> InactiveItems { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -23,6 +24,9 @@ public partial class AccountsModel : ObservableObject
 
     [ObservableProperty]
     private string statusMessage = "Loading...";
+
+    [ObservableProperty]
+    private bool showInactive = false;
 
     public AccountsModel(AccountManagementService accounts, IAuthenticationService authService)
     {
@@ -101,18 +105,59 @@ public partial class AccountsModel : ObservableObject
 
     /// <summary>
     /// Update an account with new name and type.
+    /// Returns a tuple with success status and error message (if any).
     /// </summary>
-    public async Task<bool> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
+    public async Task<(bool Success, string? ErrorMessage)> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType)
     {
         try
         {
-            var success = await _accounts.UpdateAccountAsync(accountId, newName, newAccountType);
-            return success;
+            var (success, errorMessage) = await _accounts.UpdateAccountAsync(accountId, newName, newAccountType);
+            if (success)
+            {
+                StatusMessage = $"Account updated successfully";
+                return (true, null);
+            }
+            
+            StatusMessage = $"Failed to update account: {errorMessage}";
+            return (false, errorMessage);
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error updating account: {ex.Message}";
-            return false;
+            var errorMsg = $"Error updating account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
+        }
+    }
+
+    /// <summary>
+    /// Delete an account by ID.
+    /// Returns a tuple with success status and error message (if any).
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId)
+    {
+        try
+        {
+            var (success, errorMessage) = await _accounts.DeleteAccountAsync(accountId);
+            if (success)
+            {
+                // Remove from local collection
+                var item = Items.FirstOrDefault(i => i.Id == accountId);
+                if (item != null)
+                {
+                    Items.Remove(item);
+                }
+                StatusMessage = $"Account deleted successfully";
+                return (true, null);
+            }
+            
+            StatusMessage = $"Failed to delete account: {errorMessage}";
+            return (false, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Error deleting account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
     }
 
@@ -123,6 +168,91 @@ public partial class AccountsModel : ObservableObject
     {
         await CheckUserSessionAsync();
         if (IsLoggedIn)
+        {
+            if (ShowInactive)
+            {
+                await LoadInactiveAccountsAsync();
+            }
+            else
+            {
+                await LoadAccountsAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Load inactive accounts for the current authenticated user.
+    /// </summary>
+    public async Task LoadInactiveAccountsAsync()
+    {
+        if (IsBusy || !IsLoggedIn) return;
+
+        try
+        {
+            IsBusy = true;
+            StatusMessage = "Loading inactive accounts...";
+            InactiveItems.Clear();
+
+            var list = await _accounts.GetInactiveAccountsAsync();
+            foreach (var account in list)
+                InactiveItems.Add(new AccountItemViewModel(account));
+
+            StatusMessage = list.Count == 0 ? "No inactive accounts found" : $"Loaded {list.Count} inactive accounts";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error loading inactive accounts: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Reactivate an inactive account by ID.
+    /// Returns a tuple with success status and error message (if any).
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> ReactivateAccountAsync(int accountId)
+    {
+        try
+        {
+            var (success, errorMessage) = await _accounts.ReactivateAccountAsync(accountId);
+            if (success)
+            {
+                // Remove from inactive collection
+                var item = InactiveItems.FirstOrDefault(i => i.Id == accountId);
+                if (item != null)
+                {
+                    InactiveItems.Remove(item);
+                }
+                StatusMessage = $"Account reactivated successfully";
+                return (true, null);
+            }
+            
+            StatusMessage = $"Failed to reactivate account: {errorMessage}";
+            return (false, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Error reactivating account: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
+        }
+    }
+
+    /// <summary>
+    /// Toggle between showing active and inactive accounts.
+    /// </summary>
+    public async Task ToggleShowInactiveAsync()
+    {
+        ShowInactive = !ShowInactive;
+        
+        if (ShowInactive)
+        {
+            await LoadInactiveAccountsAsync();
+        }
+        else
         {
             await LoadAccountsAsync();
         }

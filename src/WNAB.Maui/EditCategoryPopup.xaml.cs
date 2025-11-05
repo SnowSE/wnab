@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Views;
+using WNAB.MVM;
 
 namespace WNAB.Maui;
 

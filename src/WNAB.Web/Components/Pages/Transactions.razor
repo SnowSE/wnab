@@ -2,31 +2,31 @@
 @inject TransactionsViewModel ViewModel
 @inject WNAB.MVM.IAuthenticationService AuthService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
-<div class="page-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1>Transactions</h1>
-        </div>
-        <div>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal" @onclick="OnAddTransactionClick">
-                <i class="bi bi-plus-circle me-1"></i>
-                Create Transaction
-            </button>
-            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
-                @if (ViewModel.Model.IsBusy)
-                {
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                }
-                else
-                {
-                    <i class="bi bi-arrow-clockwise me-1"></i>
-                }
-                Refresh
-            </button>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+<div>
+   <h1>Transactions</h1>
+  </div>
+    <div>
+   <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
+ <i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
+  @(ViewModel.IsAddFormVisible ? "Cancel" : "New Transaction")
+   </button>
+    <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+   @if (ViewModel.Model.IsBusy)
+ {
+      <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+     }
+  else
+   {
+      <i class="bi bi-arrow-clockwise me-1"></i>
+     }
+ Refresh
+   </button>
     </div>
+</div>
 
 @if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
 {
@@ -36,222 +36,585 @@
 @if (!ViewModel.Model.IsLoggedIn)
 {
     <div class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle me-1"></i>
-        Please log in to view transactions.
+  <i class="bi bi-exclamation-triangle me-1"></i>
+      Please log in to view transactions.
     </div>
 }
 
-<!-- Transactions Section -->
+<!-- Inline Add Transaction Form -->
+@if (ViewModel.IsAddFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+<h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Transaction</h5>
+   </div>
+   <div class="card-body">
+      @if (!string.IsNullOrWhiteSpace(ViewModel.AddTransactionViewModel.Model.StatusMessage))
+     {
+    <div class="alert @GetAlertClass(ViewModel.AddTransactionViewModel.Model.StatusMessage) mb-3">
+  @ViewModel.AddTransactionViewModel.Model.StatusMessage
+ </div>
+  }
+
+ <EditForm Model="ViewModel.AddTransactionViewModel.Model" OnValidSubmit="OnCreateTransactionSubmit">
+          <div class="row g-3">
+  <div class="col-md-3">
+  <label class="form-label">Account</label>
+      <select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.AccountId" required>
+        <option value="0">Select account...</option>
+  @foreach (var account in ViewModel.AddTransactionViewModel.Model.AvailableAccounts)
+  {
+   <option value="@account.Id">@account.AccountName</option>
+          }
+     </select>
+    </div>
+  <div class="col-md-3">
+       <label class="form-label">Date</label>
+       <input type="date" class="form-control" @bind="ViewModel.AddTransactionViewModel.Model.TransactionDate" required />
+ </div>
+    <div class="col-md-3">
+    <label class="form-label">Payee</label>
+     <input class="form-control" @bind="ViewModel.AddTransactionViewModel.Model.Payee" required />
+  </div>
+ <div class="col-md-3">
+             <label class="form-label">Amount</label>
+ <input type="number" step="0.01" class="form-control" @bind="ViewModel.AddTransactionViewModel.Model.Amount" required />
+  </div>
+    </div>
+
+    <div class="row g-3 mt-2">
+  <div class="col-md-9">
+        <div class="d-flex align-items-center gap-2 mb-2">
+       <label class="form-label mb-0">Category</label>
+    <button type="button" class="btn btn-sm btn-outline-primary" @onclick="ViewModel.AddTransactionViewModel.ToggleSplitTransactionCommand.Execute">
+ @(ViewModel.AddTransactionViewModel.Model.IsSplitTransaction ? "Single Category" : "Split Transaction")
+    </button>
+ </div>
+
+            @if (!ViewModel.AddTransactionViewModel.Model.IsSplitTransaction)
+        {
+           <select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId" required>
+          <option value="0">Select a category...</option>
+ @foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
+    {
+<option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+       }
+      </select>
+     }
+  else
+     {
+     <div class="border rounded p-3 bg-light">
+ @foreach (var split in ViewModel.AddTransactionViewModel.Model.Splits)
+       {
+    <div class="row g-2 mb-2 align-items-center">
+        <div class="col-md-6">
+        <select class="form-select form-select-sm" 
+                value="@(split.Model.SelectedCategory?.Id ?? 0)"
+                @onchange="(e) => OnSplitCategoryChanged(split, e)">
+      <option value="0">Select category...</option>
+     @foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
+           {
+        <option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+  }
+       </select>
+ </div>
+     <div class="col-md-4">
+        <input type="number" step="0.01" class="form-control form-control-sm" 
+     @bind="split.Model.Amount" placeholder="0.00" />
+ </div>
+       <div class="col-md-2">
+     <button type="button" class="btn btn-sm btn-danger w-100" 
+   @onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
+         disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
+        ×
+           </button>
+        </div>
+</div>
+ }
+
+     <button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddTransactionViewModel.AddSplitCommand.Execute">
+ + Add Split
+   </button>
+
+   <div class="d-flex align-items-center gap-2 mt-2">
+   <small class="text-muted">Balance:</small>
+     <small class="fw-bold @(ViewModel.AddTransactionViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
+      @ViewModel.AddTransactionViewModel.Model.RemainingAmount.ToString("C")
+         </small>
+       <small class="text-muted">remaining</small>
+    </div>
+   </div>
+   }
+  </div>
+ <div class="col-md-3">
+       <label class="form-label">Memo (Optional)</label>
+   <textarea class="form-control" rows="3" @bind="ViewModel.AddTransactionViewModel.Model.Memo"></textarea>
+         </div>
+         </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+   <button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelAddTransactionCommand.Execute(null)">Cancel</button>
+      <button class="btn btn-primary" type="submit" disabled="@ViewModel.AddTransactionViewModel.Model.IsBusy">
+     @if (ViewModel.AddTransactionViewModel.Model.IsBusy)
+     {
+    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+ Create Transaction
+</button>
+  </div>
+ </EditForm>
+  </div>
+    </div>
+}
+
+<!-- Inline Edit Transaction Form -->
+@if (ViewModel.IsEditFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm border-warning">
+     <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Transaction</h5>
+        </div>
+        <div class="card-body">
+  @if (!string.IsNullOrWhiteSpace(ViewModel.EditTransactionViewModel.Model.StatusMessage))
+            {
+      <div class="alert @GetAlertClass(ViewModel.EditTransactionViewModel.Model.StatusMessage) mb-3">
+        @ViewModel.EditTransactionViewModel.Model.StatusMessage
+    </div>
+            }
+
+            <EditForm Model="ViewModel.EditTransactionViewModel.Model" OnValidSubmit="OnEditTransactionSubmit">
+        <div class="row g-3">
+       <div class="col-md-3">
+              <label class="form-label">Account</label>
+      <select class="form-select" @bind="ViewModel.EditTransactionViewModel.Model.AccountId" required>
+            <option value="0">Select account...</option>
+     @foreach (var account in ViewModel.EditTransactionViewModel.Model.AvailableAccounts)
+   {
+ <option value="@account.Id">@account.AccountName</option>
+   }
+         </select>
+      </div>
+          <div class="col-md-3">
+<label class="form-label">Date</label>
+               <input type="date" class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.TransactionDate" required />
+           </div>
+         <div class="col-md-3">
+        <label class="form-label">Payee</label>
+          <input class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.Payee" required />
+     </div>
+ <div class="col-md-3">
+            <label class="form-label">Amount</label>
+    <input type="number" step="0.01" class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.Amount" required />
+  </div>
+ </div>
+
+             <div class="row g-3 mt-2">
+     <div class="col-md-9">
+            <label class="form-label">Description (Optional)</label>
+    <textarea class="form-control" rows="2" @bind="ViewModel.EditTransactionViewModel.Model.Description"></textarea>
+            </div>
+         <div class="col-md-3">
+    <div class="form-check mt-4">
+     <input class="form-check-input" type="checkbox" @bind="ViewModel.EditTransactionViewModel.Model.IsReconciled" id="isReconciled" />
+           <label class="form-check-label" for="isReconciled">
+                 Reconciled
+       </label>
+              </div>
+           </div>
+  </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+              <button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelEditTransactionCommand.Execute(null)">Cancel</button>
+    <button class="btn btn-warning" type="submit" disabled="@ViewModel.EditTransactionViewModel.Model.IsBusy">
+   @if (ViewModel.EditTransactionViewModel.Model.IsBusy)
+  {
+               <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+     }
+         Update Transaction
+  </button>
+        </div>
+            </EditForm>
+        </div>
+  </div>
+}
+
+<!-- Inline Add Split to Transaction Form -->
+@if (ViewModel.IsAddSplitFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm border-success">
+    <div class="card-header bg-success text-white">
+   <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Add Split to Transaction</h5>
+      </div>
+        <div class="card-body">
+      @if (!string.IsNullOrWhiteSpace(ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage))
+     {
+           <div class="alert @GetAlertClass(ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage) mb-3">
+  @ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage
+       </div>
+            }
+
+         <EditForm Model="ViewModel.AddSplitToTransactionViewModel.Model" OnValidSubmit="OnAddSplitToTransactionSubmit">
+  <div class="row g-3">
+   <div class="col-md-6">
+               <label class="form-label">Category</label>
+         <select class="form-select" 
+                 value="@(ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory?.Id ?? 0)"
+                 @onchange="OnAddSplitCategoryChanged" 
+                 required>
+                <option value="0">Select category...</option>
+        @foreach (var category in ViewModel.AddSplitToTransactionViewModel.Model.AvailableCategories)
+         {
+<option value="@category.Id">@category.Name (@(category.IsIncome ? "Income" : "Expense"))</option>
+  }
+            </select>
+      </div>
+         <div class="col-md-3">
+           <label class="form-label">Amount</label>
+    <input type="number" step="0.01" class="form-control" @bind="ViewModel.AddSplitToTransactionViewModel.Model.Amount" required />
+      </div>
+      <div class="col-md-3">
+                <div class="form-check mt-4">
+        <input class="form-check-input" type="checkbox" @bind="ViewModel.AddSplitToTransactionViewModel.Model.IsIncome" id="addSplitIsIncome" />
+           <label class="form-check-label" for="addSplitIsIncome">
+   Income
+     </label>
+    </div>
+ </div>
+ </div>
+
+     <div class="row g-3 mt-2">
+    <div class="col-md-12">
+           <label class="form-label">Notes (Optional)</label>
+          <textarea class="form-control" rows="2" @bind="ViewModel.AddSplitToTransactionViewModel.Model.Notes"></textarea>
+    </div>
+       </div>
+
+      <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelAddSplitToTransactionCommand.Execute(null)">Cancel</button>
+         <button class="btn btn-success" type="submit" disabled="@ViewModel.AddSplitToTransactionViewModel.Model.IsBusy">
+  @if (ViewModel.AddSplitToTransactionViewModel.Model.IsBusy)
+            {
+               <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+    }
+   Add Split
+        </button>
+     </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<!-- Inline Edit Split Form -->
+@if (ViewModel.IsEditSplitFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm border-info">
+<div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Transaction Split</h5>
+   </div>
+    <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(ViewModel.EditTransactionSplitViewModel.Model.StatusMessage))
+       {
+    <div class="alert @GetAlertClass(ViewModel.EditTransactionSplitViewModel.Model.StatusMessage) mb-3">
+      @ViewModel.EditTransactionSplitViewModel.Model.StatusMessage
+                </div>
+            }
+
+   <EditForm Model="ViewModel.EditTransactionSplitViewModel.Model" OnValidSubmit="OnEditTransactionSplitSubmit">
+ <div class="row g-3">
+      <div class="col-md-6">
+   <label class="form-label">Category</label>
+           <select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId" required>
+   <option value="0">Select category...</option>
+                @foreach (var category in ViewModel.EditTransactionSplitViewModel.Model.AvailableCategories)
+ {
+     <option value="@category.Id">@category.Name</option>
+   }
+              </select>
+   </div>
+        <div class="col-md-3">
+                  <label class="form-label">Amount</label>
+                  <input type="number" step="0.01" class="form-control" @bind="ViewModel.EditTransactionSplitViewModel.Model.Amount" required />
+      </div>
+      <div class="col-md-3">
+              <div class="form-check mt-4">
+      <input class="form-check-input" type="checkbox" @bind="ViewModel.EditTransactionSplitViewModel.Model.IsIncome" id="isIncome" />
+      <label class="form-check-label" for="isIncome">
+        Income
+         </label>
+    </div>
+  </div>
+                </div>
+
+   <div class="row g-3 mt-2">
+         <div class="col-md-12">
+     <label class="form-label">Description (Optional)</label>
+   <textarea class="form-control" rows="2" @bind="ViewModel.EditTransactionSplitViewModel.Model.Description"></textarea>
+       </div>
+      </div>
+
+         <div class="d-flex justify-content-end gap-2 mt-3">
+  <button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelEditTransactionSplitCommand.Execute(null)">Cancel</button>
+    <button class="btn btn-info text-white" type="submit" disabled="@ViewModel.EditTransactionSplitViewModel.Model.IsBusy">
+ @if (ViewModel.EditTransactionSplitViewModel.Model.IsBusy)
+         {
+   <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          }
+     Update Split
+       </button>
+          </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+<!-- Transactions with Splits Section -->
 <div class="responsive-panel mb-4">
     <h2 class="h4 mb-3">Transactions</h2>
     @if (ViewModel.Model.Items == null)
     {
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2 text-muted">Loading transactions...</p>
+   <div class="text-center p-4">
+    <div class="spinner-border text-primary" role="status">
+       <span class="visually-hidden">Loading...</span>
+</div>
+   <p class="mt-2 text-muted">Loading transactions...</p>
         </div>
     }
     else if (ViewModel.Model.Items.Count == 0)
     {
-        <div class="text-center p-4">
-            <i class="bi bi-receipt fs-1 text-muted"></i>
-            <p class="mt-2">No transactions found. Click "Create Transaction" to add your first transaction.</p>
+  <div class="text-center p-4">
+   <i class="bi bi-receipt fs-1 text-muted"></i>
+  <p class="mt-2">No transactions found. Click "New Transaction" to add your first transaction.</p>
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Date</th>
-                        <th>Payee</th>
-                        <th>Description</th>
-                        <th>Account</th>
-                        <th class="text-end">Amount</th>
-                        <th width="120">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var transaction in ViewModel.Model.Items)
-                    {
-                        <tr>
-                            <td class="text-muted">#@transaction.Id</td>
-                            <td>@transaction.Date.ToString("MM/dd/yyyy")</td>
-                            <td>@transaction.Payee</td>
-                            <td>@transaction.Description</td>
-                            <td>@transaction.AccountName</td>
-                            <td class="text-end">
-                                <span class="@(transaction.Amount >= 0 ? "text-success" : "text-danger")">
-                                    @transaction.Amount.ToString("C")
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewTransaction(transaction.Id)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(transaction.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-</div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+<thead class="table-light">
+  <tr>
+    <th>Date</th>
+ <th>Payee</th>
+         <th>Account</th>
+     <th class="text-end">Amount</th>
+     <th width="180">Actions</th>
+        </tr>
+   </thead>
+<tbody>
+ @foreach (var transaction in ViewModel.Model.Items)
+         {
+    <!-- Transaction Row -->
+      <tr class="table-primary" @key="@($"tx-{transaction.Id}")">
+     <td>@transaction.Date.ToString("MM/dd/yyyy")</td>
+      <td><strong>@transaction.Payee</strong></td>
+       <td>@transaction.AccountName</td>
+  <td class="text-end">
+  <span class="@(transaction.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
+  @transaction.Amount.ToString("C")
+ </span>
+      </td>
+        <td>
+        <button class="btn btn-sm btn-outline-primary" @onclick="() => ModifyTransaction(transaction.Id)" title="Edit Transaction">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-success ms-1" @onclick="() => AddSplitToTransaction(transaction.Id)" title="Add Split">
+ <i class="bi bi-plus-circle"></i>
+   </button>
+<button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(transaction.Id)" title="Delete Transaction">
+   <i class="bi bi-trash"></i>
+  </button>
+  </td>
+</tr>
 
-<!-- Transaction Splits Section -->
-<div class="responsive-panel">
-    <h2 class="h4 mb-3">Transaction Splits</h2>
-    @if (ViewModel.Model.Splits == null)
-    {
-        <div class="text-center p-4">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-2 text-muted">Loading transaction splits...</p>
+ <!-- Split Rows (indented under transaction) -->
+    @foreach (var split in ViewModel.Model.GetSplitsForTransaction(transaction.Id))
+       {
+<tr class="table-light" @key="@($"split-{split.Id}")">
+    <td class="ps-5">
+            <i class="bi bi-arrow-return-right me-2 text-muted"></i>
+    <small class="text-muted">Split #@split.Id</small>
+         </td>
+            <td>
+  <span class="badge bg-primary">@split.CategoryName</span>
+   @if (!string.IsNullOrWhiteSpace(split.Description))
+      {
+ <small class="text-muted ms-2">@split.Description</small>
+  }
+ </td>
+        <td>
+<span class="badge @(split.IsIncome ? "bg-success" : "bg-warning") text-dark">
+  @(split.IsIncome ? "Income" : "Expense")
+  </span>
+ </td>
+     <td class="text-end">
+  <span class="@(split.Amount >= 0 ? "text-success" : "text-danger")">
+       @split.Amount.ToString("C")
+  </span>
+     </td>
+  <td>
+    <button class="btn btn-sm btn-outline-primary" @onclick="() => ModifySplit(split.Id)" title="Edit Split">
+  <i class="bi bi-pencil"></i>
+         </button>
+  <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteSplit(split.Id)" title="Delete Split">
+      <i class="bi bi-trash"></i>
+ </button>
+ </td>
+       </tr>
+ }
+   }
+     </tbody>
+     </table>
         </div>
-    }
-    else if (ViewModel.Model.Splits.Count == 0)
-    {
-        <div class="text-center p-4">
-            <i class="bi bi-receipt fs-1 text-muted"></i>
-            <p class="mt-2">No transaction splits found.</p>
-        </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Transaction ID</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Type</th>
-                        <th class="text-end">Amount</th>
-                        <th width="120">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var split in ViewModel.Model.Splits)
-                    {
-                        <tr>
-                            <td class="text-muted">#@split.TransactionId</td>
-                            <td>
-                                <span class="badge bg-primary">@split.CategoryName</span>
-                            </td>
-                            <td>@(split.Description ?? "-")</td>
-                            <td>
-                                <span class="badge @(split.IsIncome ? "bg-success" : "bg-warning")">
-                                    @(split.IsIncome ? "Income" : "Expense")
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <span class="@(split.Amount >= 0 ? "text-success" : "text-danger")">
-                                    @split.Amount.ToString("C")
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewSplit(split.Id)">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteSplit(split.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+ }
 </div>
-
-<!-- Include the Create Transaction Modal -->
-<CreateTransactionModal OnTransactionCreated="OnTransactionCreated" />
 
 @code {
-    // LLM-Dev:v8 Updated to display both transactions and transaction splits
-    // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
+    // LLM-Dev: Thin presentation layer - all logic delegated to ViewModel
 
     protected override async Task OnInitializedAsync()
     {
-        // Check if user is authenticated and token is valid
-        if (AuthService is WNAB.Web.Services.WebAuthenticationService webAuthService)
-        {
-            var isAuthenticated = await AuthService.IsAuthenticatedAsync();
-            var isTokenExpired = await webAuthService.IsTokenExpiredAsync();
+    // Check if user is authenticated and token is valid
+     if (AuthService is WNAB.Web.Services.WebAuthenticationService webAuthService)
+    {
+     var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+   var isTokenExpired = await webAuthService.IsTokenExpiredAsync();
 
-            if (!isAuthenticated || isTokenExpired)
-            {
-                Navigation.NavigateTo("/landing");
-                return;
-            }
-        }
+if (!isAuthenticated || isTokenExpired)
+   {
+   Navigation.NavigateTo("/landing");
+        return;
+  }
+   }
 
         // Subscribe to property changes to trigger UI updates
-        ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
+ ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+     ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
+  ViewModel.AddTransactionViewModel.Model.PropertyChanged += OnAddTransactionModelPropertyChanged;
 
         await ViewModel.InitializeAsync();
+ }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+ InvokeAsync(StateHasChanged);
     }
 
     private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // When Model properties change, update the UI
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnRefreshClick()
+    private void OnAddTransactionModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        await ViewModel.RefreshCommand.ExecuteAsync(null);
+     InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnAddTransactionClick()
-    {
-        // Modal is shown via Bootstrap, but we call the ViewModel command for consistency
-        await ViewModel.AddTransactionCommand.ExecuteAsync(null);
+ private async Task OnRefreshClick()
+  {
+      await ViewModel.RefreshCommand.ExecuteAsync(null);
     }
 
-    private async Task OnTransactionCreated()
+    // Form submit handlers
+    private async Task OnCreateTransactionSubmit()
     {
-        // Called by modal when transaction is created - refresh the list
-        await ViewModel.Model.RefreshAsync();
+        await ViewModel.SaveTransactionInlineCommand.ExecuteAsync(null);
     }
 
-    // Placeholder action handlers for transactions
-    private void ViewTransaction(int transactionId)
+    private async Task OnEditTransactionSubmit()
     {
-        // Future: open view/edit modal
+        await ViewModel.SaveEditTransactionCommand.ExecuteAsync(null);
     }
+
+    private async Task OnAddSplitToTransactionSubmit()
+    {
+        await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+    }
+
+    private async Task OnEditTransactionSplitSubmit()
+    {
+        await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+    }
+
+    // Helper methods for split category selection
+    private int GetSelectedCategoryId(AddTransactionSplitViewModel split)
+    {
+        return split.Model.SelectedCategory?.Id ?? 0;
+    }
+
+    private void OnSplitCategoryChanged(AddTransactionSplitViewModel split, ChangeEventArgs e)
+    {
+        if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
+        {
+            var category = ViewModel.AddTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
+            split.Model.SelectedCategory = category;
+        }
+    }
+
+    // Helper method for add split to transaction form
+    private void OnAddSplitCategoryChanged(ChangeEventArgs e)
+    {
+        if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
+        {
+            var category = ViewModel.AddSplitToTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
+            ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+        }
+    }
+
+    // Action handlers for transactions
+    private async Task ModifyTransaction(int transactionId)
+  {
+        await ViewModel.ModifyTransactionCommand.ExecuteAsync(transactionId);
+}
 
     private async Task DeleteTransaction(int transactionId)
     {
-        // Future: implement delete with confirmation
+    if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this transaction?"))
+        {
+ await ViewModel.DeleteTransactionCommand.ExecuteAsync(transactionId);
+    }
     }
 
-    // Placeholder action handlers for splits
-    private void ViewSplit(int splitId)
+    // Action handlers for splits
+    private async Task ModifySplit(int splitId)
     {
-        // Future: open view/edit modal
+     await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(splitId);
     }
 
-    private async Task DeleteSplit(int splitId)
+  private async Task DeleteSplit(int splitId)
+  {
+if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this split?"))
+   {
+    await ViewModel.DeleteTransactionSplitCommand.ExecuteAsync(splitId);
+        }
+ }
+
+    private async Task AddSplitToTransaction(int transactionId)
     {
-        // Future: implement delete with confirmation
+        await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
+    }
+
+    private string GetAlertClass(string message)
+    {
+    if (message.Contains("Error") || message.Contains("Please") || message.Contains("Missing") || message.Contains("No "))
+  return "alert-danger";
+        if (message.Contains("success"))
+   return "alert-success";
+   return "alert-info";
     }
 
     public void Dispose()
-    {
-        if (ViewModel?.Model != null)
-        {
-            ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;
-        }
+  {
+  if (ViewModel != null)
+ {
+      ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+   }
+  if (ViewModel?.Model != null)
+ {
+        ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;
+    }
+  if (ViewModel?.AddTransactionViewModel?.Model != null)
+  {
+        ViewModel.AddTransactionViewModel.Model.PropertyChanged -= OnAddTransactionModelPropertyChanged;
+      }
     }
 }
 </div>

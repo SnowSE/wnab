@@ -11,7 +11,6 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// LLM-Dev: Enable Aspire service defaults (service discovery + resilience for HttpClient).
 builder.AddServiceDefaults();
 
 // Configure authentication with Keycloak
@@ -76,9 +75,6 @@ builder.Services.AddHttpContextAccessor();
 // Register the authentication delegating handler
 builder.Services.AddTransient<WNAB.Web.AuthenticationDelegatingHandler>();
 
-// LLM-Dev:v2 Centralize base root: define ONE named HttpClient with the service-discovery base URI
-// and construct all Logic services with that named client via IHttpClientFactory.
-// Add the authentication handler to attach tokens to API requests
 builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"))
     .AddHttpMessageHandler<WNAB.Web.AuthenticationDelegatingHandler>();
 
@@ -113,6 +109,9 @@ builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
 builder.Services.AddScoped<AddAccountModel>();
 builder.Services.AddScoped<AddCategoryModel>();
 builder.Services.AddScoped<AddTransactionModel>();
+builder.Services.AddScoped<EditTransactionModel>();
+builder.Services.AddScoped<EditTransactionSplitModel>();
+builder.Services.AddScoped<AddSplitToTransactionModel>();
 
 // Register all ViewModels (UI coordination layer)
 builder.Services.AddScoped<AccountsViewModel>();
@@ -126,6 +125,9 @@ builder.Services.AddScoped<PlanBudgetViewModel>();
 builder.Services.AddScoped<AddAccountViewModel>();
 builder.Services.AddScoped<AddCategoryViewModel>();
 builder.Services.AddScoped<AddTransactionViewModel>();
+builder.Services.AddScoped<EditTransactionViewModel>();
+builder.Services.AddScoped<EditTransactionSplitViewModel>();
+builder.Services.AddScoped<AddSplitToTransactionViewModel>();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

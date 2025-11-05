@@ -24,7 +24,7 @@ public partial class LandingPage : ContentPage
         }
         else
         {
-            await DisplayAlert("Login Failed", "Unable to authenticate. Please try again.", "OK");
+            await DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.", "OK");
         }
     }
 }

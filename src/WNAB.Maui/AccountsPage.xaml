@@ -8,26 +8,88 @@
              Title="Accounts">
     
     <ScrollView>
-        <VerticalStackLayout Padding="24" Spacing="24">
+        <VerticalStackLayout Spacing="24">
+            <VerticalStackLayout.Padding>
+                <OnIdiom x:TypeArguments="Thickness" 
+                         Phone="12" 
+                         Tablet="20" 
+                         Desktop="24" />
+            </VerticalStackLayout.Padding>
+            <VerticalStackLayout.Spacing>
+                <OnIdiom x:TypeArguments="x:Double" 
+                         Phone="16" 
+                         Tablet="20" 
+                         Desktop="24" />
+            </VerticalStackLayout.Spacing>
             
             <!-- Header with title and Add Account button -->
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                 <VerticalStackLayout Spacing="4">
                     <Label Text="Accounts" 
-                           FontSize="28" 
-                           FontAttributes="Bold" />
-                    <Label Text="Manage your financial accounts" 
-                           FontSize="14" 
-                           />
+                           FontAttributes="Bold">
+                        <Label.FontSize>
+                            <OnIdiom x:TypeArguments="x:Double" 
+                                     Phone="22" 
+                                     Tablet="26" 
+                                     Desktop="28" />
+                        </Label.FontSize>
+                    </Label>
+                    <Label>
+                        <Label.FontSize>
+                            <OnIdiom x:TypeArguments="x:Double" 
+                                     Phone="12" 
+                                     Tablet="13" 
+                                     Desktop="14" />
+                        </Label.FontSize>
+                        <Label.Text>
+                            <Binding Path="Model.ShowInactive">
+                                <Binding.Converter>
+                                    <converters:BoolToTextConverter TrueText="Viewing inactive accounts" FalseText="Manage your financial accounts" />
+                                </Binding.Converter>
+                            </Binding>
+                        </Label.Text>
+                    </Label>
                 </VerticalStackLayout>
                 
                 <Button Grid.Column="1" 
-                        Text="+ Add Account"
-                        Command="{Binding AddAccountCommand}"
+                        Command="{Binding ToggleShowInactiveCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}"
                         CornerRadius="8"
-                        Padding="16,12"
-                        VerticalOptions="Center" />
+                        VerticalOptions="Center">
+                    <Button.Text>
+                        <Binding Path="Model.ShowInactive">
+                            <Binding.Converter>
+                                <converters:BoolToTextConverter TrueText="Show Active" FalseText="Show Inactive" />
+                            </Binding.Converter>
+                        </Binding>
+                    </Button.Text>
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness" 
+                                 Phone="8,6" 
+                                 Tablet="10,8" 
+                                 Desktop="12,10" />
+                    </Button.Padding>
+                </Button>
+                
+                <Button Grid.Column="2" 
+                        Command="{Binding AddAccountCommand}"
+                        IsEnabled="{Binding Model.IsLoggedIn}"
+                        IsVisible="{Binding Model.ShowInactive, Converter={StaticResource InvertedBoolConverter}}"
+                        CornerRadius="8"
+                        VerticalOptions="Center">
+                    <Button.Text>
+                        <OnIdiom x:TypeArguments="x:String" 
+                                 Phone="+ Add" 
+                                 Tablet="+ Add Account" 
+                                 Desktop="+ Add Account" />
+                    </Button.Text>
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness" 
+                                 Phone="12,8" 
+                                 Tablet="14,10" 
+                                 Desktop="16,12" />
+                    </Button.Padding>
+                </Button>
             </Grid>
 
             <!-- Login prompt when not logged in -->
@@ -45,17 +107,32 @@
                 
                 <!-- Total Balance Card -->
                 <Border StrokeThickness="1"
-                        Padding="24"
                         Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
+                    <Border.Padding>
+                        <OnIdiom x:TypeArguments="Thickness" 
+                                 Phone="16" 
+                                 Tablet="20" 
+                                 Desktop="24" />
+                    </Border.Padding>
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="12" />
                     </Border.StrokeShape>
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="Total Balance" 
-                               FontSize="14" 
-                                />
-                        <Label FontSize="36" 
-                               FontAttributes="Bold">
+                        <Label Text="Total Balance">
+                            <Label.FontSize>
+                                <OnIdiom x:TypeArguments="x:Double" 
+                                         Phone="12" 
+                                         Tablet="13" 
+                                         Desktop="14" />
+                            </Label.FontSize>
+                        </Label>
+                        <Label FontAttributes="Bold">
+                            <Label.FontSize>
+                                <OnIdiom x:TypeArguments="x:Double" 
+                                         Phone="28" 
+                                         Tablet="32" 
+                                         Desktop="36" />
+                            </Label.FontSize>
                             <Label.Text>
                                 <Binding Path="Model.Items">
                                     <Binding.Converter>
@@ -67,51 +144,74 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Accounts Grid/List -->
-                <CollectionView ItemsSource="{Binding Model.Items}">
+                <!-- Active Accounts presented with a responsive grid to prevent overlap -->
+                <CollectionView x:Name="AccountsCollection"
+                                ItemsSource="{Binding Model.Items}"
+                                IsVisible="{Binding Model.ShowInactive, Converter={StaticResource InvertedBoolConverter}}"
+                                SelectionMode="None"
+                                HorizontalScrollBarVisibility="Never"
+                                VerticalScrollBarVisibility="Default"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                Padding="12,0,14,0">
+                    <CollectionView.ItemsLayout>
+                        <!-- Span is set dynamically in code-behind based on available width -->
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="1"
+                                         HorizontalItemSpacing="12"
+                                         VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
                     <CollectionView.EmptyView>
                         <Label Text="No accounts found." 
                                HorizontalOptions="Center" 
                                VerticalOptions="Center"
                                Margin="0,40" />
                     </CollectionView.EmptyView>
-                    
-                    <!-- Responsive Layout: Grid on larger screens, Stack on phones -->
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" 
-                                       HorizontalItemSpacing="16"
-                                       VerticalItemSpacing="16">
-                            <GridItemsLayout.Span>
-                                <OnIdiom x:TypeArguments="x:Int32" 
-                                       Phone="1" 
-                                       Tablet="2" 
-                                       Desktop="3" />
-                            </GridItemsLayout.Span>
-                        </GridItemsLayout>
-                    </CollectionView.ItemsLayout>
-                    
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:AccountItemViewModel">
                             <Border StrokeThickness="1"
-                                    Padding="20"
-                                    Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}">
+                                    Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}"
+                                    Margin="0"
+                                    HorizontalOptions="FillAndExpand">
+                                <Border.Padding>
+                                    <OnIdiom x:TypeArguments="Thickness" 
+                                             Phone="12" 
+                                             Tablet="16" 
+                                             Desktop="20" />
+                                </Border.Padding>
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-                                <Grid RowDefinitions="Auto,Auto,Auto" 
-                                      RowSpacing="16">
-                                    
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+                                    <Grid.RowSpacing>
+                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                 Phone="12" 
+                                                 Tablet="14" 
+                                                 Desktop="16" />
+                                    </Grid.RowSpacing>
+
                                     <!-- Account Name with Edit/Delete buttons (View Mode) -->
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
                                           IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
                                         <Label Text="{Binding AccountName}" 
-                                               FontSize="16" 
                                                FontAttributes="Bold"
-                                               VerticalOptions="Center" />
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="14" 
+                                                         Tablet="15" 
+                                                         Desktop="16" />
+                                            </Label.FontSize>
+                                        </Label>
                                         <Label Grid.Column="1"
                                                Text="✏️"
-                                               FontSize="18"
                                                VerticalOptions="Center">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="16" 
+                                                         Tablet="17" 
+                                                         Desktop="18" />
+                                            </Label.FontSize>
                                             <Label.GestureRecognizers>
                                                 <TapGestureRecognizer 
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=EditAccountCommand}"
@@ -120,26 +220,49 @@
                                         </Label>
                                         <Label Grid.Column="2"
                                                Text="🗑️"
-                                               FontSize="18"
                                                VerticalOptions="Center">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="16" 
+                                                         Tablet="17" 
+                                                         Desktop="18" />
+                                            </Label.FontSize>
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer />
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=DeleteAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>
-                                    
+
                                     <!-- Account Name Edit Mode (with Save/Cancel) -->
                                     <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
                                           IsVisible="{Binding IsEditing}">
                                         <Entry Text="{Binding EditAccountName}" 
-                                               FontSize="14" 
-                                               HeightRequest="40"
                                                VerticalOptions="Center"
-                                               Placeholder="Account Name" />
+                                               Placeholder="Account Name">
+                                            <Entry.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="12" 
+                                                         Tablet="13" 
+                                                         Desktop="14" />
+                                            </Entry.FontSize>
+                                            <Entry.HeightRequest>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="36" 
+                                                         Tablet="38" 
+                                                         Desktop="40" />
+                                            </Entry.HeightRequest>
+                                        </Entry>
                                         <Label Grid.Column="1"
                                                Text="✅"
-                                               FontSize="18"
                                                VerticalOptions="Center">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="16" 
+                                                         Tablet="17" 
+                                                         Desktop="18" />
+                                            </Label.FontSize>
                                             <Label.GestureRecognizers>
                                                 <TapGestureRecognizer 
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=SaveAccountCommand}"
@@ -148,8 +271,13 @@
                                         </Label>
                                         <Label Grid.Column="2"
                                                Text="❌"
-                                               FontSize="18"
                                                VerticalOptions="Center">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="16" 
+                                                         Tablet="17" 
+                                                         Desktop="18" />
+                                            </Label.FontSize>
                                             <Label.GestureRecognizers>
                                                 <TapGestureRecognizer 
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=CancelEditAccountCommand}"
@@ -157,30 +285,58 @@
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>
-                                    
+
                                     <!-- Account Type Badge (View Mode) -->
                                     <HorizontalStackLayout Grid.Row="1" Spacing="8"
                                                           IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
-                                        <Border Stroke="Transparent"
-                                                Padding="12,6">
+                                        <Border Stroke="Transparent">
+                                            <Border.Padding>
+                                                <OnIdiom x:TypeArguments="Thickness" 
+                                                         Phone="8,4" 
+                                                         Tablet="10,5" 
+                                                         Desktop="12,6" />
+                                            </Border.Padding>
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="6" />
                                             </Border.StrokeShape>
                                             <HorizontalStackLayout Spacing="6">
-                                                <Label Text="💳" FontSize="14" />
-                                                <Label Text="{Binding AccountTypeDisplay}" 
-                                                       FontSize="12" />
+                                                <Label Text="💳">
+                                                    <Label.FontSize>
+                                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                                 Phone="12" 
+                                                                 Tablet="13" 
+                                                                 Desktop="14" />
+                                                    </Label.FontSize>
+                                                </Label>
+                                                <Label Text="{Binding AccountTypeDisplay}">
+                                                    <Label.FontSize>
+                                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                                 Phone="11" 
+                                                                 Tablet="11.5" 
+                                                                 Desktop="12" />
+                                                    </Label.FontSize>
+                                                </Label>
                                             </HorizontalStackLayout>
                                         </Border>
                                     </HorizontalStackLayout>
-                                    
+
                                     <!-- Account Type Edit Mode -->
                                     <Picker Grid.Row="1" 
                                             SelectedItem="{Binding EditAccountTypeString}"
-                                            FontSize="14"
-                                            HeightRequest="40"
                                             VerticalOptions="Center"
                                             IsVisible="{Binding IsEditing}">
+                                        <Picker.FontSize>
+                                            <OnIdiom x:TypeArguments="x:Double" 
+                                                     Phone="12" 
+                                                     Tablet="13" 
+                                                     Desktop="14" />
+                                        </Picker.FontSize>
+                                        <Picker.HeightRequest>
+                                            <OnIdiom x:TypeArguments="x:Double" 
+                                                     Phone="36" 
+                                                     Tablet="38" 
+                                                     Desktop="40" />
+                                        </Picker.HeightRequest>
                                         <Picker.ItemsSource>
                                             <x:Array Type="{x:Type x:String}">
                                                 <x:String>Checking</x:String>
@@ -189,17 +345,198 @@
                                             </x:Array>
                                         </Picker.ItemsSource>
                                     </Picker>
-                                    
+
                                     <!-- Balance -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">
                                         <Label Text="{Binding CachedBalance, StringFormat='{0:C}'}" 
-                                               FontSize="24" 
-                                               FontAttributes="Bold" />
-                                        <Label Text="USD" 
-                                               FontSize="12" 
-                                                />
+                                               FontAttributes="Bold">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="20" 
+                                                         Tablet="22" 
+                                                         Desktop="24" />
+                                            </Label.FontSize>
+                                        </Label>
+                                        <Label Text="USD">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="10" 
+                                                         Tablet="11" 
+                                                         Desktop="12" />
+                                            </Label.FontSize>
+                                        </Label>
                                     </VerticalStackLayout>
-                                    
+
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Inactive Accounts presented with a responsive grid -->
+                <CollectionView x:Name="InactiveAccountsCollection"
+                                ItemsSource="{Binding Model.InactiveItems}"
+                                IsVisible="{Binding Model.ShowInactive}"
+                                SelectionMode="None"
+                                HorizontalScrollBarVisibility="Never"
+                                VerticalScrollBarVisibility="Default"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                Padding="12,0,14,0">
+                    <CollectionView.ItemsLayout>
+                        <!-- Span is set dynamically in code-behind based on available width -->
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="1"
+                                         HorizontalItemSpacing="12"
+                                         VerticalItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout HorizontalOptions="Center" 
+                                            VerticalOptions="Center"
+                                            Spacing="12"
+                                            Margin="0,40">
+                            <Label Text="📭" 
+                                   HorizontalOptions="Center"
+                                   FontSize="48" />
+                            <Label Text="No inactive or deleted accounts to show" 
+                                   HorizontalOptions="Center"
+                                   FontSize="16"
+                                   FontAttributes="Bold" />
+                            <Label Text="Deleted accounts will appear here" 
+                                   HorizontalOptions="Center"
+                                   FontSize="14"
+                                   TextColor="Gray" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:AccountItemViewModel">
+                            <Border StrokeThickness="1"
+                                    Shadow="{Shadow Brush=Gray, Offset='2,2', Radius=4, Opacity=0.2}"
+                                    Margin="0"
+                                    HorizontalOptions="FillAndExpand"
+                                    Opacity="0.7">
+                                <Border.Padding>
+                                    <OnIdiom x:TypeArguments="Thickness" 
+                                             Phone="12" 
+                                             Tablet="16" 
+                                             Desktop="20" />
+                                </Border.Padding>
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Grid RowDefinitions="Auto,Auto,Auto">
+                                    <Grid.RowSpacing>
+                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                 Phone="12" 
+                                                 Tablet="14" 
+                                                 Desktop="16" />
+                                    </Grid.RowSpacing>
+
+                                    <!-- Account Name with Reactivate button -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <Label Text="{Binding AccountName}" 
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Center"
+                                               LineBreakMode="TailTruncation"
+                                               TextDecorations="Strikethrough">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="14" 
+                                                         Tablet="15" 
+                                                         Desktop="16" />
+                                            </Label.FontSize>
+                                        </Label>
+                                        <HorizontalStackLayout Grid.Column="1" 
+                                                              Spacing="6"
+                                                              VerticalOptions="Center">
+                                            <Label Text="♻️">
+                                                <Label.FontSize>
+                                                    <OnIdiom x:TypeArguments="x:Double" 
+                                                             Phone="16" 
+                                                             Tablet="17" 
+                                                             Desktop="18" />
+                                                </Label.FontSize>
+                                            </Label>
+                                            <Label Text="Reactivate Account"
+                                                   VerticalOptions="Center">
+                                                <Label.FontSize>
+                                                    <OnIdiom x:TypeArguments="x:Double" 
+                                                             Phone="12" 
+                                                             Tablet="13" 
+                                                             Desktop="14" />
+                                                </Label.FontSize>
+                                            </Label>
+                                            <HorizontalStackLayout.GestureRecognizers>
+                                                <TapGestureRecognizer 
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=ReactivateAccountCommand}"
+                                                    CommandParameter="{Binding .}" />
+                                            </HorizontalStackLayout.GestureRecognizers>
+                                        </HorizontalStackLayout>
+                                    </Grid>
+
+                                    <!-- Account Type Badge -->
+                                    <HorizontalStackLayout Grid.Row="1" Spacing="8">
+                                        <Border Stroke="Transparent" Opacity="0.8">
+                                            <Border.Padding>
+                                                <OnIdiom x:TypeArguments="Thickness" 
+                                                         Phone="8,4" 
+                                                         Tablet="10,5" 
+                                                         Desktop="12,6" />
+                                            </Border.Padding>
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="6" />
+                                            </Border.StrokeShape>
+                                            <HorizontalStackLayout Spacing="6">
+                                                <Label Text="💳">
+                                                    <Label.FontSize>
+                                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                                 Phone="12" 
+                                                                 Tablet="13" 
+                                                                 Desktop="14" />
+                                                    </Label.FontSize>
+                                                </Label>
+                                                <Label Text="{Binding AccountTypeDisplay}">
+                                                    <Label.FontSize>
+                                                        <OnIdiom x:TypeArguments="x:Double" 
+                                                                 Phone="11" 
+                                                                 Tablet="11.5" 
+                                                                 Desktop="12" />
+                                                    </Label.FontSize>
+                                                </Label>
+                                            </HorizontalStackLayout>
+                                        </Border>
+                                        <Label Text="(Inactive)" 
+                                               TextColor="Gray"
+                                               VerticalOptions="Center">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="11" 
+                                                         Tablet="11.5" 
+                                                         Desktop="12" />
+                                            </Label.FontSize>
+                                        </Label>
+                                    </HorizontalStackLayout>
+
+                                    <!-- Balance -->
+                                    <VerticalStackLayout Grid.Row="2" Spacing="4">
+                                        <Label Text="{Binding CachedBalance, StringFormat='{0:C}'}" 
+                                               FontAttributes="Bold">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="20" 
+                                                         Tablet="22" 
+                                                         Desktop="24" />
+                                            </Label.FontSize>
+                                        </Label>
+                                        <Label Text="USD">
+                                            <Label.FontSize>
+                                                <OnIdiom x:TypeArguments="x:Double" 
+                                                         Phone="10" 
+                                                         Tablet="11" 
+                                                         Desktop="12" />
+                                            </Label.FontSize>
+                                        </Label>
+                                    </VerticalStackLayout>
+
                                 </Grid>
                             </Border>
                         </DataTemplate>

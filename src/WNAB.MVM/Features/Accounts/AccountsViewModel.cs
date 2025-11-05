@@ -80,13 +80,20 @@ public partial class AccountsViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveAccount(AccountItemViewModel accountItem)
     {
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+            return;
+
         if (string.IsNullOrWhiteSpace(accountItem.EditAccountName))
         {
-            // Could show an error message via popup service if needed
+            await mainPage.DisplayAlert(
+                "Validation Error",
+                "Account name cannot be empty.",
+                "OK");
             return;
         }
 
-        var success = await Model.UpdateAccountAsync(
+        var (success, errorMessage) = await Model.UpdateAccountAsync(
             accountItem.Id, 
             accountItem.EditAccountName, 
             accountItem.EditAccountType);
@@ -97,8 +104,12 @@ public partial class AccountsViewModel : ObservableObject
         }
         else
         {
-            // Could show error message via popup service
-            accountItem.CancelEditing();
+            // Show specific error message and keep user in edit mode so they can correct it
+            await mainPage.DisplayAlert(
+                "Error",
+                errorMessage ?? "Failed to update account. Please try again.",
+                "OK");
+            // DO NOT call CancelEditing() - leave user's input intact so they can fix it
         }
     }
 
@@ -109,5 +120,83 @@ public partial class AccountsViewModel : ObservableObject
     private void CancelEditAccount(AccountItemViewModel accountItem)
     {
         accountItem.CancelEditing();
+    }
+
+    /// <summary>
+    /// Delete an account - prompts for confirmation then removes it.
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteAccount(AccountItemViewModel accountItem)
+    {
+        // Show confirmation dialog
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+            return;
+
+        bool confirm = await mainPage.DisplayAlert(
+            "Delete Account",
+            $"Are you sure you want to delete '{accountItem.AccountName}'?",
+            "Delete",
+            "Cancel");
+
+        if (!confirm)
+            return;
+
+        var (success, errorMessage) = await Model.DeleteAccountAsync(accountItem.Id);
+
+        if (!success)
+        {
+            // Show specific error message from the API
+            await mainPage.DisplayAlert(
+                "Error",
+                errorMessage ?? "Failed to delete account. Please try again.",
+                "OK");
+        }
+    }
+
+    /// <summary>
+    /// Toggle between showing active and inactive accounts.
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleShowInactive()
+    {
+        await Model.ToggleShowInactiveAsync();
+    }
+
+    /// <summary>
+    /// Reactivate an inactive account - prompts for confirmation then reactivates it.
+    /// </summary>
+    [RelayCommand]
+    private async Task ReactivateAccount(AccountItemViewModel accountItem)
+    {
+        // Show confirmation dialog
+        var mainPage = Application.Current?.MainPage;
+        if (mainPage == null)
+            return;
+
+        bool confirm = await mainPage.DisplayAlert(
+            "Reactivate Account",
+            $"Are you sure you want to reactivate '{accountItem.AccountName}'?",
+            "Reactivate",
+            "Cancel");
+
+        if (!confirm)
+            return;
+
+        var (success, errorMessage) = await Model.ReactivateAccountAsync(accountItem.Id);
+
+        if (success)
+        {
+            // Refresh active accounts to show the newly reactivated account
+            await Model.LoadAccountsAsync();
+        }
+        else
+        {
+            // Show specific error message from the API
+            await mainPage.DisplayAlert(
+                "Error",
+                errorMessage ?? "Failed to reactivate account. Please try again.",
+                "OK");
+        }
     }
 }
