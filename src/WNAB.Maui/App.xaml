@@ -15,6 +15,7 @@
             <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:MonthToIndexConverter x:Key="MonthToIndexConverter" />
+            <converters:MonthButtonColorConverter x:Key="MonthButtonColorConverter" />
             <converters:IncomeExpenseConverter x:Key="IncomeExpenseConverter" />
             <converters:IncomeExpenseColorConverter x:Key="IncomeExpenseColorConverter" />
             <converters:ColorMatchToBorderConverter x:Key="ColorMatchToBorderConverter" />
@@ -23,6 +24,7 @@
             <converters:BalanceColorConverter x:Key="BalanceColorConverter" />
             <converters:GreaterThanOneConverter x:Key="GreaterThanOneConverter" />
             <converters:AddFormButtonTextConverter x:Key="AddFormButtonTextConverter" />
+            <converters:BoolToExpandIconConverter x:Key="BoolToExpandIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

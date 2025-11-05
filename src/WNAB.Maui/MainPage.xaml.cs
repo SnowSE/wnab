@@ -32,4 +32,13 @@ public partial class MainPage : ContentPage
             await vm.InitializeAsync();
         }
     }
+    
+    private async void OnMonthYearDisplayTapped(object? sender, EventArgs e)
+    {
+        if (BindingContext is not PlanBudgetViewModel vm || vm.Model.IsEditMode)
+            return;
+            
+        var popup = new MonthYearPickerPopup(vm);
+        await this.ShowPopupAsync(popup);
+    }
 }

@@ -19,8 +19,11 @@ public partial class PlanBudgetModel : ObservableObject
     // Available categories - categories not yet allocated
     public ObservableCollection<Category> AvailableCategories { get; } = new();
 
-    // Budget allocations - allocated categories with budget amounts
+    // Budget allocations - allocated categories with budget amounts (active only)
     public ObservableCollection<CategoryAllocation> BudgetAllocations { get; } = new();
+    
+    // Hidden allocations - allocated categories that are hidden (IsActive = false)
+    public ObservableCollection<CategoryAllocation> HiddenAllocations { get; } = new();
     
     // Changed allocations - changed allocated categories with budget amounts
     public ObservableCollection<CategoryAllocation> ChangedAllocations { get; } = new();
@@ -57,7 +60,7 @@ public partial class PlanBudgetModel : ObservableObject
     
     // Backup state for undo functionality
     private decimal _backupMonthlyLimit;
-    private List<(int AllocationId, decimal BudgetedAmount)> _backupAllocations = new();
+    private List<(int CategoryId, decimal BudgetedAmount)> _backupAllocations = new();
 
     public PlanBudgetModel(
         CategoryManagementService categoryService,
@@ -104,9 +107,12 @@ public partial class PlanBudgetModel : ObservableObject
             else
             {
                 IsLoggedIn = false;
-                StatusMessage = "Please log in to plan budget";
+                StatusMessage = "Error checking login status";
                 AvailableCategories.Clear();
                 BudgetAllocations.Clear();
+                HiddenAllocations.Clear();
+                OnPropertyChanged(nameof(BudgetAllocations));
+                OnPropertyChanged(nameof(HiddenAllocations));
             }
         }
         catch
@@ -115,6 +121,9 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = "Error checking login status";
             AvailableCategories.Clear();
             BudgetAllocations.Clear();
+            HiddenAllocations.Clear();
+            OnPropertyChanged(nameof(BudgetAllocations));
+            OnPropertyChanged(nameof(HiddenAllocations));
         }
     }
 
@@ -169,14 +178,17 @@ public partial class PlanBudgetModel : ObservableObject
 
     /// <summary>
     /// Load existing allocations for the specified month/year.
+    /// Creates allocations for ALL categories - both those with existing data and new ones.
+    /// New categories (Id=0) are automatically hidden until user shows them.
     /// </summary>
     private async Task LoadExistingAllocationsAsync(int month, int year)
     {
         BudgetAllocations.Clear();
+        HiddenAllocations.Clear();
         _allocatedCategoryIds.Clear();
         _spentAmounts.Clear();
 
-        // Get all categories first to find their allocations
+        // Get all categories first
         var categories = await _categoryService.GetCategoriesForUserAsync();
         
         foreach (var category in categories)
@@ -184,20 +196,52 @@ public partial class PlanBudgetModel : ObservableObject
             var allocations = await _allocationService.GetAllocationsForCategoryAsync(category.Id);
             var allocation = allocations.FirstOrDefault(a => 
                 a.Month == month && 
-                a.Year == year && 
-                a.IsActive);
+                a.Year == year);
             
-            if (allocation != null)
+            // If no allocation exists for this category/month, create a temporary one
+            if (allocation == null)
+            {
+                allocation = new CategoryAllocation
+                {
+                    Id = 0, // Not yet persisted
+                    CategoryId = category.Id,
+                    Category = category,
+                    BudgetedAmount = 0,
+                    Month = month,
+                    Year = year,
+                    IsActive = false, // Auto-hide new allocations
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                
+                // New allocations always go to hidden
+                HiddenAllocations.Add(allocation);
+            }
+            else
             {
                 // Ensure the Category navigation property is populated
                 allocation.Category = category;
-                BudgetAllocations.Add(allocation);
-                _allocatedCategoryIds.Add(category.Id);
                 
-                // Load spent amount for this allocation
+                // Existing allocations go to appropriate collection based on IsActive
+                if (allocation.IsActive)
+                {
+                    BudgetAllocations.Add(allocation);
+                }
+                else
+                {
+                    HiddenAllocations.Add(allocation);
+                }
+                
+                // Load spent amount for existing allocations
                 await LoadSpentAmountAsync(allocation.Id);
             }
+            
+            _allocatedCategoryIds.Add(category.Id);
         }
+        
+        // Notify UI that collections have changed
+        OnPropertyChanged(nameof(BudgetAllocations));
+        OnPropertyChanged(nameof(HiddenAllocations));
     }
     
     /// <summary>
@@ -270,7 +314,7 @@ public partial class PlanBudgetModel : ObservableObject
         IsEditMode = true;
         _backupMonthlyLimit = MonthlyLimit;
         _backupAllocations = BudgetAllocations
-            .Select(a => (a.Id, a.BudgetedAmount))
+            .Select(a => (a.CategoryId, a.BudgetedAmount))
             .ToList();
     }
     
@@ -283,7 +327,7 @@ public partial class PlanBudgetModel : ObservableObject
         
         foreach (var backup in _backupAllocations)
         {
-            var allocation = BudgetAllocations.FirstOrDefault(a => a.Id == backup.AllocationId);
+            var allocation = BudgetAllocations.FirstOrDefault(a => a.CategoryId == backup.CategoryId);
             if (allocation != null)
             {
                 allocation.BudgetedAmount = backup.BudgetedAmount;
@@ -347,6 +391,9 @@ public partial class PlanBudgetModel : ObservableObject
         AvailableCategories.Remove(category);
         BudgetAllocations.Add(allocation);
         _allocatedCategoryIds.Add(category.Id);
+        
+        // Notify UI that collection has changed
+        OnPropertyChanged(nameof(BudgetAllocations));
     }
 
     /// <summary>
@@ -366,6 +413,9 @@ public partial class PlanBudgetModel : ObservableObject
         {
             AvailableCategories.Add(allocation.Category);
         }
+        
+        // Notify UI that collection has changed
+        OnPropertyChanged(nameof(BudgetAllocations));
     }
 
     /// <summary>
@@ -410,32 +460,60 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = "Saving budget allocations...";
 
             int savedCount = 0;
+            int updatedCount = 0;
+            
             foreach (var allocation in BudgetAllocations)
             {
-                // Only save allocations that don't have an Id yet (new ones)
+                // New allocation (not yet persisted)
                 if (allocation.Id == 0)
                 {
-                    var record = new CategoryAllocationRecord(
-                        CategoryId: allocation.CategoryId,
-                        BudgetedAmount: allocation.BudgetedAmount,
-                        Month: allocation.Month,
-                        Year: allocation.Year,
-                        EditorName: allocation.EditorName,
-                        PercentageAllocation: allocation.PercentageAllocation,
-                        OldAmount: allocation.OldAmount,
-                        EditedMemo: allocation.EditedMemo
-                    );
+                    // Only create allocation if it has a non-zero amount
+                    if (allocation.BudgetedAmount > 0)
+                    {
+                        var record = new CategoryAllocationRecord(
+                            CategoryId: allocation.CategoryId,
+                            BudgetedAmount: allocation.BudgetedAmount,
+                            Month: allocation.Month,
+                            Year: allocation.Year,
+                            EditorName: allocation.EditorName,
+                            PercentageAllocation: allocation.PercentageAllocation,
+                            OldAmount: allocation.OldAmount,
+                            EditedMemo: allocation.EditedMemo
+                        );
 
-                    var newId = await _allocationService.CreateCategoryAllocationAsync(record);
-                    allocation.Id = newId;
-                    savedCount++;
+                        var newId = await _allocationService.CreateCategoryAllocationAsync(record);
+                        allocation.Id = newId;
+                        savedCount++;
+                    }
                 }
-                // TODO: Handle updates for existing allocations when update API exists
+                // Existing allocation - check if amount changed
+                else
+                {
+                    var backup = _backupAllocations.FirstOrDefault(b => b.CategoryId == allocation.CategoryId);
+                    if (backup != default && backup.BudgetedAmount != allocation.BudgetedAmount)
+                    {
+                        var updateRequest = new UpdateCategoryAllocationRequest(
+                            Id: allocation.Id,
+                            BudgetedAmount: allocation.BudgetedAmount,
+                            EditorName: await _authService.GetUserNameAsync()
+                        );
+
+                        await _allocationService.UpdateCategoryAllocationAsync(updateRequest);
+                        updatedCount++;
+                    }
+                }
             }
 
-            StatusMessage = savedCount > 0 
-                ? $"Saved {savedCount} allocation(s)" 
-                : "No new allocations to save";
+            var message = new List<string>();
+            if (savedCount > 0) message.Add($"Created {savedCount} allocation(s)");
+            if (updatedCount > 0) message.Add($"Updated {updatedCount} allocation(s)");
+            
+            StatusMessage = message.Count > 0 
+                ? string.Join(", ", message)
+                : "No changes to save";
+                
+            // Exit edit mode after successful save
+            IsEditMode = false;
         }
         catch (Exception ex)
         {
@@ -462,6 +540,84 @@ public partial class PlanBudgetModel : ObservableObject
         if (IsLoggedIn)
         {
             await LoadDataAsync();
+        }
+    }
+
+    /// <summary>
+    /// Hide a category allocation (set IsActive to false).
+    /// Moves allocation from BudgetAllocations to HiddenAllocations.
+    /// For new allocations (Id=0), just updates in memory without API call.
+    /// </summary>
+    public async Task HideAllocationAsync(CategoryAllocation allocation)
+    {
+        if (allocation == null)
+            return;
+
+        try
+        {
+            // For existing allocations, update via API
+            if (allocation.Id > 0)
+            {
+                var request = new UpdateCategoryAllocationRequest(
+                    Id: allocation.Id,
+                    IsActive: false
+                );
+                
+                await _allocationService.UpdateCategoryAllocationAsync(request);
+            }
+            
+            // Update local state (for both new and existing allocations)
+            allocation.IsActive = false;
+            BudgetAllocations.Remove(allocation);
+            HiddenAllocations.Add(allocation);
+            
+            // Notify UI that collections have changed
+            OnPropertyChanged(nameof(BudgetAllocations));
+            OnPropertyChanged(nameof(HiddenAllocations));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error hiding category: {ex.Message}";
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Unhide a category allocation (set IsActive to true).
+    /// Moves allocation from HiddenAllocations to BudgetAllocations.
+    /// For new allocations (Id=0), just updates in memory without API call.
+    /// </summary>
+    public async Task UnhideAllocationAsync(CategoryAllocation allocation)
+    {
+        if (allocation == null)
+            return;
+
+        try
+        {
+            // For existing allocations, update via API
+            if (allocation.Id > 0)
+            {
+                var request = new UpdateCategoryAllocationRequest(
+                    Id: allocation.Id,
+                    IsActive: true
+                );
+                
+                await _allocationService.UpdateCategoryAllocationAsync(request);
+            }
+            
+            // Update local state (for both new and existing allocations)
+            allocation.IsActive = true;
+            HiddenAllocations.Remove(allocation);
+            BudgetAllocations.Add(allocation);
+            
+            // Notify UI that collections have changed
+            OnPropertyChanged(nameof(BudgetAllocations));
+            OnPropertyChanged(nameof(HiddenAllocations));
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error unhiding category: {ex.Message}";
+            throw;
         }
     }
 

@@ -721,6 +721,44 @@ app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTr
     ));
 }).RequireAuthorization();
 
+// update allocation
+app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCategoryAllocationRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var allocation = await db.Allocations
+        .Include(a => a.Category)
+        .FirstOrDefaultAsync(a => a.Id == id);
+
+    if (allocation is null) return Results.NotFound("Allocation not found");
+
+    // Verify allocation belongs to user
+    if (allocation.Category.UserId != user.Id)
+        return Results.Forbid();
+
+    // Update only provided fields
+    if (req.BudgetedAmount.HasValue)
+    {
+        allocation.OldAmount = allocation.BudgetedAmount;
+        allocation.BudgetedAmount = req.BudgetedAmount.Value;
+    }
+
+    if (req.IsActive.HasValue)
+        allocation.IsActive = req.IsActive.Value;
+
+    if (req.EditorName is not null)
+        allocation.EditorName = req.EditorName;
+
+    if (req.EditedMemo is not null)
+        allocation.EditedMemo = req.EditedMemo;
+
+    allocation.UpdatedAt = DateTime.UtcNow;
+
+    await db.SaveChangesAsync();
+    return Results.Ok(new { allocation.Id, allocation.BudgetedAmount, allocation.IsActive });
+}).RequireAuthorization();
+
 ///
 // DELETE ENDPOINTS ------------------------------------
 ///

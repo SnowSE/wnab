@@ -47,7 +47,20 @@ public class CategoryDBService
 
     public async Task<Category> CreateCategoryWithValidationAsync(int userId, CreateCategoryRequest request, CancellationToken cancellationToken = default)
     {
-        // Check for duplicate category name
+        // Check if a soft-deleted category with this name exists
+        var existingCategory = await _db.Categories
+            .FirstOrDefaultAsync(c => c.UserId == userId && c.Name == request.Name && !c.IsActive, cancellationToken);
+        
+        if (existingCategory != null)
+        {
+            // Reactivate the soft-deleted category
+            existingCategory.IsActive = true;
+            existingCategory.Color = request.Color;
+            await _db.SaveChangesAsync(cancellationToken);
+            return existingCategory;
+        }
+
+        // Check for duplicate category name among active categories
         var isDuplicate = await IsDuplicateCategoryNameAsync(request.Name, userId, cancellationToken: cancellationToken);
         if (isDuplicate)
         {
@@ -91,7 +104,7 @@ public class CategoryDBService
 
     public async Task DeleteCategoryAsync(Category category, CancellationToken cancellationToken = default)
     {
-        _db.Categories.Remove(category);
+        category.IsActive = false;
         await _db.SaveChangesAsync(cancellationToken);
     }
 

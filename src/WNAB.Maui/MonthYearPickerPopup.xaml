@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+               xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+               xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+               xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+               x:Class="WNAB.Maui.MonthYearPickerPopup"
+               x:DataType="local:PlanBudgetViewModel">
+    
+    <Border Padding="24"
+            BackgroundColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray900}}"
+            StrokeThickness="0"
+            WidthRequest="360"
+            MaximumHeightRequest="500">
+        <Border.StrokeShape>
+            <RoundRectangle CornerRadius="12"/>
+        </Border.StrokeShape>
+        
+        <Border.Shadow>
+            <Shadow Brush="Black"
+                    Opacity="0.3"
+                    Radius="20"
+                    Offset="0,10"/>
+        </Border.Shadow>
+        
+        <VerticalStackLayout Spacing="20">
+            <!-- Year Header with Navigation -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="40">
+                <Button Text="&lt;"
+                        Command="{Binding PreviousYearCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light=White, Dark=White}"
+                        FontSize="20"
+                        WidthRequest="40"
+                        HeightRequest="40"/>
+                <Label Text="{Binding Model.CurrentYear}"
+                       FontSize="24"
+                       FontAttributes="Bold"
+                       TextColor="White"
+                       VerticalOptions="Center"
+                       HorizontalOptions="Center"
+                       WidthRequest="100"
+                       HorizontalTextAlignment="Center"/>
+                <Button Text="&gt;"
+                        Command="{Binding NextYearCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{AppThemeBinding Light=White, Dark=White}"
+                        FontSize="20"
+                        WidthRequest="40"
+                        HeightRequest="40"/>
+            </HorizontalStackLayout>
+            
+            <!-- Month Grid (3 rows x 4 columns) -->
+            <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="10">
+                <!-- Row 1: Jan, Feb, Mar, Apr -->
+                <Button Grid.Row="0" Grid.Column="0" Text="Jan" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="1"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=1}"/>
+                <Button Grid.Row="0" Grid.Column="1" Text="Feb" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="2"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=2}"/>
+                <Button Grid.Row="0" Grid.Column="2" Text="Mar" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="3"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=3}"/>
+                <Button Grid.Row="0" Grid.Column="3" Text="Apr" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="4"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=4}"/>
+                
+                <!-- Row 2: May, Jun, Jul, Aug -->
+                <Button Grid.Row="1" Grid.Column="0" Text="May" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="5"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=5}"/>
+                <Button Grid.Row="1" Grid.Column="1" Text="Jun" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="6"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=6}"/>
+                <Button Grid.Row="1" Grid.Column="2" Text="Jul" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="7"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=7}"/>
+                <Button Grid.Row="1" Grid.Column="3" Text="Aug" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="8"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=8}"/>
+                
+                <!-- Row 3: Sep, Oct, Nov, Dec -->
+                <Button Grid.Row="2" Grid.Column="0" Text="Sep" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="9"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=9}"/>
+                <Button Grid.Row="2" Grid.Column="1" Text="Oct" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="10"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=10}"/>
+                <Button Grid.Row="2" Grid.Column="2" Text="Nov" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="11"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=11}"/>
+                <Button Grid.Row="2" Grid.Column="3" Text="Dec" 
+                        Clicked="OnMonthSelected"
+                        CommandParameter="12"
+                        TextColor="White"
+                        BackgroundColor="{Binding Model.CurrentMonth, Converter={StaticResource MonthButtonColorConverter}, ConverterParameter=12}"/>
+            </Grid>
+        </VerticalStackLayout>
+    </Border>
+    
+</toolkit:Popup>
