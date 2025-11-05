@@ -17,7 +17,16 @@ a, .btn-link {
 }
 
 .content {
-    padding-top: 1.1rem;
+    padding-top: 0;
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+}
+
+.page-container {
+    padding: 2rem;
+    width: 100%;
 }
 
 h1:focus {
@@ -96,11 +105,14 @@ h1:focus {
     min-height: calc(100vh - 60px);
     background-color: #f8f9fa;
     padding: 2rem;
+    width: 100%;
 }
 
 .budgets-content {
-    max-width: 1200px;
-    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 1rem;
 }
 
 .budgets-header {
@@ -403,6 +415,46 @@ h1:focus {
     border: 2px solid transparent;
 }
 .swatch-selected { box-shadow: 0 0 0 3px rgba(0,0,0,0.06); border: 3px solid rgba(255,255,255,0.85); }
+
+/* Hidden Categories Section */
+.hidden-categories-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.hidden-categories-header {
+    padding: 16px 20px;
+    background: #e9ecef;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.hidden-categories-header:hover {
+    background: #dee2e6;
+}
+
+.hidden-categories-list {
+    padding: 12px 20px;
+    background: #fff;
+}
+
+.hidden-category-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.hidden-category-item:last-child {
+    border-bottom: none;
+}
 
 @media (max-width: 480px) {
     .category-amount { font-size: 1.25rem; }

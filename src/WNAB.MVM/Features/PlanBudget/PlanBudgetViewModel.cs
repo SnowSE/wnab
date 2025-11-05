@@ -204,6 +204,11 @@ public partial class PlanBudgetViewModel : ObservableObject
                 OnPropertyChanged(nameof(UnallocatedFormatted));
                 OnPropertyChanged(nameof(HasNoBudgetAllocations));
             }
+            
+            if (e.PropertyName == nameof(Model.HiddenAllocations))
+            {
+                OnPropertyChanged(nameof(HasHiddenAllocations));
+            }
         };
     }
 
@@ -221,6 +226,17 @@ public partial class PlanBudgetViewModel : ObservableObject
     /// Check if there are no budget allocations for empty state display.
     /// </summary>
     public bool HasNoBudgetAllocations => Model.BudgetAllocations == null || Model.BudgetAllocations.Count == 0;
+    
+    /// <summary>
+    /// Check if there are hidden allocations to show the dropdown.
+    /// </summary>
+    public bool HasHiddenAllocations => Model.HiddenAllocations != null && Model.HiddenAllocations.Count > 0;
+    
+    /// <summary>
+    /// Gets or sets whether the hidden categories section is expanded.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isHiddenCategoriesExpanded;
 
     /// <summary>
     /// Initialize the ViewModel by delegating to the Model.
@@ -397,5 +413,52 @@ public partial class PlanBudgetViewModel : ObservableObject
                 await Shell.Current.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.", "OK");
             }
         }
+    }
+    
+    /// <summary>
+    /// Hide allocation command - delegates to Model.
+    /// Moves allocation from active to hidden section.
+    /// </summary>
+    [RelayCommand]
+    private async Task HideAllocation(CategoryAllocation allocation)
+    {
+        try
+        {
+            await Model.HideAllocationAsync(allocation);
+            OnPropertyChanged(nameof(HasNoBudgetAllocations));
+            OnPropertyChanged(nameof(HasHiddenAllocations));
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to hide category: {ex.Message}", "OK");
+        }
+    }
+    
+    /// <summary>
+    /// Unhide allocation command - delegates to Model.
+    /// Moves allocation from hidden to active section.
+    /// </summary>
+    [RelayCommand]
+    private async Task UnhideAllocation(CategoryAllocation allocation)
+    {
+        try
+        {
+            await Model.UnhideAllocationAsync(allocation);
+            OnPropertyChanged(nameof(HasNoBudgetAllocations));
+            OnPropertyChanged(nameof(HasHiddenAllocations));
+        }
+        catch (Exception ex)
+        {
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to unhide category: {ex.Message}", "OK");
+        }
+    }
+    
+    /// <summary>
+    /// Toggle the hidden categories section visibility.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleHiddenCategories()
+    {
+        IsHiddenCategoriesExpanded = !IsHiddenCategoriesExpanded;
     }
 }

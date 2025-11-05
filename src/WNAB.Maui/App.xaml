@@ -20,6 +20,7 @@
             <converters:IncomeExpenseColorConverter x:Key="IncomeExpenseColorConverter" />
             <converters:ColorMatchToBorderConverter x:Key="ColorMatchToBorderConverter" />
             <converters:AmountColorConverter x:Key="AmountColorConverter" />
+            <converters:BoolToExpandIconConverter x:Key="BoolToExpandIconConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

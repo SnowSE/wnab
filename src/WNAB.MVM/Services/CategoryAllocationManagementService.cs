@@ -39,6 +39,17 @@ public class CategoryAllocationManagementService
         return allocations.FirstOrDefault(a => a.Month == month && a.Year == year && a.IsActive);
     }
 
+    /// <summary>
+    /// Updates an existing CategoryAllocation (amount and/or IsActive status).
+    /// </summary>
+    public async Task UpdateCategoryAllocationAsync(UpdateCategoryAllocationRequest request, CancellationToken ct = default)
+    {
+        if (request is null) throw new ArgumentNullException(nameof(request));
+
+        var response = await _http.PutAsJsonAsync($"allocations/{request.Id}", request, ct);
+        response.EnsureSuccessStatusCode();
+    }
+
     private sealed record IdResponse(int Id);
 
     // LLM-Dev: Add method to get allocations for a specific category

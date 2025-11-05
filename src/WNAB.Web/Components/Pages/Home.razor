@@ -164,7 +164,13 @@
                                     <h6 class="mb-0 fw-bold">@allocation.Category?.Name</h6>
                                     <i class="bi @(isExpanded ? "bi-chevron-up" : "bi-chevron-down") ms-2 text-muted"></i>
                                 </div>
-                                <div class="text-end">
+                                <div class="d-flex align-items-center gap-2">
+                                    <button class="btn btn-sm btn-link text-secondary p-0" 
+                                            @onclick="() => OnHideCategory(allocation)"
+                                            @onclick:stopPropagation="true"
+                                            title="Hide this category">
+                                        <i class="bi bi-eye-slash fs-5"></i>
+                                    </button>
                                     @if (ViewModel.Model.IsEditMode)
                                     {
                                         <div class="input-group input-group-sm" style="width: 150px;">
@@ -227,6 +233,43 @@
                     <p class="text-muted mt-3">No budget allocations for this month. Add categories to get started.</p>
                 </div>
             }
+            
+            <!-- Hidden Categories Section -->
+            @if (ViewModel.Model.HiddenAllocations != null && ViewModel.Model.HiddenAllocations.Count > 0)
+            {
+                <div class="hidden-categories-section mt-4">
+                    <div class="hidden-categories-header" @onclick="ToggleHiddenCategories">
+                        <h6 class="fw-bold mb-0">
+                            <i class="bi bi-eye-slash me-2"></i>
+                            Hidden Categories (@ViewModel.Model.HiddenAllocations.Count)
+                        </h6>
+                        <i class="bi @(_isHiddenCategoriesExpanded ? "bi-chevron-up" : "bi-chevron-down")"></i>
+                    </div>
+                    
+                    @if (_isHiddenCategoriesExpanded)
+                    {
+                        <div class="hidden-categories-list">
+                            @foreach (var allocation in ViewModel.Model.HiddenAllocations)
+                            {
+                                var categoryColor = allocation.Category?.Color ?? "#6c757d";
+                                
+                                <div class="hidden-category-item">
+                                    <div class="d-flex align-items-center gap-2 flex-grow-1">
+                                        <span class="category-dot opacity-50" style="background-color: @categoryColor"></span>
+                                        <span class="text-muted">@allocation.Category?.Name</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <span class="text-muted small">@allocation.BudgetedAmount.ToString("C")</span>
+                                        <button class="btn btn-sm btn-primary" @onclick="() => OnUnhideCategory(allocation)">
+                                            <i class="bi bi-eye me-1"></i>Show
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -238,6 +281,7 @@
     private HashSet<int> _expandedCategories = new();
     private bool _isInitialized = false;
     private bool _shouldNavigateToLanding = false;
+    private bool _isHiddenCategoriesExpanded = false;
     
     private async Task OnToggleMonthYearPicker()
     {
@@ -373,6 +417,37 @@
         else
         {
             _expandedCategories.Add(allocationId);
+        }
+    }
+    
+    private void ToggleHiddenCategories()
+    {
+        _isHiddenCategoriesExpanded = !_isHiddenCategoriesExpanded;
+    }
+    
+    private async Task OnHideCategory(WNAB.Data.CategoryAllocation allocation)
+    {
+        try
+        {
+            await ViewModel.HideAllocationCommand.ExecuteAsync(allocation);
+        }
+        catch (Exception ex)
+        {
+            // Error is already displayed by the ViewModel
+            Console.WriteLine($"Error hiding category: {ex.Message}");
+        }
+    }
+    
+    private async Task OnUnhideCategory(WNAB.Data.CategoryAllocation allocation)
+    {
+        try
+        {
+            await ViewModel.UnhideAllocationCommand.ExecuteAsync(allocation);
+        }
+        catch (Exception ex)
+        {
+            // Error is already displayed by the ViewModel
+            Console.WriteLine($"Error unhiding category: {ex.Message}");
         }
     }
 

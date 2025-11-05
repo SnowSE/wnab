@@ -4,28 +4,29 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h1>Transactions</h1>
+<div class="page-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1>Transactions</h1>
+        </div>
+        <div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal" @onclick="OnAddTransactionClick">
+                <i class="bi bi-plus-circle me-1"></i>
+                Create Transaction
+            </button>
+            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+                @if (ViewModel.Model.IsBusy)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                }
+                Refresh
+            </button>
+        </div>
     </div>
-    <div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransactionModal" @onclick="OnAddTransactionClick">
-            <i class="bi bi-plus-circle me-1"></i>
-            Create Transaction
-        </button>
-        <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
-            @if (ViewModel.Model.IsBusy)
-            {
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-            }
-            else
-            {
-                <i class="bi bi-arrow-clockwise me-1"></i>
-            }
-            Refresh
-        </button>
-    </div>
-</div>
 
 @if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
 {
@@ -253,3 +254,4 @@
         }
     }
 }
+</div>

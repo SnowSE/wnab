@@ -8,6 +8,7 @@ public record CategoryRecord(string Name);
 public record AccountRecord(string Name, AccountType AccountType = AccountType.Checking);
 public record EditAccountRequest(int Id, string NewName, AccountType NewAccountType);
 public record CategoryAllocationRecord(int CategoryId, decimal BudgetedAmount, int Month, int Year, string? EditorName = null, decimal? PercentageAllocation = null, decimal? OldAmount = null, string? EditedMemo = null);
+public record UpdateCategoryAllocationRequest(int Id, decimal? BudgetedAmount = null, bool? IsActive = null, string? EditorName = null, string? EditedMemo = null);
 
 // Transaction creation with splits
 public record TransactionRecord(

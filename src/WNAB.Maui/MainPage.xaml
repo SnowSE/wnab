@@ -20,22 +20,20 @@
                         IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
                         Command="{Binding ToggleEditModeCommand}"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                        WidthRequest="100" />
-                <Button Text="Add Allocation"
-                        IsVisible="{Binding Model.IsEditMode}"
-                        Command="{Binding ToggleCategoriesVisibilityCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
+                        TextColor="White"
                         WidthRequest="120" />
-                <Button Text="Undo"
+                <Button Text="Cancel"
                         IsVisible="{Binding Model.IsEditMode}"
                         Command="{Binding UndoChangesCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                        WidthRequest="80" />
-                <Button Text="Save"
+                        BackgroundColor="{AppThemeBinding Light=#DC3545, Dark=#DC3545}"
+                        TextColor="White"
+                        WidthRequest="100" />
+                <Button Text="Save Changes"
                         IsVisible="{Binding Model.IsEditMode}"
                         Command="{Binding SaveCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray700}}"
-                        WidthRequest="80" />
+                        BackgroundColor="{AppThemeBinding Light=#28A745, Dark=#28A745}"
+                        TextColor="White"
+                        WidthRequest="130" />
             </HorizontalStackLayout>
 
             <!-- Compact Month Navigator -->
@@ -221,20 +219,25 @@
                                            FontAttributes="Bold"
                                            VerticalOptions="Center"/>
                                     
+                                    <!-- Hide/Show Button (eye icon) -->
+                                    <Button Grid.Column="2"
+                                            Text="👁"
+                                            FontSize="20"
+                                            WidthRequest="40"
+                                            HeightRequest="40"
+                                            Padding="0"
+                                            BackgroundColor="Transparent"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.HideAllocationCommand}"
+                                            CommandParameter="{Binding}"
+                                            ToolTipProperties.Text="Hide this category"
+                                            VerticalOptions="Center"
+                                            Margin="5,0"/>
+                                    
                                     <!-- Budget Amount (view mode) -->
-                                    <Label Grid.Column="2"
+                                    <Label Grid.Column="3"
                                            Text="{Binding BudgetedAmount, StringFormat='{0:C}'}"
                                            FontAttributes="Bold"
                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
-                                    
-                                    <!-- Remove Button (edit mode) -->
-                                    <Button Grid.Column="3"
-                                            Text="Remove"
-                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode}"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveAllocationCommand}"
-                                            CommandParameter="{Binding}"
-                                            BackgroundColor="Red"
-                                            WidthRequest="80"/>
                                 </Grid>
 
                                 <!-- Budget Amount (edit mode) -->
@@ -281,6 +284,93 @@
                        FontSize="12"
                        HorizontalOptions="Center"
                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+            </VerticalStackLayout>
+
+            <!-- Hidden Categories Section -->
+            <VerticalStackLayout Spacing="5"
+                                 Margin="0,20,0,0"
+                                 IsVisible="{Binding HasHiddenAllocations}">
+                <!-- Header with dropdown toggle -->
+                <Border Padding="15,10"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}"
+                        StrokeThickness="0">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Hidden Categories (" />
+                                    <Span Text="{Binding Model.HiddenAllocations.Count}" />
+                                    <Span Text=")" />
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Button Grid.Column="1"
+                                Text="{Binding IsHiddenCategoriesExpanded, Converter={StaticResource BoolToExpandIconConverter}}"
+                                FontSize="20"
+                                WidthRequest="40"
+                                HeightRequest="40"
+                                Padding="0"
+                                BackgroundColor="Transparent"
+                                Command="{Binding ToggleHiddenCategoriesCommand}"
+                                VerticalOptions="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Hidden Categories List -->
+                <CollectionView ItemsSource="{Binding Model.HiddenAllocations}"
+                                SelectionMode="None"
+                                IsVisible="{Binding IsHiddenCategoriesExpanded}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="data:CategoryAllocation">
+                            <Border Padding="15,10"
+                                    Margin="0,2"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray50}, Dark={StaticResource Gray900}}"
+                                    StrokeThickness="1"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                    <!-- Category Color Dot (grayed out) -->
+                                    <BoxView Grid.Column="0"
+                                             WidthRequest="12"
+                                             HeightRequest="12"
+                                             CornerRadius="6"
+                                             Color="{Binding Category.Color}"
+                                             Opacity="0.4"
+                                             VerticalOptions="Center"
+                                             Margin="0,0,10,0"/>
+                                    
+                                    <!-- Category Name (grayed out) -->
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Category.Name}"
+                                           FontSize="14"
+                                           Opacity="0.6"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <!-- Budget Amount (grayed out) -->
+                                    <Label Grid.Column="2"
+                                           Text="{Binding BudgetedAmount, StringFormat='{0:C}'}"
+                                           FontSize="14"
+                                           Opacity="0.5"
+                                           Margin="0,0,10,0"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <!-- Unhide Button -->
+                                    <Button Grid.Column="3"
+                                            Text="Show"
+                                            FontSize="12"
+                                            Padding="10,5"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                            TextColor="White"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.UnhideAllocationCommand}"
+                                            CommandParameter="{Binding}"
+                                            VerticalOptions="Center"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </VerticalStackLayout>
 
         </VerticalStackLayout>
