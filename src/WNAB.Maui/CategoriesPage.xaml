@@ -16,16 +16,6 @@
     
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
-            <!-- Header Section -->
-            <VerticalStackLayout Spacing="8">
-                <Label Text="Categories" 
-                       FontSize="32" 
-                       FontAttributes="Bold" />
-                <Label Text="Organize your transactions into categories" 
-                       FontSize="14" 
-                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" />
-            </VerticalStackLayout>
-
             <!-- Add Category Button -->
             <Button Text="+ Add Category"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"

@@ -334,9 +334,8 @@ PlaceholderColor="Gray" />
     </Frame>
 
  <!-- Transactions with Splits Section -->
-     <VerticalStackLayout Spacing="8" IsVisible="{Binding Model.IsLoggedIn}">
-  <Label Text="Transactions" FontSize="Large" FontAttributes="Bold" Margin="0,8,0,0" />
-     <CollectionView ItemsSource="{Binding Model.Items}">
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding Model.IsLoggedIn}">
+                <CollectionView ItemsSource="{Binding Model.Items}">
    <CollectionView.EmptyView>
   <Label Text="No transactions found." HorizontalOptions="Center" VerticalOptions="Center" />
      </CollectionView.EmptyView>

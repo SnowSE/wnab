@@ -25,15 +25,6 @@
             <!-- Header with title and Add Account button -->
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
                 <VerticalStackLayout Spacing="4">
-                    <Label Text="Accounts" 
-                           FontAttributes="Bold">
-                        <Label.FontSize>
-                            <OnIdiom x:TypeArguments="x:Double" 
-                                     Phone="22" 
-                                     Tablet="26" 
-                                     Desktop="28" />
-                        </Label.FontSize>
-                    </Label>
                     <Label>
                         <Label.FontSize>
                             <OnIdiom x:TypeArguments="x:Double" 
