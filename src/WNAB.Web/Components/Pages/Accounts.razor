@@ -4,99 +4,194 @@
 @inject NavigationManager Navigation
 @implements IDisposable
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h1>Accounts</h1>
-    </div>
-    <div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal" @onclick="OnAddAccountClick">
-            <i class="bi bi-plus-circle me-1"></i>
-            Create Account
-        </button>
-        <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
-            @if (ViewModel.Model.IsBusy)
+<div class="accounts-container">
+    <!-- Header with title and Add Account button -->
+    <div class="accounts-header">
+        <div class="header-text">
+            <h1 class="page-title">Accounts</h1>
+            <p class="page-subtitle">
+                @if (ViewModel.Model.ShowInactive)
+                {
+                    <text>Viewing inactive accounts</text>
+                }
+                else
+                {
+                    <text>Manage your financial accounts</text>
+                }
+            </p>
+        </div>
+        
+        <div class="header-actions">
+            <button class="btn btn-secondary" 
+                    @onclick="OnToggleShowInactiveClick" 
+                    disabled="@(!ViewModel.Model.IsLoggedIn)">
+                @if (ViewModel.Model.ShowInactive)
+                {
+                    <text>Show Active</text>
+                }
+                else
+                {
+                    <text>Show Inactive</text>
+                }
+            </button>
+            
+            @if (!ViewModel.Model.ShowInactive)
             {
-                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <button class="btn btn-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#createAccountModal" 
+                        @onclick="OnAddAccountClick"
+                        disabled="@(!ViewModel.Model.IsLoggedIn)">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Account
+                </button>
             }
-            else
-            {
-                <i class="bi bi-arrow-clockwise me-1"></i>
-            }
-            Refresh
-        </button>
+        </div>
     </div>
-</div>
 
-@if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
-{
-    <div class="alert alert-info">@ViewModel.Model.StatusMessage</div>
-}
-
-@if (!ViewModel.Model.IsLoggedIn)
-{
-    <div class="alert alert-warning">
-        <i class="bi bi-exclamation-triangle me-1"></i>
-        Please log in to view accounts.
-    </div>
-}
-
-<div class="responsive-panel">
-    @if (ViewModel.Model.Items == null)
+    <!-- Login prompt when not logged in -->
+    @if (!ViewModel.Model.IsLoggedIn)
     {
-        <div class="text-center p-4">
+        <div class="text-center my-5">
+            <p>Please use the Login page to sign in first.</p>
+        </div>
+    }
+
+    <!-- Loading indicator -->
+    @if (ViewModel.Model.IsBusy)
+    {
+        <div class="text-center my-4">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2 text-muted">Loading accounts...</p>
         </div>
     }
-    else if (ViewModel.Model.Items.Count == 0)
+    
+    <!-- Content when logged in -->
+    @if (ViewModel.Model.IsLoggedIn)
     {
-        <div class="text-center p-4">
-            <i class="bi bi-wallet2 fs-1 text-muted"></i>
-            <p class="mt-2">No accounts found. Click "Create Account" to add your first account.</p>
+        <!-- Total Balance Card -->
+        <div class="total-balance-card">
+            <p class="balance-label">Total Balance</p>
+            <h2 class="balance-amount">@CalculateTotalBalance().ToString("C")</h2>
         </div>
-    }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Account Name</th>
-                        <th>Type</th>
-                        <th class="text-end">Balance</th>
-                        <th>Last Updated</th>
-                        <th width="120">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var a in ViewModel.Model.Items)
+
+        <!-- Active Accounts -->
+        @if (!ViewModel.Model.ShowInactive)
+        {
+            @if (ViewModel.Model.Items.Count == 0)
+            {
+                <div class="text-center my-5">
+                    <p>No accounts found.</p>
+                </div>
+            }
+            else
+            {
+                <div class="accounts-grid">
+                    @foreach (var account in ViewModel.Model.Items)
                     {
-                        <tr>
-                            <td class="fw-semibold">@a.AccountName</td>
-                            <td>
-                                <span class="badge bg-secondary">@a.AccountType</span>
-                            </td>
-                            <td class="text-end">
-                                <span class="@(a.CachedBalance >= 0 ? "text-success" : "text-danger")">
-                                    @a.CachedBalance.ToString("C")
-                                </span>
-                            </td>
-                            <td class="text-muted">@a.UpdatedAt.ToString("MMM dd, yyyy")</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" @onclick="() => ViewTransactions(a.Id)">
-                                    <i class="bi bi-receipt"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteAccount(a.Id)">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
+                        <div class="account-card">
+                            @if (!account.IsEditing)
+                            {
+                                <!-- View Mode -->
+                                <div class="account-header">
+                                    <h3 class="account-name">@account.AccountName</h3>
+                                    <div class="account-actions">
+                                        <button class="btn-icon" @onclick="() => OnEditAccountClick(account)" title="Edit">
+                                            ✏️
+                                        </button>
+                                        <button class="btn-icon" @onclick="() => OnDeleteAccountClick(account)" title="Delete">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="account-type-section">
+                                    <span class="account-type-badge">
+                                        <span class="badge-icon">💳</span>
+                                        <span>@account.AccountTypeDisplay</span>
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <!-- Edit Mode -->
+                                <div class="account-header">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           @bind="account.EditAccountName" 
+                                           placeholder="Account Name" />
+                                    <div class="account-actions">
+                                        <button class="btn-icon" @onclick="() => OnSaveAccountClick(account)" title="Save">
+                                            ✅
+                                        </button>
+                                        <button class="btn-icon" @onclick="() => OnCancelEditClick(account)" title="Cancel">
+                                            ❌
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="account-type-section">
+                                    <select class="form-select" @bind="account.EditAccountTypeString">
+                                        <option value="Checking">Checking</option>
+                                        <option value="Savings">Savings</option>
+                                        <option value="Misc">Misc</option>
+                                    </select>
+                                </div>
+                            }
+                            
+                            <div class="account-balance">
+                                <p class="balance-value">@account.CachedBalance.ToString("C")</p>
+                                <p class="balance-currency">USD</p>
+                            </div>
+                        </div>
                     }
-                </tbody>
-            </table>
-        </div>
+                </div>
+            }
+        }
+
+        <!-- Inactive Accounts -->
+        @if (ViewModel.Model.ShowInactive)
+        {
+            @if (ViewModel.Model.InactiveItems.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h3 class="empty-title">No inactive or deleted accounts to show</h3>
+                    <p class="empty-subtitle">Deleted accounts will appear here</p>
+                </div>
+            }
+            else
+            {
+                <div class="accounts-grid">
+                    @foreach (var account in ViewModel.Model.InactiveItems)
+                    {
+                        <div class="account-card inactive-account">
+                            <div class="account-header">
+                                <h3 class="account-name inactive-name">@account.AccountName</h3>
+                                <button class="btn-reactivate" @onclick="() => OnReactivateAccountClick(account)">
+                                    <span class="reactivate-icon">♻️</span>
+                                    <span>Reactivate Account</span>
+                                </button>
+                            </div>
+                            
+                            <div class="account-type-section">
+                                <span class="account-type-badge inactive-badge">
+                                    <span class="badge-icon">💳</span>
+                                    <span>@account.AccountTypeDisplay</span>
+                                </span>
+                                <span class="inactive-label">(Inactive)</span>
+                            </div>
+                            
+                            <div class="account-balance">
+                                <p class="balance-value">@account.CachedBalance.ToString("C")</p>
+                                <p class="balance-currency">USD</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
     }
 </div>
 
@@ -104,8 +199,8 @@
 <CreateAccountModal OnAccountCreated="OnAccountCreated" />
 
 @code {
-    // LLM-Dev:v6 Refactored to use WNAB.MVM ViewModels and Models for shared business logic
-    // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
+    // LLM-Dev:v7 Refactored to match XAML AccountsPage with card layout, edit mode, and inactive accounts
+    // UI matches MAUI version with total balance, responsive grid, and full CRUD operations
     
     protected override async Task OnInitializedAsync()
     {
@@ -134,9 +229,13 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnRefreshClick()
+    private decimal CalculateTotalBalance()
     {
-        await ViewModel.RefreshCommand.ExecuteAsync(null);
+        if (ViewModel.Model.ShowInactive)
+        {
+            return ViewModel.Model.InactiveItems?.Sum(a => a.CachedBalance) ?? 0;
+        }
+        return ViewModel.Model.Items?.Sum(a => a.CachedBalance) ?? 0;
     }
 
     private async Task OnAddAccountClick()
@@ -151,15 +250,34 @@
         await ViewModel.Model.RefreshAsync();
     }
 
-    // Placeholder action handlers
-    private void ViewTransactions(int accountId)
+    private async Task OnToggleShowInactiveClick()
     {
-        // Future: navigate to transactions filtered by account
+        await ViewModel.ToggleShowInactiveCommand.ExecuteAsync(null);
     }
 
-    private async Task DeleteAccount(int accountId)
+    private void OnEditAccountClick(AccountItemViewModel account)
     {
-        // Future: implement delete with confirmation
+        ViewModel.EditAccountCommand.Execute(account);
+    }
+
+    private async Task OnSaveAccountClick(AccountItemViewModel account)
+    {
+        await ViewModel.SaveAccountCommand.ExecuteAsync(account);
+    }
+
+    private void OnCancelEditClick(AccountItemViewModel account)
+    {
+        ViewModel.CancelEditAccountCommand.Execute(account);
+    }
+
+    private async Task OnDeleteAccountClick(AccountItemViewModel account)
+    {
+        await ViewModel.DeleteAccountCommand.ExecuteAsync(account);
+    }
+
+    private async Task OnReactivateAccountClick(AccountItemViewModel account)
+    {
+        await ViewModel.ReactivateAccountCommand.ExecuteAsync(account);
     }
 
     public void Dispose()
