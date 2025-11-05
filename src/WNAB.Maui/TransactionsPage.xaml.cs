@@ -2,20 +2,24 @@ using WNAB.MVM.Behaviors;
 
 namespace WNAB.Maui;
 
-// LLM-Dev: TransactionsPage code-behind following the same pattern as other pages
+// LLM-Dev: TransactionsPage code-behind - thin layer, delegates to ViewModel
 public partial class TransactionsPage : ContentPage
 {
     private readonly TransactionsViewModel _viewModel;
     private readonly IAuthenticationService _authService;
+  
+    public TransactionsPage() : this(
+        ServiceHelper.GetService<TransactionsViewModel>(), 
+      ServiceHelper.GetService<IAuthenticationService>()) { }
     
-    public TransactionsPage() : this(ServiceHelper.GetService<TransactionsViewModel>(), ServiceHelper.GetService<IAuthenticationService>()) { }
-    
-    public TransactionsPage(TransactionsViewModel vm, IAuthenticationService authService)
+    public TransactionsPage(
+        TransactionsViewModel vm, 
+        IAuthenticationService authService)
     {
         InitializeComponent();
         _viewModel = vm;
         _authService = authService;
-        BindingContext = vm;
+      BindingContext = vm;
     }
 
     // LLM-Dev: Added automatic initialization when page appears
@@ -28,9 +32,9 @@ public partial class TransactionsPage : ContentPage
         if (!isAuthenticated)
         {
             await Shell.Current.GoToAsync("//Landing");
-            return;
-        }
+     return;
+      }
 
-        await _viewModel.InitializeAsync();
+      await _viewModel.InitializeAsync();
     }
 }

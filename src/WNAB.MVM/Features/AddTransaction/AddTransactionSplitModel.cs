@@ -10,13 +10,7 @@ namespace WNAB.MVM;
 public partial class AddTransactionSplitModel : ObservableObject
 {
     [ObservableProperty]
-    private int transactionId;
-
-    [ObservableProperty]
     private Category? selectedCategory;
-
-    [ObservableProperty]
-    private CategoryAllocation? selectedCategoryAllocation;
 
     [ObservableProperty]
     private decimal amount;
@@ -28,20 +22,14 @@ public partial class AddTransactionSplitModel : ObservableObject
     private string? notes;
 
     /// <summary>
-    /// Track category allocation ID for API submission.
-    /// Enforces budget-first approach - if no allocation exists, validation should prevent saving.
+    /// Convenience property for display - gets the category name.
     /// </summary>
-    public int CategoryAllocationId => SelectedCategoryAllocation?.Id ?? 0;
+    public string CategoryName => SelectedCategory?.Name ?? string.Empty;
 
     /// <summary>
-    /// Convenience property for display - gets the category name from the allocation.
+    /// Validates that all required fields are populated.
     /// </summary>
-    public string CategoryName => SelectedCategoryAllocation?.Category?.Name ?? SelectedCategory?.Name ?? string.Empty;
-
-    /// <summary>
-    /// Validates that all required fields are populated for API submission.
-    /// </summary>
-    public bool IsValid => CategoryAllocationId > 0 && Amount != 0;
+    public bool IsValid => SelectedCategory != null && Amount != 0;
 
     /// <summary>
     /// Gets validation error message if the split is invalid.
@@ -50,8 +38,8 @@ public partial class AddTransactionSplitModel : ObservableObject
     {
         get
         {
-            if (CategoryAllocationId <= 0)
-                return "Category allocation is required";
+            if (SelectedCategory == null)
+                return "Category is required";
             if (Amount == 0)
                 return "Amount must be non-zero";
             return null;
@@ -59,22 +47,13 @@ public partial class AddTransactionSplitModel : ObservableObject
     }
 
     /// <summary>
-    /// When category allocation is selected, update computed properties.
-    /// </summary>
-    partial void OnSelectedCategoryAllocationChanged(CategoryAllocation? value)
-    {
-        OnPropertyChanged(nameof(CategoryAllocationId));
-        OnPropertyChanged(nameof(CategoryName));
-        OnPropertyChanged(nameof(IsValid));
-        OnPropertyChanged(nameof(ValidationError));
-    }
-
-    /// <summary>
-    /// When category is selected directly, update computed properties.
+    /// When category is selected, update computed properties.
     /// </summary>
     partial void OnSelectedCategoryChanged(Category? value)
     {
         OnPropertyChanged(nameof(CategoryName));
+        OnPropertyChanged(nameof(IsValid));
+        OnPropertyChanged(nameof(ValidationError));
     }
 
     /// <summary>

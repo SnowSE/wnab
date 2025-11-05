@@ -97,7 +97,23 @@ public record TransactionSplitResponse(
     string? Description
 );
 
-
+/// <summary>
+/// DTO for returning category allocation data - no navigation properties
+/// </summary>
+public record CategoryAllocationDto(
+    int Id,
+    int CategoryId,
+    decimal BudgetedAmount,
+    int Month,
+    int Year,
+    string? EditorName,
+    decimal? PercentageAllocation,
+    decimal? OldAmount,
+    string? EditedMemo,
+    bool IsActive,
+    DateTime CreatedAt,
+    DateTime UpdatedAt
+);
 
 /// <summary>
 /// DTO for creating a new category - no circular references

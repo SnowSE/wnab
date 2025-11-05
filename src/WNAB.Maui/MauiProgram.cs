@@ -43,14 +43,22 @@ public static class MauiProgram
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 
-		// LLM-Dev: Register LandingPage
 		builder.Services.AddSingleton<LandingPage>();
 
 		builder.Services.AddSingleton<AddTransactionModel>();
 		builder.Services.AddSingleton<AddTransactionViewModel>();
 		builder.Services.AddSingleton<TransactionPopup>();
 
-        builder.Services.AddSingleton<AddCategoryModel>();
+        builder.Services.AddSingleton<EditTransactionModel>();
+		builder.Services.AddSingleton<EditTransactionViewModel>();
+
+		builder.Services.AddSingleton<EditTransactionSplitModel>();
+		builder.Services.AddSingleton<EditTransactionSplitViewModel>();
+
+		builder.Services.AddSingleton<AddSplitToTransactionModel>();
+		builder.Services.AddSingleton<AddSplitToTransactionViewModel>();
+
+      builder.Services.AddSingleton<AddCategoryModel>();
 		builder.Services.AddSingleton<AddCategoryViewModel>();
 		builder.Services.AddSingleton<AddCategoryPopup>();
 
@@ -62,9 +70,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AddAccountViewModel>();
 		builder.Services.AddSingleton<AddAccountPopup>();
 
-
-
-		// LLM-Dev:v2 Centralize base root for MAUI API calls with authentication
 		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
 		builder.Services.AddHttpClient("wnab-api", client =>
 		{
@@ -84,15 +89,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CategoriesViewModel>();
 		builder.Services.AddSingleton<CategoriesPage>();
 
-        // LLM-Dev:v3 Register Accounts so Shell can resolve via DI (constructor requires VM)
         builder.Services.AddSingleton<AccountsModel>();
-        builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
+   builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
         builder.Services.AddSingleton<AccountsPage>();
-		// LLM-Dev: Register Transactions page and view model
+
 		builder.Services.AddSingleton<TransactionsModel>();
 		builder.Services.AddSingleton<TransactionsViewModel>();
 		builder.Services.AddSingleton<TransactionsPage>();
-		// LLM-Dev: Register PlanBudget page, model, and view model with TransactionManagementService
+
 		builder.Services.AddSingleton<PlanBudgetModel>(sp => new PlanBudgetModel(
 			sp.GetRequiredService<CategoryManagementService>(),
 			sp.GetRequiredService<CategoryAllocationManagementService>(),
@@ -105,7 +109,6 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-		// LLM-Dev:v6 expose ServiceProvider for ServiceHelper, to support parameterless page constructors
 		ServiceHelper.Services = app.Services;
 		return app;
 	}

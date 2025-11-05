@@ -180,56 +180,12 @@ public partial class AddTransactionModel : ObservableObject
     }
 
     /// <summary>
-    /// Update CategoryId and find CategoryAllocation when category is selected.
+    /// Update CategoryId when category is selected.
     /// Enforces budget-first approach: CategoryAllocation must exist for the transaction date.
     /// </summary>
     partial void OnSelectedCategoryChanged(Category? value)
     {
         CategoryId = value?.Id ?? 0;
-        
-        // When category changes, automatically find allocation for transaction date
-        if (value != null && !IsSplitTransaction)
-        {
-            _ = ValidateAndSetCategoryAllocationAsync(value.Id);
-        }
-    }
-    
-    /// <summary>
-    /// Find and validate CategoryAllocation for the selected category and transaction date.
-    /// </summary>
-    private async Task ValidateAndSetCategoryAllocationAsync(int categoryId)
-    {
-        try
-        {
-            var allocation = await _allocations.FindAllocationAsync(
-                categoryId, 
-                TransactionDate.Month, 
-                TransactionDate.Year);
-            
-            if (allocation == null)
-            {
-                StatusMessage = $"No budget allocation found for {TransactionDate:MMMM yyyy}. Please create a budget first.";
-            }
-            else
-            {
-                StatusMessage = "Ready to create transaction";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error validating category allocation: {ex.Message}";
-        }
-    }
-    
-    /// <summary>
-    /// Re-validate allocation when transaction date changes.
-    /// </summary>
-    partial void OnTransactionDateChanged(DateTime value)
-    {
-        if (SelectedCategory != null && !IsSplitTransaction)
-        {
-            _ = ValidateAndSetCategoryAllocationAsync(SelectedCategory.Id);
-        }
     }
 
     /// <summary>
@@ -267,58 +223,19 @@ public partial class AddTransactionModel : ObservableObject
         var newSplit = new AddTransactionSplitViewModel();
         newSplit.Model.Amount = RemainingAmount > 0 ? RemainingAmount : 0;
         
-        // Subscribe to Model property changes to update totals and validate allocations
-        newSplit.Model.PropertyChanged += async (s, e) =>
+        // Subscribe to amount changes to update totals
+        newSplit.Model.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(AddTransactionSplitModel.Amount))
             {
                 OnPropertyChanged(nameof(RemainingAmount));
                 OnPropertyChanged(nameof(AreSplitsBalanced));
             }
-            else if (e.PropertyName == nameof(AddTransactionSplitModel.SelectedCategory))
-            {
-                // When category is selected in a split, find and set the allocation
-                if (newSplit.Model.SelectedCategory != null)
-                {
-                    await FindAndSetAllocationForSplitAsync(newSplit);
-                }
-            }
         };
         
         Splits.Add(newSplit);
         OnPropertyChanged(nameof(RemainingAmount));
         OnPropertyChanged(nameof(AreSplitsBalanced));
-    }
-    
-    /// <summary>
-    /// Find CategoryAllocation for a split based on transaction date.
-    /// </summary>
-    private async Task FindAndSetAllocationForSplitAsync(AddTransactionSplitViewModel split)
-    {
-        if (split.Model.SelectedCategory == null) return;
-        
-        try
-        {
-            var allocation = await _allocations.FindAllocationAsync(
-                split.Model.SelectedCategory.Id, 
-                TransactionDate.Month, 
-                TransactionDate.Year);
-            
-            split.Model.SelectedCategoryAllocation = allocation;
-            
-            if (allocation == null)
-            {
-                StatusMessage = $"Missing budget allocation for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
-            }
-            else if (Splits.All(s => s.Model.CategoryAllocationId > 0))
-            {
-                StatusMessage = "Ready to create transaction";
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Error finding allocation: {ex.Message}";
-        }
     }
 
     /// <summary>
@@ -366,8 +283,8 @@ public partial class AddTransactionModel : ObservableObject
             if (!AreSplitsBalanced)
                 return $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
 
-            // Validate each split has a category allocation
-            if (Splits.Any(s => s.Model.CategoryAllocationId <= 0))
+            // Validate each split has a category selected
+            if (Splits.Any(s => s.Model.SelectedCategory == null))
                 return "Please select a category for all splits";
         }
 
@@ -400,14 +317,36 @@ public partial class AddTransactionModel : ObservableObject
             
             if (IsSplitTransaction)
             {
-                // Create transaction with multiple splits using CategoryAllocation
-                var splitRecords = Splits.Select(s => 
-                    new TransactionSplitRecord(
-                        s.Model.CategoryAllocationId, 
+                // Look up allocations for each split at save time
+                var splitRecords = new List<TransactionSplitRecord>();
+                
+                foreach (var split in Splits)
+                {
+                    if (split.Model.SelectedCategory == null)
+                    {
+                        StatusMessage = "Please select a category for all splits";
+                        return (false, "Please select a category for all splits");
+                    }
+                    
+                    var allocation = await _allocations.FindAllocationAsync(
+                        split.Model.SelectedCategory.Id, 
+                        TransactionDate.Month, 
+                        TransactionDate.Year);
+                    
+                    if (allocation == null)
+                    {
+                        var errorMsg = $"No budget allocation found for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                        StatusMessage = errorMsg;
+                        return (false, errorMsg);
+                    }
+                    
+                    splitRecords.Add(new TransactionSplitRecord(
+                        allocation.Id, 
                         -1, 
-                        s.Model.Amount, 
-                        s.Model.IsIncome, 
-                        s.Model.Notes)).ToList();
+                        split.Model.Amount, 
+                        split.Model.IsIncome, 
+                        split.Model.Notes));
+                }
                     
                 record = new TransactionRecord(
                     AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
