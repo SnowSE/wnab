@@ -52,6 +52,19 @@ public class TransactionManagementService
         return result?.Transactions ?? new();
     }
 
+    public async Task<TransactionResponse?> GetTransactionByIdAsync(int transactionId, CancellationToken ct = default)
+    {
+        try
+        {
+            var result = await _http.GetFromJsonAsync<TransactionResponse>($"transactions/{transactionId}", ct);
+            return result;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     // Update a transaction
     public async Task<TransactionResponse> UpdateTransactionAsync(EditTransactionRequest request, CancellationToken ct = default)
     {
@@ -93,6 +106,19 @@ public class TransactionManagementService
         return result?.TransactionSplits ?? new();
     }
 
+    public async Task<TransactionSplitResponse?> GetTransactionSplitByIdAsync(int splitId, CancellationToken ct = default)
+    {
+        try
+        {
+            var result = await _http.GetFromJsonAsync<TransactionSplitResponse>($"transactionsplits/{splitId}", ct);
+            return result;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
+
     // Update a transaction split
     public async Task<TransactionSplitResponse> UpdateTransactionSplitAsync(EditTransactionSplitRequest request, CancellationToken ct = default)
     {
@@ -115,7 +141,14 @@ public class TransactionManagementService
 
     public async Task DeleteTransactionSplitAsync(int transactionSplitId, CancellationToken ct = default)
     {
+        System.Diagnostics.Debug.WriteLine($"[TransactionManagementService] Deleting split ID: {transactionSplitId}");
+        
         var response = await _http.DeleteAsync($"transactionsplits/{transactionSplitId}", ct);
+        
+        System.Diagnostics.Debug.WriteLine($"[TransactionManagementService] Delete response status: {response.StatusCode}");
+        
         response.EnsureSuccessStatusCode();
+        
+        System.Diagnostics.Debug.WriteLine($"[TransactionManagementService] Split {transactionSplitId} deleted successfully");
     }
 }
