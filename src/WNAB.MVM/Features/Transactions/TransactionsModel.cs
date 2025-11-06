@@ -121,16 +121,18 @@ public partial class TransactionsModel : ObservableObject
             // Populate Items collection (sorted by date descending)
             foreach (var t in transactionsList.OrderByDescending(t => t.TransactionDate))
   {
+     var transactionSplits = splitsList.Where(s => s.TransactionId == t.Id).ToList();
      Items.Add(new TransactionItem(
         t.Id,
          t.TransactionDate,
                     t.Payee,
            t.Description,
       t.Amount,
-       t.AccountName));
+       t.AccountName,
+       transactionSplits));
      }
 
-    // Populate Splits collection
+    // Populate Splits collection (keep for compatibility)
        foreach (var s in splitsList)
      {
                 Splits.Add(s);
@@ -182,7 +184,8 @@ public partial class TransactionsModel : ObservableObject
       t.Payee,
         t.Description,
         t.Amount,
-        t.AccountName));
+        t.AccountName,
+        new List<TransactionSplitResponse>()));
          }
 
          StatusMessage = list.Count == 0 ? "No transactions found" : $"Loaded {list.Count} transactions";
@@ -352,5 +355,6 @@ public sealed record TransactionItem(
     string Payee,
     string Description,
     decimal Amount,
-    string AccountName
+    string AccountName,
+    List<TransactionSplitResponse> Splits
 );
