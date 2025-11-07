@@ -18,11 +18,11 @@ public class AllocationDBService
     /// <summary>
     /// Gets all allocations for a specific category
     /// </summary>
-    public async Task<List<CategoryAllocationDto>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken cancellationToken = default)
+    public async Task<List<CategoryAllocationResponse>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken cancellationToken = default)
     {
         return await _db.Allocations
             .Where(a => a.CategoryId == categoryId)
-            .Select(a => new CategoryAllocationDto(
+            .Select(a => new CategoryAllocationResponse(
                 a.Id,
                 a.CategoryId,
                 a.BudgetedAmount,
