@@ -17,33 +17,17 @@ public partial class AccountsModel : ObservableObject
     public ObservableCollection<AccountItemViewModel> Items { get; } = new();
     public ObservableCollection<AccountItemViewModel> InactiveItems { get; } = new();
 
-    private bool _isBusy;
-    public bool IsBusy
-    {
-        get => _isBusy;
-        set => SetProperty(ref _isBusy, value);
-    }
+    [ObservableProperty]
+    private bool isBusy;
 
-    private bool _isLoggedIn;
-    public bool IsLoggedIn
-    {
-        get => _isLoggedIn;
-        set => SetProperty(ref _isLoggedIn, value);
-    }
+    [ObservableProperty]
+    private bool isLoggedIn;
 
-    private string _statusMessage = "Loading...";
-    public string StatusMessage
-    {
-        get => _statusMessage;
-        set => SetProperty(ref _statusMessage, value);
-    }
+    [ObservableProperty]
+    private string statusMessage = "Loading...";
 
-    private bool _showInactive = false;
-    public bool ShowInactive
-    {
-        get => _showInactive;
-        set => SetProperty(ref _showInactive, value);
-    }
+    [ObservableProperty]
+    private bool showInactive = false;
 
     public AccountsModel(AccountManagementService accounts, IAuthenticationService authService)
     {
