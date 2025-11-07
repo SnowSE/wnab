@@ -249,6 +249,10 @@
     {
         // Called by modal when account is created - refresh the list
         await ViewModel.Model.RefreshAsync();
+        
+        // Close the modal using Bootstrap's API
+        await JS.InvokeVoidAsync("eval", 
+            "bootstrap.Modal.getInstance(document.getElementById('createAccountModal'))?.hide()");
     }
 
     private async Task OnToggleShowInactiveClick()
