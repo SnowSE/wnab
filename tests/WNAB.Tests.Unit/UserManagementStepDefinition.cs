@@ -2,12 +2,11 @@ using System;
 using System.Linq;
 using Reqnroll;
 using WNAB.Data;
-using WNAB.SharedDTOs;
-
 using Shouldly;
 
 namespace WNAB.Tests.Unit;
 
+public record UserRecord(string FirstName, string LastName, string Email);
 
 public partial class StepDefinitions
 {

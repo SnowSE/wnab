@@ -67,7 +67,7 @@ public class AccountDBService
     public async Task<List<Account>> GetAccountsForUserAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _db.Accounts
-            .Where(a => a.UserId == userId && a.IsActive)
+            .Where(a => a.UserId == userId)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
@@ -77,7 +77,7 @@ public class AccountDBService
         return _db.Accounts.AnyAsync(a => a.Id == accountId && a.UserId == userId && a.IsActive, cancellationToken);
     }
 
-    public async Task<Account?> UpdateAccountAsync(int accountId, int userId, string newName, AccountType newAccountType, int? requestAccountId = null, CancellationToken cancellationToken = default)
+    public async Task<Account?> UpdateAccountAsync(int accountId, int userId, string newName, AccountType newAccountType, bool isActive, int? requestAccountId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(newName)) throw new ArgumentException("Account name is required", nameof(newName));
 
@@ -89,16 +89,16 @@ public class AccountDBService
         if (_db.ChangeTracker.HasChanges())
             throw new InvalidOperationException("Context has pending changes; aborting account update.");
 
-        // Verify the account exists and belongs to the user
+        // Verify the account exists and belongs to the user (don't filter by IsActive - allow updating inactive accounts)
         var account = await _db.Accounts
-            .FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId && a.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(a => a.Id == accountId && a.UserId == userId, cancellationToken);
 
         if (account is null)
             return null; // Account not found or doesn't belong to user
 
-        // Check for duplicate account names for this user (excluding the current account, only check active accounts)
+        // Check for duplicate account names for this user (excluding the current account, only check accounts with same active status we're setting)
         var duplicateExists = await _db.Accounts
-            .AnyAsync(a => a.UserId == userId && a.Id != accountId && a.AccountName == newName && a.IsActive, cancellationToken);
+            .AnyAsync(a => a.UserId == userId && a.Id != accountId && a.AccountName == newName && a.IsActive == isActive, cancellationToken);
 
         if (duplicateExists)
             throw new InvalidOperationException($"An account with the name '{newName}' already exists for this user.");
@@ -106,6 +106,7 @@ public class AccountDBService
         // Update the account
         account.AccountName = newName;
         account.AccountType = newAccountType;
+        account.IsActive = isActive;
         account.UpdatedAt = DateTime.UtcNow;
 
         var affected = await _db.SaveChangesAsync(cancellationToken);
@@ -139,53 +140,6 @@ public class AccountDBService
 
         // Soft delete: set IsActive to false instead of removing the account
         account.IsActive = false;
-        account.UpdatedAt = DateTime.UtcNow;
-        var affected = await _db.SaveChangesAsync(cancellationToken);
-
-        // Postcondition: ensure only the account was updated
-        if (affected != 1)
-            throw new InvalidOperationException($"Expected to update exactly 1 entry, but updated {affected}.");
-
-        return (true, null);
-    }
-
-    public async Task<List<Account>> GetInactiveAccountsForUserAsync(int userId, CancellationToken cancellationToken = default)
-    {
-        return await _db.Accounts
-            .Where(a => a.UserId == userId && !a.IsActive)
-            .AsNoTracking()
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<(bool Success, string? ErrorMessage)> ReactivateAccountAsync(int accountId, int userId, CancellationToken cancellationToken = default)
-    {
-        // Validate account ID
-        if (accountId <= 0)
-            return (false, "Invalid account ID.");
-
-        // Guard: prevent saving unrelated pending changes in this context
-        if (_db.ChangeTracker.HasChanges())
-            throw new InvalidOperationException("Context has pending changes; aborting account reactivation.");
-
-        // Verify the account exists and belongs to the user
-        var account = await _db.Accounts
-            .FirstOrDefaultAsync(a => a.Id == accountId && !a.IsActive, cancellationToken);
-
-        if (account is null)
-            return (false, "Inactive account not found.");
-
-        if (account.UserId != userId)
-            return (false, "Account does not belong to the current user.");
-
-        // Check for duplicate active account names for this user
-        var duplicateExists = await _db.Accounts
-            .AnyAsync(a => a.UserId == userId && a.Id != accountId && a.AccountName == account.AccountName && a.IsActive, cancellationToken);
-
-        if (duplicateExists)
-            return (false, $"An active account with the name '{account.AccountName}' already exists. Please rename it first.");
-
-        // Reactivate: set IsActive to true
-        account.IsActive = true;
         account.UpdatedAt = DateTime.UtcNow;
         var affected = await _db.SaveChangesAsync(cancellationToken);
 

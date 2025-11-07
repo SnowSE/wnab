@@ -60,12 +60,12 @@ public class AccountManagementService
 	}
 
 	/// <summary>
-	/// Update an existing account's name and type for the current authenticated user.
+	/// Update an existing account's name, type, and active status for the current authenticated user.
 	/// Returns a tuple with success status and error message (if any).
 	/// </summary>
-	public async Task<(bool Success, string? ErrorMessage)> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType, CancellationToken ct = default)
+	public async Task<(bool Success, string? ErrorMessage)> UpdateAccountAsync(int accountId, string newName, AccountType newAccountType, bool isActive, CancellationToken ct = default)
 	{
-		var request = new EditAccountRequest(accountId, newName, newAccountType);
+		var request = new EditAccountRequest(accountId, newName, newAccountType, isActive);
 		var response = await _http.PutAsJsonAsync($"accounts/{accountId}", request, ct);
 		
 		if (response.IsSuccessStatusCode)
@@ -145,62 +145,6 @@ public class AccountManagementService
 		catch
 		{
 			errorMessage = "Failed to delete account. Unable to read error details.";
-		}
-
-		return (false, errorMessage);
-	}
-
-	/// <summary>
-	/// Get inactive accounts for the current authenticated user.
-	/// Returns a list of inactive accounts.
-	/// </summary>
-	public async Task<List<Account>> GetInactiveAccountsAsync(CancellationToken ct = default)
-	{
-		var list = await _http.GetFromJsonAsync<List<Account>>("accounts/inactive", ct);
-		return list ?? new();
-	}
-
-	/// <summary>
-	/// Reactivate an inactive account for the current authenticated user.
-	/// Returns a tuple with success status and error message (if any).
-	/// </summary>
-	public async Task<(bool Success, string? ErrorMessage)> ReactivateAccountAsync(int accountId, CancellationToken ct = default)
-	{
-		var response = await _http.PutAsync($"accounts/{accountId}/reactivate", null, ct);
-		
-		if (response.IsSuccessStatusCode)
-		{
-			return (true, null);
-		}
-
-		// Extract error message from response
-		string? errorMessage = null;
-		try
-		{
-			if (response.StatusCode == System.Net.HttpStatusCode.BadRequest ||
-				response.StatusCode == System.Net.HttpStatusCode.NotFound)
-			{
-				// These return plain string error messages
-				errorMessage = await response.Content.ReadAsStringAsync(ct);
-			}
-			else if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
-			{
-				// Conflict returns JSON with error property
-				var errorResponse = await response.Content.ReadFromJsonAsync<ErrorResponse>(cancellationToken: ct);
-				errorMessage = errorResponse?.Error;
-			}
-			else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
-			{
-				errorMessage = "You don't have permission to reactivate this account.";
-			}
-			else
-			{
-				errorMessage = $"Failed to reactivate account. Status: {response.StatusCode}";
-			}
-		}
-		catch
-		{
-			errorMessage = "Failed to reactivate account. Unable to read error details.";
 		}
 
 		return (false, errorMessage);

@@ -8,7 +8,8 @@ public partial class AccountsPage : ContentPage
     private readonly IAuthenticationService _authService;
     private const double CardTargetWidth = 320; // px
     private const double ItemSpacing = 16; // matches XAML spacing
-    
+    private CollectionView? _accountsCollection; // backing field for x:Name workaround
+
     public AccountsPage() : this(ServiceHelper.GetService<AccountsViewModel>(), ServiceHelper.GetService<IAuthenticationService>()) { }
     
     public AccountsPage(AccountsViewModel vm, IAuthenticationService authService)
@@ -18,8 +19,16 @@ public partial class AccountsPage : ContentPage
         _authService = authService;
         BindingContext = vm;
 
+        // Find the collection view after content is loaded
+        Loaded += OnLoaded;
         // Keep the grid responsive as the window resizes
         SizeChanged += (_, __) => UpdateGridSpan();
+    }
+
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        _accountsCollection = this.FindByName<CollectionView>("AccountsCollection");
+        UpdateGridSpan();
     }
 
     // LLM-Dev: v1 Added automatic initialization when page appears
@@ -43,10 +52,10 @@ public partial class AccountsPage : ContentPage
 
     private void UpdateGridSpan()
     {
-        if (AccountsCollection?.ItemsLayout is GridItemsLayout grid)
+        if (_accountsCollection?.ItemsLayout is GridItemsLayout grid)
         {
             // Use the actual width of the collection to compute an appropriate number of columns
-            var width = AccountsCollection.Width;
+            var width = _accountsCollection.Width;
             if (width <= 0)
                 return;
 

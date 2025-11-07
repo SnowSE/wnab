@@ -163,15 +163,6 @@ app.MapGet("/accounts", async (HttpContext context, WnabContext db, WNAB.API.Ser
     return Results.Ok(accounts);
 }).RequireAuthorization();
 
-app.MapGet("/accounts/inactive", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
-{
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
-    if (user is null) return Results.Unauthorized();
-
-    var inactiveAccounts = await accountsService.GetInactiveAccountsForUserAsync(user.Id);
-    return Results.Ok(inactiveAccounts);
-}).RequireAuthorization();
-
 app.MapGet("/allocations", async (HttpContext context, int categoryId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
@@ -562,12 +553,12 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
 
     try
     {
-        var updatedAccount = await accountsService.UpdateAccountAsync(id, user.Id, req.NewName, req.NewAccountType, req.Id);
+        var updatedAccount = await accountsService.UpdateAccountAsync(id, user.Id, req.NewName, req.NewAccountType, req.IsActive, req.Id);
 
         if (updatedAccount is null)
             return Results.NotFound("Account not found or does not belong to the current user.");
 
-        return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.UpdatedAt });
+        return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.IsActive, updatedAccount.UpdatedAt });
     }
     catch (ArgumentException ex) when (ex.Message.Contains("mismatch"))
     {
@@ -576,38 +567,6 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
     catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
     {
         return Results.Conflict(new { error = ex.Message });
-    }
-}).RequireAuthorization();
-
-
-
-// Reactivate account by id (must belong to current user)
-app.MapPut("/accounts/{id}/reactivate", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
-{
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
-    if (user is null) return Results.Unauthorized();
-
-    try
-    {
-        var (success, errorMessage) = await accountsService.ReactivateAccountAsync(id, user.Id);
-
-        if (!success)
-        {
-            return errorMessage switch
-            {
-                "Invalid account ID." => Results.BadRequest(errorMessage),
-                "Inactive account not found." => Results.NotFound(errorMessage),
-                "Account does not belong to the current user." => Results.Forbid(),
-                _ when errorMessage?.Contains("already exists") == true => Results.Conflict(new { error = errorMessage }),
-                _ => Results.BadRequest("An error occurred while reactivating the account.")
-            };
-        }
-
-        return Results.NoContent();
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.Problem(ex.Message, statusCode: 500);
     }
 }).RequireAuthorization();
 
