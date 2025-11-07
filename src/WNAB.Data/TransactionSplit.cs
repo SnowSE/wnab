@@ -9,11 +9,11 @@ public class TransactionSplit
 
     public int TransactionId { get; set; }
 
-    public int CategoryAllocationId { get; set; }
+    public int? CategoryAllocationId { get; set; }
 
     public decimal Amount { get; set; }
 
-    public bool IsIncome { get; set; }
+    public bool IsIncome => CategoryAllocationId is null;
 
     [MaxLength(1000)]
     public string? Description { get; set; }

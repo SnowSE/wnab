@@ -262,7 +262,7 @@ public partial class PlanBudgetModel : ObservableObject
             var relevantSplits = splits.Where(s => s.CategoryAllocationId == allocationId);
             
             // Sum the amounts (expenses are positive, income would be negative if IsIncome = true)
-            var spent = relevantSplits.Sum(s => s.IsIncome ? -s.Amount : s.Amount);
+            var spent = relevantSplits.Sum(s => s.Amount);
             
             _spentAmounts[allocationId] = spent;
         }

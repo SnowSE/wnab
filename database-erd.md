@@ -20,7 +20,6 @@ erDiagram
         string Name
         string Description
         string Color
-        bool IsIncome
         datetime CreatedAt
         datetime UpdatedAt
         bool IsActive
@@ -73,7 +72,6 @@ erDiagram
         int TransactionId FK
         int CategoryAllocationId FK
         decimal Amount
-        bool IsIncome
         string Notes
         datetime CreatedAt
         datetime UpdatedAt
@@ -114,7 +112,7 @@ erDiagram
 - If the transaction is not split (e.g. the entire transaction amount is for a single category), the system creates a single TransactionSplit behind the scenes for the entire amount
 - Every transaction has at least 1 TransactionSplit record
 - Enforces budget-first approach: must reference an existing CategoryAllocation
-- `IsIncome` flag allows splits to be marked as income separately from expense
+- Splits can be marked as income by setting CategoryAllocationId to null.
 
 ### Supporting Entities
 

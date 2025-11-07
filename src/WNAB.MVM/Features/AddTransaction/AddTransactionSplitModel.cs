@@ -15,8 +15,7 @@ public partial class AddTransactionSplitModel : ObservableObject
     [ObservableProperty]
     private decimal amount;
 
-    [ObservableProperty]
-    private bool isIncome;
+    public bool IsIncome => SelectedCategory is null;
 
     [ObservableProperty]
     private string? notes;
@@ -54,6 +53,7 @@ public partial class AddTransactionSplitModel : ObservableObject
         OnPropertyChanged(nameof(CategoryName));
         OnPropertyChanged(nameof(IsValid));
         OnPropertyChanged(nameof(ValidationError));
+        OnPropertyChanged(nameof(IsIncome));
     }
 
     /// <summary>

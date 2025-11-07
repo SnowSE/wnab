@@ -137,7 +137,6 @@ public class TransactionDBService
                 TransactionId = transaction.Id,
                 CategoryAllocationId = splitRecord.CategoryAllocationId,
                 Amount = splitRecord.Amount,
-                IsIncome = splitRecord.IsIncome,
                 Description = splitRecord.Notes,
                 Transaction = transaction,
                 CategoryAllocation = allocation,

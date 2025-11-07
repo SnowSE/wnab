@@ -17,7 +17,7 @@ public class BudgetService
         this.categoryAllocationService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
     }
 
-    public async Task<decimal> CalculateRTA(int month, int year)
+    public async Task<decimal> CalculateReadyToAssign(int month, int year)
     {
         // pull out things from the context
 

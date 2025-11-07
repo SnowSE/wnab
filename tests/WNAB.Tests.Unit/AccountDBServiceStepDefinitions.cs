@@ -46,7 +46,7 @@ public partial class StepDefinitions
     public void GivenPendingCategoryChangeExists()
     {
         var user = context.Get<User>("User");
-        _db.Categories.Add(new Category { Id = 10, UserId = user.Id, Name = "Food", IsIncome = false, IsActive = true });
+        _db.Categories.Add(new Category { Id = 10, UserId = user.Id, Name = "Food", IsActive = true });
         // do not SaveChanges -> leaves pending change in ChangeTracker
     }
 

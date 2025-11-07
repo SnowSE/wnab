@@ -18,8 +18,6 @@ public class Category
     [MaxLength(7)] // For hex color codes like #FF5733
     public string? Color { get; set; }
 
-    public bool IsIncome { get; set; }
-
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

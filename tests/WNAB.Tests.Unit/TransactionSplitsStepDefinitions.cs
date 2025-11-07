@@ -33,7 +33,6 @@ public partial class StepDefinitions
                 category.Id,
                 transaction.Id,
                 amount,
-                false,
                 null
             );
             splitRecords.Add(splitRecord);
@@ -57,7 +56,7 @@ public partial class StepDefinitions
         var transactionSplits = new List<TransactionSplit>();
         int nextSplitId = 1;
         
-		foreach (var splitRecord in splitRecords)
+		foreach (var splitRecord in splitRecords.Where(sr => sr.CategoryAllocationId is not null))
 		{
 			var category = categories.Single(c => c.Id == splitRecord.CategoryAllocationId);
 			var split = new TransactionSplit
@@ -66,9 +65,8 @@ public partial class StepDefinitions
 				CategoryAllocationId = splitRecord.CategoryAllocationId,
 				TransactionId = splitRecord.TransactionId,
 				Amount = splitRecord.Amount,
-				IsIncome = splitRecord.IsIncome,
 				Description = splitRecord.Notes,
-				CategoryAllocation = new CategoryAllocation { Id = splitRecord.CategoryAllocationId, CategoryId = category.Id, Category = category },
+				CategoryAllocation = new CategoryAllocation { Id = splitRecord.CategoryAllocationId!.Value, CategoryId = category.Id, Category = category },
 				Transaction = transaction
 			};
 			transactionSplits.Add(split);

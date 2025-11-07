@@ -367,7 +367,6 @@ app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRe
             rec.CategoryAllocationId,
             user.Id,
             rec.Amount,
-            rec.IsIncome,
             rec.Notes
         );
 
@@ -503,7 +502,6 @@ app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTr
             user.Id,
             req.CategoryAllocationId,
             req.Amount,
-            req.IsIncome,
             req.Description
         );
 

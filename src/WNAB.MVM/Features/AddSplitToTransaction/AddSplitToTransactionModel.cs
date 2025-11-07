@@ -25,9 +25,6 @@ public partial class AddSplitToTransactionModel : ObservableObject
     private decimal amount;
 
     [ObservableProperty]
-    private bool isIncome;
-
-    [ObservableProperty]
     private string? notes;
 
     [ObservableProperty]
@@ -168,7 +165,6 @@ public partial class AddSplitToTransactionModel : ObservableObject
                 allocation.Id,
                 TransactionId,
                 Amount,
-                IsIncome,
                 Notes);
 
             await _transactions.CreateTransactionSplitAsync(record);
@@ -193,7 +189,6 @@ public partial class AddSplitToTransactionModel : ObservableObject
         TransactionId = 0;
         SelectedCategory = null;
         Amount = 0;
-        IsIncome = false;
         Notes = null;
         StatusMessage = string.Empty;
         TransactionDate = DateTime.Today;

@@ -11,8 +11,8 @@ public class IncomeExpenseConverter : IValueConverter
     {
         if (value is bool isIncome)
         {
-     return isIncome ? "Income" : "Expense";
-    }
+            return isIncome ? "Income" : "Expense";
+        }
         return "Expense";
     }
 

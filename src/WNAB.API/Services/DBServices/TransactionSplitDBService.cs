@@ -40,7 +40,6 @@ public class TransactionSplitDBService
                 ts.TransactionId,
                 ts.CategoryAllocation.Category.Name,
                 ts.Amount,
-                ts.IsIncome,
                 ts.Description
             ))
             .AsNoTracking()
@@ -63,7 +62,6 @@ public class TransactionSplitDBService
                 ts.TransactionId,
                 ts.CategoryAllocation.Category.Name,
                 ts.Amount,
-                ts.IsIncome,
                 ts.Description
             ))
             .AsNoTracking()
@@ -75,10 +73,9 @@ public class TransactionSplitDBService
     /// </summary>
     public async Task<TransactionSplitResponse> CreateTransactionSplitAsync(
         int transactionId,
-        int categoryAllocationId,
+        int? categoryAllocationId,
         int userId,
         decimal amount,
-        bool isIncome,
         string? notes,
         CancellationToken cancellationToken = default)
     {
@@ -94,13 +91,17 @@ public class TransactionSplitDBService
         if (transaction is null)
             throw new InvalidOperationException("Transaction not found or does not belong to user");
 
-        // Validate category allocation belongs to user's categories and load it
-        var allocation = await _db.Allocations
-            .Include(a => a.Category)
-            .FirstOrDefaultAsync(a => a.Id == categoryAllocationId && a.Category.UserId == userId, cancellationToken);
-        
-        if (allocation is null)
-            throw new InvalidOperationException("Category allocation does not belong to user");
+        CategoryAllocation? allocation = null;
+        if (categoryAllocationId is not null)
+        {
+            // Validate category allocation belongs to user's categories and load it
+            allocation = await _db.Allocations
+                .Include(a => a.Category)
+                .FirstOrDefaultAsync(a => a.Id == categoryAllocationId && a.Category.UserId == userId, cancellationToken);
+
+            if (allocation is null)
+                throw new InvalidOperationException("Category allocation does not belong to user");
+        }
 
         var utcNow = DateTime.UtcNow;
 
@@ -109,10 +110,8 @@ public class TransactionSplitDBService
             TransactionId = transactionId,
             CategoryAllocationId = categoryAllocationId,
             Amount = amount,
-            IsIncome = isIncome,
             Description = notes,
             Transaction = transaction,
-            CategoryAllocation = allocation,
             CreatedAt = utcNow,
             UpdatedAt = utcNow
         };
@@ -128,9 +127,8 @@ public class TransactionSplitDBService
             split.Id,
             split.CategoryAllocationId,
             split.TransactionId,
-            allocation.Category.Name,
+            allocation?.Category.Name ?? "Income",
             split.Amount,
-            split.IsIncome,
             split.Description
         );
     }
@@ -141,9 +139,8 @@ public class TransactionSplitDBService
     public async Task<TransactionSplitResponse> UpdateTransactionSplitAsync(
         int splitId,
         int userId,
-        int categoryAllocationId,
+        int? categoryAllocationId,
         decimal amount,
-        bool isIncome,
         string? description,
         CancellationToken cancellationToken = default)
     {
@@ -177,7 +174,6 @@ public class TransactionSplitDBService
         // Update split properties
         split.CategoryAllocationId = categoryAllocationId;
         split.Amount = amount;
-        split.IsIncome = isIncome;
         split.Description = description;
         split.UpdatedAt = utcNow;
 
@@ -197,7 +193,6 @@ public class TransactionSplitDBService
             split.TransactionId,
             split.CategoryAllocation.Category.Name,
             split.Amount,
-            split.IsIncome,
             split.Description
         );
     }

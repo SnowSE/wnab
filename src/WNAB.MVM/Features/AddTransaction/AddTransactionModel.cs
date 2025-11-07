@@ -344,7 +344,6 @@ public partial class AddTransactionModel : ObservableObject
                         allocation.Id, 
                         -1, 
                         split.Model.Amount, 
-                        split.Model.IsIncome, 
                         split.Model.Notes));
                 }
                     
@@ -374,7 +373,7 @@ public partial class AddTransactionModel : ObservableObject
                 
                 var splitRecords = new List<TransactionSplitRecord>
                 {
-                    new TransactionSplitRecord(allocation.Id, -1, Amount, SelectedCategory.IsIncome, null)
+                    new TransactionSplitRecord(allocation.Id, -1, Amount, null)
                 };
                 
                 record = new TransactionRecord(

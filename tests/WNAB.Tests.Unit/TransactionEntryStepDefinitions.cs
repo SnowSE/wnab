@@ -104,7 +104,7 @@ public partial class StepDefinitions
                     "Budget allocations must be created before transactions (budget-first approach).");
             }
 
-            splitRecords.Add(new TransactionSplitRecord(allocation.Id, 0, splitAmount, false, null));
+            splitRecords.Add(new TransactionSplitRecord(allocation.Id, 0, splitAmount, null));
         }
 
         var record = new TransactionRecord(

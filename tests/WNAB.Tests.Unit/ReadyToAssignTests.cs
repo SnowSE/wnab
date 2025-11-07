@@ -13,7 +13,7 @@ using WNAB.MVM;
 
 namespace WNAB.Tests.Unit;
 
-public class RTATest
+public class ReadyToAssignTests
 {
     [Fact]
     public async Task CalculateRTA_GivenAllocations()
@@ -36,7 +36,7 @@ public class RTATest
         var budgetService = new BudgetService(mockHttpClient, mockAllocationService);
 
         // Act
-        var actualRTA = await budgetService.CalculateRTA(10, 2025);
+        var actualRTA = await budgetService.CalculateReadyToAssign(10, 2025);
 
         // Assert
         actualRTA.ShouldBe(expectedRTA);
@@ -72,7 +72,6 @@ public class RTATest
             Id = 1,
             CategoryAllocationId = 1,
             Amount = 150m,  // Spending $150 when only $100 is budgeted
-            IsIncome = false,
             Description = "Overspending transaction"
         };
 
@@ -80,7 +79,6 @@ public class RTATest
         {
             Id = 2,
             Amount = 300m,  // Income of $50
-            IsIncome = true,
             Description = "Income transaction"
         };
         
@@ -97,7 +95,7 @@ public class RTATest
         var budgetService = new BudgetService(mockHttpClient, mockAllocationService);
         
         // Act
-        var actualRTA = await budgetService.CalculateRTA(11, 2025);
+        var actualRTA = await budgetService.CalculateReadyToAssign(11, 2025);
         
         // Assert
         actualRTA.ShouldBe(expectedRTA);
