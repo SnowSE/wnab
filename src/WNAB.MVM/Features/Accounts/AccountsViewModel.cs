@@ -96,7 +96,8 @@ public partial class AccountsViewModel : ObservableObject
         var (success, errorMessage) = await Model.UpdateAccountAsync(
             accountItem.Id, 
             accountItem.EditAccountName, 
-            accountItem.EditAccountType);
+            accountItem.EditAccountType,
+            accountItem.Account.IsActive);
 
         if (success)
         {
@@ -183,11 +184,11 @@ public partial class AccountsViewModel : ObservableObject
         if (!confirm)
             return;
 
-        var (success, errorMessage) = await Model.ReactivateAccountAsync(accountItem.Id);
+        var (success, errorMessage) = await Model.UpdateAccountAsync(accountItem.Id, accountItem.AccountName, accountItem.AccountType, isActive: true);
 
         if (success)
         {
-            // Refresh active accounts to show the newly reactivated account
+            // Refresh accounts to update the collections
             await Model.LoadAccountsAsync();
         }
         else

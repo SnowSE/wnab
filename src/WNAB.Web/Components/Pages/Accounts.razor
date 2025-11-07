@@ -249,6 +249,10 @@
     {
         // Called by modal when account is created - refresh the list
         await ViewModel.Model.RefreshAsync();
+        
+        // Close the modal using Bootstrap's API
+        await JS.InvokeVoidAsync("eval", 
+            "bootstrap.Modal.getInstance(document.getElementById('createAccountModal'))?.hide()");
     }
 
     private async Task OnToggleShowInactiveClick()
@@ -269,21 +273,16 @@
             return;
         }
 
-        var (success, errorMessage) = await ViewModel.Model.UpdateAccountAsync(
-            account.Id, 
-            account.EditAccountName, 
-            account.EditAccountType);
-
+        var result = await ViewModel.Model.UpdateAccountAsync(account.Id, account.EditAccountName, account.EditAccountType, account.Account.IsActive);
+        var success = result.Success;
+        var errorMessage = result.ErrorMessage;
         if (success)
         {
             account.ApplyChanges();
         }
         else
         {
-            // Show specific error message and keep user in edit mode so they can correct it
-            await JS.InvokeVoidAsync("alert", 
-                errorMessage ?? "Failed to update account. Please try again.");
-            // DO NOT call CancelEditing() - leave user's input intact so they can fix it
+            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to update account. Please try again.");
         }
     }
 
@@ -299,12 +298,12 @@
         
         if (!confirmed) return;
 
-        var (success, errorMessage) = await ViewModel.Model.DeleteAccountAsync(account.Id);
-        
+        var result = await ViewModel.Model.DeleteAccountAsync(account.Id);
+        var success = result.Success;
+        var errorMessage = result.ErrorMessage;
         if (!success)
         {
-            await JS.InvokeVoidAsync("alert", 
-                errorMessage ?? "Failed to delete account. Please try again.");
+            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to delete account. Please try again.");
         }
     }
 
@@ -315,8 +314,9 @@
         
         if (!confirmed) return;
 
-        var (success, errorMessage) = await ViewModel.Model.ReactivateAccountAsync(account.Id);
-        
+        var result = await ViewModel.Model.ReactivateAccountAsync(account.Id);
+        var success = result.Success;
+        var errorMessage = result.ErrorMessage;
         if (success)
         {
             // Refresh to show the reactivated account in the active list
@@ -324,8 +324,7 @@
         }
         else
         {
-            await JS.InvokeVoidAsync("alert", 
-                errorMessage ?? "Failed to reactivate account. Please try again.");
+            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to reactivate account. Please try again.");
         }
     }
 

@@ -7,6 +7,7 @@ using WNAB.Data;
 using WNAB.SharedDTOs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using WNAB.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +67,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // Register user provisioning service
-builder.Services.AddScoped<WNAB.API.Services.UserProvisioningService>();
+builder.Services.AddScoped<UserProvisioningService>();
 // Register accounts DB service
 builder.Services.AddScoped<AccountDBService>();
 // Register categories DB service
@@ -124,7 +125,7 @@ app.UseAuthorization();
 app.MapGet("/", () => "Hello World!");
 
 // User info and provisioning endpoint
-app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, WnabContext db) =>
+app.MapGet("/api/me", async (HttpContext context, UserProvisioningService provisioningService, WnabContext db) =>
 {
     var subjectId = context.User.FindFirst("sub")?.Value;
     if (string.IsNullOrEmpty(subjectId))
@@ -150,7 +151,7 @@ app.MapGet("/api/me", async (HttpContext context, WNAB.API.Services.UserProvisio
 }).RequireAuthorization();
 
 // Query endpoints - secured with authorization
-app.MapGet("/categories", async (HttpContext context, WNAB.API.Services.UserProvisioningService provisioningService, CategoryDBService categoryService) =>
+app.MapGet("/categories", async (HttpContext context, UserProvisioningService provisioningService, CategoryDBService categoryService) =>
 {
     var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -160,7 +161,7 @@ app.MapGet("/categories", async (HttpContext context, WNAB.API.Services.UserProv
 }).RequireAuthorization();
 
 //
-app.MapGet("/accounts", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+app.MapGet("/accounts", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService, AccountDBService accountsService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -169,16 +170,7 @@ app.MapGet("/accounts", async (HttpContext context, WnabContext db, WNAB.API.Ser
     return Results.Ok(accounts);
 }).RequireAuthorization();
 
-app.MapGet("/accounts/inactive", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
-{
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
-    if (user is null) return Results.Unauthorized();
-
-    var inactiveAccounts = await accountsService.GetInactiveAccountsForUserAsync(user.Id);
-    return Results.Ok(inactiveAccounts);
-}).RequireAuthorization();
-
-app.MapGet("/allocations/{categoryId}", async (HttpContext context, int categoryId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapGet("/allocations/{categoryId:int}", async (HttpContext context, int categoryId, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -190,7 +182,7 @@ app.MapGet("/allocations/{categoryId}", async (HttpContext context, int category
     return Results.Ok(allocations);
 }).RequireAuthorization();
 
-app.MapGet("/allocations", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapGet("/allocations", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -200,7 +192,7 @@ app.MapGet("/allocations", async (HttpContext context, WnabContext db, WNAB.API.
 }).RequireAuthorization();
 
 // get transactions for authenticated user, optional accountID to get by account.
-app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -217,7 +209,7 @@ app.MapGet("/transactions", async (HttpContext context, int? accountId, WnabCont
     return Results.Ok(new GetTransactionsResponse(transactions));
 }).RequireAuthorization();
 
-app.MapGet("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapGet("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -230,7 +222,7 @@ app.MapGet("/transactions/{id:int}", async (HttpContext context, int id, WnabCon
     return Results.Ok(transaction);
 }).RequireAuthorization();
 
-app.MapGet("/transactionsplits", async (HttpContext context, int? allocationId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapGet("/transactionsplits", async (HttpContext context, int? allocationId, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -246,7 +238,7 @@ app.MapGet("/transactionsplits", async (HttpContext context, int? allocationId, 
     return Results.Ok(new GetTransactionSplitsResponse(transactionSplits));
 }).RequireAuthorization();
 
-app.MapGet("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapGet("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -263,7 +255,7 @@ app.MapGet("/transactionsplits/{id:int}", async (HttpContext context, int id, Wn
 // POST ENDPOINTS --------------------------------------------------------------------------------------------
 ///
 
-app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec, CategoryDBService categoryService, UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -281,7 +273,7 @@ app.MapPost("/categories", async (HttpContext context, CreateCategoryRequest rec
 
 }).RequireAuthorization();
 
-app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabContext db, UserProvisioningService provisioningService, AccountDBService accountsService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -297,7 +289,7 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
 }).RequireAuthorization();
 
 // create allocation
-app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord rec, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -329,7 +321,7 @@ app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord
 }).RequireAuthorization();
 
 // create transaction
-app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -355,7 +347,7 @@ app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, 
 }).RequireAuthorization();
 
 // Create transaction split (add split to existing transaction)
-app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRecord rec, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -382,7 +374,7 @@ app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRe
 // PUT ENDPOINTS -------------------------------------------------------------------------
 ///
 
-app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryRequest rec, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryRequest rec, CategoryDBService categoryService, UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -400,19 +392,19 @@ app.MapPut("/categories/{id}", async (HttpContext context, int id, EditCategoryR
 
 }).RequireAuthorization();
 
-app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequest req, WnabContext db, UserProvisioningService provisioningService, AccountDBService accountsService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
 
     try
     {
-        var updatedAccount = await accountsService.UpdateAccountAsync(id, user.Id, req.NewName, req.NewAccountType, req.Id);
+        var updatedAccount = await accountsService.UpdateAccountAsync(id, user.Id, req.NewName, req.NewAccountType, req.IsActive, req.Id);
 
         if (updatedAccount is null)
             return Results.NotFound("Account not found or does not belong to the current user.");
 
-        return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.UpdatedAt });
+        return Results.Ok(new { updatedAccount.Id, updatedAccount.AccountName, updatedAccount.AccountType, updatedAccount.IsActive, updatedAccount.UpdatedAt });
     }
     catch (ArgumentException ex) when (ex.Message.Contains("mismatch"))
     {
@@ -424,40 +416,8 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
     }
 }).RequireAuthorization();
 
-
-
-// Reactivate account by id (must belong to current user)
-app.MapPut("/accounts/{id}/reactivate", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
-{
-    var user = await context.GetCurrentUserAsync(db, provisioningService);
-    if (user is null) return Results.Unauthorized();
-
-    try
-    {
-        var (success, errorMessage) = await accountsService.ReactivateAccountAsync(id, user.Id);
-
-        if (!success)
-        {
-            return errorMessage switch
-            {
-                "Invalid account ID." => Results.BadRequest(errorMessage),
-                "Inactive account not found." => Results.NotFound(errorMessage),
-                "Account does not belong to the current user." => Results.Forbid(),
-                _ when errorMessage?.Contains("already exists") == true => Results.Conflict(new { error = errorMessage }),
-                _ => Results.BadRequest("An error occurred while reactivating the account.")
-            };
-        }
-
-        return Results.NoContent();
-    }
-    catch (InvalidOperationException ex)
-    {
-        return Results.Problem(ex.Message, statusCode: 500);
-    }
-}).RequireAuthorization();
-
 // Update transaction by id (must belong to current user)
-app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransactionRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransactionRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -487,7 +447,7 @@ app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransac
 }).RequireAuthorization();
 
 // Update transaction split by id (must belong to current user via transaction->account)
-app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTransactionSplitRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTransactionSplitRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -514,7 +474,7 @@ app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTr
 }).RequireAuthorization();
 
 // update allocation
-app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCategoryAllocationRequest req, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCategoryAllocationRequest req, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -549,7 +509,7 @@ app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCatego
 /// 
 
 // Delete account by id (must belong to current user)
-app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AccountDBService accountsService) =>
+app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, AccountDBService accountsService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -577,7 +537,7 @@ app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext 
     }
 }).RequireAuthorization();
 
-app.MapDelete("/categories/{id}", async (HttpContext context, int id, CategoryDBService categoryService, WNAB.API.Services.UserProvisioningService provisioningService) =>
+app.MapDelete("/categories/{id}", async (HttpContext context, int id, CategoryDBService categoryService, UserProvisioningService provisioningService) =>
 {
     var user = await context.GetCurrentUserAsync(categoryService.DbContext, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -594,7 +554,7 @@ app.MapDelete("/categories/{id}", async (HttpContext context, int id, CategoryDB
 }).RequireAuthorization();
 
 // delete transaction by id (must belong to current user)
-app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -610,7 +570,7 @@ app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, Wnab
 }).RequireAuthorization();
 
 // delete transaction split by id (must belong to current user via transaction->account)
-app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();

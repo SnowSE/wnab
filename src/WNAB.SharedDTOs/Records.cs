@@ -11,7 +11,7 @@ public record CategoryResponse(int Id, string Name, string? Color, bool IsActive
 
 // Accounts
 public record AccountRecord(string Name, AccountType AccountType = AccountType.Checking);
-public record EditAccountRequest(int Id, string NewName, AccountType NewAccountType);
+public record EditAccountRequest(int Id, string NewName, AccountType NewAccountType, bool IsActive);
 
 // Category Allocations
 public record CategoryAllocationRecord(int CategoryId, decimal BudgetedAmount, int Month, int Year, string? EditorName = null, decimal? PercentageAllocation = null, decimal? OldAmount = null, string? EditedMemo = null);
