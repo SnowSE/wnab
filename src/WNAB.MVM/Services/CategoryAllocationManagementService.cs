@@ -5,7 +5,7 @@ using WNAB.SharedDTOs;
 namespace WNAB.MVM;
 
 
-public class CategoryAllocationManagementService
+public class CategoryAllocationManagementService : ICategoryAllocationManagementService
 {
     private readonly HttpClient _http;
 
@@ -56,7 +56,13 @@ public class CategoryAllocationManagementService
     public async Task<List<CategoryAllocation>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken ct = default)
     {
         if (categoryId <= 0) return new();
-        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"allocations?categoryId={categoryId}", ct);
+        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"allocations/{categoryId}", ct);
         return allocations ?? new();
+    }
+
+    public async Task<List<CategoryAllocation>> GetAllAllocationsAsync(CancellationToken ct = default)
+    {
+        var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"allocations", ct);
+        return allocations ?? throw new InvalidOperationException("API returned no content when retrieving all allocations.");
     }
 }

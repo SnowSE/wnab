@@ -40,6 +40,29 @@ public class AllocationDBService
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<List<CategoryAllocationResponse>> GetAllocationsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Allocations
+            .Join(_db.Categories, a => a.CategoryId, c => c.Id, (a, c) => new { Allocation = a, Category = c })
+            .Where(x => x.Category.UserId == userId)
+            .Select(x => new CategoryAllocationResponse(
+                x.Allocation.Id,
+                x.Allocation.CategoryId,
+                x.Allocation.BudgetedAmount,
+                x.Allocation.Month,
+                x.Allocation.Year,
+                x.Allocation.EditorName,
+                x.Allocation.PercentageAllocation,
+                x.Allocation.OldAmount,
+                x.Allocation.EditedMemo,
+                x.Allocation.IsActive,
+                x.Allocation.CreatedAt,
+                x.Allocation.UpdatedAt
+            ))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     /// <summary>
     /// Creates a new allocation for a category
     /// </summary>
