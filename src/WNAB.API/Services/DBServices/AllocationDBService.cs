@@ -18,11 +18,11 @@ public class AllocationDBService
     /// <summary>
     /// Gets all allocations for a specific category
     /// </summary>
-    public async Task<List<CategoryAllocationDto>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken cancellationToken = default)
+    public async Task<List<CategoryAllocationResponse>> GetAllocationsForCategoryAsync(int categoryId, CancellationToken cancellationToken = default)
     {
         return await _db.Allocations
             .Where(a => a.CategoryId == categoryId)
-            .Select(a => new CategoryAllocationDto(
+            .Select(a => new CategoryAllocationResponse(
                 a.Id,
                 a.CategoryId,
                 a.BudgetedAmount,
@@ -35,6 +35,29 @@ public class AllocationDBService
                 a.IsActive,
                 a.CreatedAt,
                 a.UpdatedAt
+            ))
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<CategoryAllocationResponse>> GetAllocationsForUserAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _db.Allocations
+            .Join(_db.Categories, a => a.CategoryId, c => c.Id, (a, c) => new { Allocation = a, Category = c })
+            .Where(x => x.Category.UserId == userId)
+            .Select(x => new CategoryAllocationResponse(
+                x.Allocation.Id,
+                x.Allocation.CategoryId,
+                x.Allocation.BudgetedAmount,
+                x.Allocation.Month,
+                x.Allocation.Year,
+                x.Allocation.EditorName,
+                x.Allocation.PercentageAllocation,
+                x.Allocation.OldAmount,
+                x.Allocation.EditedMemo,
+                x.Allocation.IsActive,
+                x.Allocation.CreatedAt,
+                x.Allocation.UpdatedAt
             ))
             .AsNoTracking()
             .ToListAsync(cancellationToken);

@@ -30,7 +30,10 @@ public partial class StepDefinitions
 			Id = userId,
 			FirstName = firstname, 
 			LastName = lastname, 
-			Email = email
+			Email = email,
+			IsActive = true,
+			CreatedAt = DateTime.UtcNow,
+			UpdatedAt = DateTime.UtcNow
 		};
 		// Store
 		context["User"] = user;
@@ -50,25 +53,27 @@ public partial class StepDefinitions
 		var row = dataTable.Rows.Single();
 		var firstName = row["FirstName"];
 		var lastName = row["LastName"];
-		// Act
-		var userRecord = new UserRecord(firstName, lastName, row["Email"]);
-		// Store
-		context["UserRecord"] = userRecord;
+		var email = row["Email"];
+		// Store the user data for the When step
+		context["UserData"] = new { FirstName = firstName, LastName = lastName, Email = email };
 	}
 
 	[When(@"I create the user")]
 	public void WhenICreateTheUser()
 	{
 		// Actual
-		var record = context.Get<UserRecord>("UserRecord");
+		var userData = context.Get<dynamic>("UserData");
 		var users = context.ContainsKey("Users") ? context.Get<List<User>>("Users") : new List<User>();
 		// Act
 		var user = new User
 		{
 			Id = users.Count + 1,
-			FirstName = record.FirstName,
-			LastName = record.LastName,
-			Email = record.Email
+			FirstName = userData.FirstName,
+			LastName = userData.LastName,
+			Email = userData.Email,
+			IsActive = true,
+			CreatedAt = DateTime.UtcNow,
+			UpdatedAt = DateTime.UtcNow
 		};
 		// Store
 		users.Add(user);

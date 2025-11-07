@@ -178,7 +178,7 @@ app.MapGet("/accounts/inactive", async (HttpContext context, WnabContext db, WNA
     return Results.Ok(inactiveAccounts);
 }).RequireAuthorization();
 
-app.MapGet("/allocations", async (HttpContext context, int categoryId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapGet("/allocations/{categoryId}", async (HttpContext context, int categoryId, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -187,6 +187,15 @@ app.MapGet("/allocations", async (HttpContext context, int categoryId, WnabConte
     if (category is null) return Results.NotFound("Category not found or does not belong to user");
 
     var allocations = await allocationService.GetAllocationsForCategoryAsync(categoryId);
+    return Results.Ok(allocations);
+}).RequireAuthorization();
+
+app.MapGet("/allocations", async (HttpContext context, WnabContext db, WNAB.API.Services.UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var allocations = await allocationService.GetAllocationsForUserAsync(user.Id);
     return Results.Ok(allocations);
 }).RequireAuthorization();
 
