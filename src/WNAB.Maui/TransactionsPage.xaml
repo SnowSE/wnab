@@ -396,7 +396,7 @@ Text="{Binding AccountName, StringFormat='Account: {0}'}"
   
  <!-- Splits for this transaction -->
   <VerticalStackLayout Margin="20,0,0,0" Spacing="2">
-     <CollectionView ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=Model.Splits}">
+     <CollectionView ItemsSource="{Binding Splits}">
      <CollectionView.ItemTemplate>
   <DataTemplate x:DataType="dto:TransactionSplitResponse">
      <Frame Padding="8" 
@@ -404,13 +404,6 @@ Text="{Binding AccountName, StringFormat='Account: {0}'}"
  CornerRadius="6" 
  BorderColor="Gray" 
   BackgroundColor="#E8E8E8">
-      <Frame.Triggers>
-        <DataTrigger TargetType="Frame" 
-   Binding="{Binding TransactionId}" 
-     Value="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionItem}}, Path=Id}">
-      <Setter Property="IsVisible" Value="True" />
-  </DataTrigger>
-   </Frame.Triggers>
             
     <Grid ColumnDefinitions="*,Auto,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
      <Label Text="{Binding CategoryName}" 

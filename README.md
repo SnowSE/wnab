@@ -21,6 +21,7 @@ WNAB is designed to be a comprehensive budgeting solution that provides users wi
 - **MAUI**: Cross-platform mobile/desktop framework
 - **Entity Framework Core**: Database ORM
 - **ASP.NET Core**: Web API backend
+- **Aspire Hosting**: Hosted through Aspire. 
 
 ## Project Structure
 
@@ -32,7 +33,6 @@ The application is composed of several key modules:
 - **API Layer**: RESTful API backend for data management and business logic
 - **Database**: Persistent storage for user data, transactions, and budgets
 - **Plaid Integration**: Third-party service for bank connectivity
-- **Serverless Functions** *(Future consideration)*: Event-driven processing and notifications
 
 ### 📁 Proposed Directory Structure
 ```
@@ -52,27 +52,27 @@ The application is composed of several key modules:
 
 ### 🎯 Minimum Viable Product
 - [ ] **User Management**
-  - User registration and authentication
-  - Account creation and management
-  - Profile settings
+  - [X] User registration and authentication
+  - [ ] Account creation and management
+  - [ ] Profile settings
 
 - [ ] **Transaction Management**
-  - Manual transaction entry
-  - Transaction editing and deletion
-  - Transaction search and filtering
-  - Transaction history view
+  - [X] Manual transaction entry
+  - [X] Transaction editing and deletion
+  - [ ] Transaction search and filtering
+  - [ ] Transaction history view
 
 - [ ] **Category System**
-  - Define custom spending categories
-  - Assign transactions to categories
-  - Category-based spending analysis
-  - Budget allocation per category
+  - [X] Define custom spending categories
+  - [X] Assign transactions to categories
+  - [ ] Category-based spending analysis
+  - [X] Budget allocation per category
 
 - [ ] **Account Linking**
-  - Connect bank accounts via Plaid
-  - Automatic transaction import
-  - Account balance synchronization
-  - Multiple account support
+  - [ ] Connect bank accounts via Plaid
+  - [ ] Automatic transaction import
+  - [ ] Account balance synchronization
+  - [ ] Multiple account support
 
 ## High-Risk Features & Technical Challenges
 
@@ -117,39 +117,28 @@ The application is composed of several key modules:
 
 ## Development Roadmap
 
-### Phase 1: Foundation (MVP)
+### [X] Phase 1: Foundation (MVP)
 1. Set up project structure and development environment
 2. Implement basic user authentication and account management
 3. Create core data models and database schema
 4. Develop transaction entry and management features
 5. Implement category system
 
-### Phase 2: Integration
+### [ ] Phase 2: Integration
 1. Integrate Plaid for bank connectivity
 2. Implement automatic transaction import
 3. Add account balance synchronization
 4. Develop cross-platform UI components
 
-### Phase 3: Enhancement
+### [ ] Phase 3: Enhancement
 1. Add advanced filtering and search capabilities
 2. Implement basic reporting and analytics
 3. Add CSV import functionality
 4. Performance optimization and testing
 
-### Phase 4: Polish & Scale
+### [ ] Phase 4: Polish & Scale
 1. Advanced reporting and insights
 2. Additional security features
 3. Performance monitoring and optimization
 4. User feedback integration
 
-## Getting Started
-
-*Coming Soon*: Instructions for setting up the development environment and running the application.
-
-## Contributing
-
-*Coming Soon*: Guidelines for contributing to the WNAB project.
-
-## License
-
-*To be determined*
