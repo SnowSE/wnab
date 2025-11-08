@@ -7,7 +7,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="createAccountModalLabel">Create Account</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" @onclick="CancelBtnClicked" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <EditForm Model="this" OnValidSubmit="Create">
                 <div class="modal-body">
@@ -19,18 +19,28 @@
                     {
                         <div class="alert alert-danger">@_error</div>
                     }
-                    @if (!string.IsNullOrWhiteSpace(_result))
+                    @* @if (!string.IsNullOrWhiteSpace(_result))
                     {
                         <div class="alert alert-success">@_result</div>
-                    }
+                    } *@
                     
                     <div class="mb-3">
                         <label class="form-label">Account Name</label>
                         <input class="form-control" @bind-value="_name" required />
                     </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Account Type</label>
+                        <select class="form-select" @bind="_selectedAccountType">
+                            @foreach (AccountType type in Enum.GetValues(typeof(AccountType)))
+                            {
+                                <option value="@type">@type</option>
+                            }
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" @onclick="CancelBtnClicked" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button class="btn btn-primary" type="submit" disabled="@_isCreating">
                         @if (_isCreating)
                         {
@@ -47,6 +57,7 @@
 @code {
     // LLM-Dev:v4 Updated to be a modal popup component instead of full page, matching MAUI popup pattern
     private string? _name;
+    private AccountType _selectedAccountType = AccountType.Checking;
     private bool _isCreating;
     private string? _result;
     private string? _error;
@@ -56,7 +67,7 @@
 
     private async Task Create()
     {
-        _result = _error = null;
+        _result = _error = _statusMessage = null;
 
         if (string.IsNullOrWhiteSpace(_name))
         {
@@ -70,12 +81,13 @@
             StateHasChanged();
 
             // userId now comes from authentication token on the API side; pass 0 in DTO
-            var record = new AccountRecord(_name!);
+            var record = new AccountRecord(_name!, _selectedAccountType);
             var id = await AccountsService.CreateAccountAsync(record);
             _result = $"Account '{_name}' created successfully with ID {id}";
 
             // Clear the name field for next use (matching MAUI pattern)
             _name = string.Empty;
+
 
             // Notify parent component to refresh the accounts list
             await OnAccountCreated.InvokeAsync();
@@ -86,8 +98,21 @@
         }
         finally
         {
+            _result = null; // Clear success message after creation
             _isCreating = false;
+
             StateHasChanged();
         }
+
+    }
+    private async Task CancelBtnClicked()
+    {
+        // Clear fields when cancel is clicked
+        _name = string.Empty;
+        _selectedAccountType = AccountType.Checking;
+        _error = null;
+        _result = null;
+        _statusMessage = null;
+        await Task.CompletedTask;
     }
 }
