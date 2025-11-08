@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Maui.Controls.Internals;
 using WNAB.Data;
 
 namespace WNAB.MVM;
 
-public class BudgetService
+public class BudgetService : IBudgetService
 {
     private readonly HttpClient _http;
     private readonly ICategoryAllocationManagementService categoryAllocationService;
@@ -25,11 +26,14 @@ public class BudgetService
 
         // do the calculations for RTA
         var allocations = await categoryAllocationService.GetAllAllocationsAsync();
-        decimal rta = 0m;
+        var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
+        var income = allTransactions.Where(t => t.CategoryAllocationId is null).Sum(t => t.Amount);
+
+        decimal allocationAmount = 0m;
         foreach (var allocation in allocations)
         {
-            rta += allocation.BudgetedAmount;
+            allocationAmount += allocation.BudgetedAmount;
         }
-        return rta;
+        return income - allocationAmount;
     }
 }

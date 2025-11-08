@@ -10,6 +10,7 @@ using NSubstitute;
 using Shouldly;
 using WNAB.Data;
 using WNAB.MVM;
+using WNAB.SharedDTOs;
 
 namespace WNAB.Tests.Unit;
 
@@ -18,11 +19,15 @@ public class ReadyToAssignTests
 
     private ICategoryAllocationManagementService _categoryAllocationManagementService;
     private ITransactionManagementService _transactionManagementService;
+    private HttpClient _httpClient;
+    private IBudgetService _budgetService;
 
-    ReadyToAssignTests()
+    public ReadyToAssignTests()
     {
         _categoryAllocationManagementService = Substitute.For<ICategoryAllocationManagementService>();
         _transactionManagementService = Substitute.For<ITransactionManagementService>();
+        _httpClient = Substitute.For<HttpClient>();
+        _budgetService = new BudgetService(_httpClient, _categoryAllocationManagementService, _transactionManagementService);
     }
 
     [Fact]
@@ -36,19 +41,34 @@ public class ReadyToAssignTests
             new CategoryAllocation { CategoryId = 3, BudgetedAmount = 150m, Month = 10, Year = 2025 }
         };
 
+        var transactionSplit = new TransactionSplit
+        {
+            Id = 1,
+            CategoryAllocationId = null,
+            Amount = 500m,
+            Description = "Income transaction"
+        };
+
         _categoryAllocationManagementService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(allocations));
 
+        _transactionManagementService.GetTransactionSplitsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<TransactionSplitResponse>
+            {
+                new TransactionSplitResponse(
+                    Id: transactionSplit.Id,
+                    CategoryName: "Income",
+                    CategoryAllocationId: transactionSplit.CategoryAllocationId,
+                    TransactionId: 1,
+                    Amount: transactionSplit.Amount,
+                    Description: transactionSplit.Description
+                )
+            }));
+
         var expectedRTA = 0m;
 
-        // Mock the ICategoryAllocationManagementService to return our allocations
-
-
-        var mockHttpClient = Substitute.For<HttpClient>();
-        var budgetService = new BudgetService(mockHttpClient, _categoryAllocationManagementService, _transactionManagementService);
-
         // Act
-        var actualRTA = await budgetService.CalculateReadyToAssign(10, 2025);
+        var actualRTA = await _budgetService.CalculateReadyToAssign(10, 2025);
 
         // Assert
         actualRTA.ShouldBe(expectedRTA);
