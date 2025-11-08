@@ -9,12 +9,14 @@ public class BudgetService
 {
     private readonly HttpClient _http;
     private readonly ICategoryAllocationManagementService categoryAllocationService;
+    private readonly ITransactionManagementService transactionManagementService;
 
 
-    public BudgetService(HttpClient http, ICategoryAllocationManagementService categoryAllocationService)
+    public BudgetService(HttpClient http, ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
         this.categoryAllocationService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
+        this.transactionManagementService = transactionManagementService ?? throw new ArgumentNullException(nameof(transactionManagementService));
     }
 
     public async Task<decimal> CalculateReadyToAssign(int month, int year)

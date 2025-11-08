@@ -6,7 +6,7 @@ namespace WNAB.MVM;
 /// <summary>
 /// Handles transaction-related operations via the API.
 /// </summary>
-public class TransactionManagementService
+public class TransactionManagementService : ITransactionManagementService
 {
     private readonly HttpClient _http;
 

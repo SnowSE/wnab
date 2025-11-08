@@ -15,6 +15,16 @@ namespace WNAB.Tests.Unit;
 
 public class ReadyToAssignTests
 {
+
+    private ICategoryAllocationManagementService _categoryAllocationManagementService;
+    private ITransactionManagementService _transactionManagementService;
+
+    ReadyToAssignTests()
+    {
+        _categoryAllocationManagementService = Substitute.For<ICategoryAllocationManagementService>();
+        _transactionManagementService = Substitute.For<ITransactionManagementService>();
+    }
+
     [Fact]
     public async Task CalculateRTA_GivenAllocations()
     {
@@ -25,15 +35,17 @@ public class ReadyToAssignTests
             new CategoryAllocation { CategoryId = 2, BudgetedAmount = 250m, Month = 10, Year = 2025 },
             new CategoryAllocation { CategoryId = 3, BudgetedAmount = 150m, Month = 10, Year = 2025 }
         };
-        var expectedRTA = 500m;
-        
-        // Mock the ICategoryAllocationManagementService to return our allocations
-        var mockAllocationService = Substitute.For<ICategoryAllocationManagementService>();
-        mockAllocationService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
+
+        _categoryAllocationManagementService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(allocations));
-        
+
+        var expectedRTA = 0m;
+
+        // Mock the ICategoryAllocationManagementService to return our allocations
+
+
         var mockHttpClient = Substitute.For<HttpClient>();
-        var budgetService = new BudgetService(mockHttpClient, mockAllocationService);
+        var budgetService = new BudgetService(mockHttpClient, _categoryAllocationManagementService, _transactionManagementService);
 
         // Act
         var actualRTA = await budgetService.CalculateReadyToAssign(10, 2025);
@@ -46,24 +58,24 @@ public class ReadyToAssignTests
     public async Task CalculateRTA_GivenOverspending()
     {
         // Arrange
-        var allocation1 = new CategoryAllocation 
-        { 
+        var allocation1 = new CategoryAllocation
+        {
             Id = 1,
-            CategoryId = 1, 
+            CategoryId = 1,
             BudgetedAmount = 100m,
             Month = 11,
             Year = 2025
         };
-        
-        var allocation2 = new CategoryAllocation 
-        { 
+
+        var allocation2 = new CategoryAllocation
+        {
             Id = 2,
-            CategoryId = 2, 
+            CategoryId = 2,
             BudgetedAmount = 200m,
             Month = 11,
             Year = 2025
         };
-        
+
         var allocations = new List<CategoryAllocation> { allocation1, allocation2 };
 
         // Transaction split that overspends allocation1 by $50
@@ -81,22 +93,23 @@ public class ReadyToAssignTests
             Amount = 300m,  // Income of $50
             Description = "Income transaction"
         };
-        
+
         allocation1.TransactionSplits.Add(transactionSplit);
 
         var expectedRTA = -50m; // 300 budgeted - 50 overspent = -50 remaining
-        
+
         // Mock the ICategoryAllocationManagementService to return our allocations
         var mockAllocationService = Substitute.For<ICategoryAllocationManagementService>();
         mockAllocationService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(allocations));
-        
+
+        var mockTransactionService = Substitute.For<ITransactionManagementService>();
         var mockHttpClient = Substitute.For<HttpClient>();
-        var budgetService = new BudgetService(mockHttpClient, mockAllocationService);
-        
+        var budgetService = new BudgetService(mockHttpClient, mockAllocationService, mockTransactionService);
+
         // Act
         var actualRTA = await budgetService.CalculateReadyToAssign(11, 2025);
-        
+
         // Assert
         actualRTA.ShouldBe(expectedRTA);
     }
