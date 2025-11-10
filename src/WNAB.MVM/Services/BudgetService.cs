@@ -58,8 +58,7 @@ public class BudgetService : IBudgetService
 
     public async Task<decimal> CalculateAvailable(int categoryId, int month, int year)
     {
-
-        List<CategoryAllocation> allocations = categoryAllocationManagementService.GetAllocationsForCategoryAsync(categoryId).Result;
+        List<CategoryAllocation> allocations = await categoryAllocationManagementService.GetAllocationsForCategoryAsync(categoryId);
 
         decimal allocationAmount = 0m;
         foreach (var allocation in allocations)
@@ -67,11 +66,9 @@ public class BudgetService : IBudgetService
             if (allocation.Year < year || (allocation.Year == year && allocation.Month <= month))
             {
                 allocationAmount += allocation.BudgetedAmount;
-                
-                transactionManagementService.GetTransactionSplitsForAllocationAsync(allocation.Id).Result.ForEach(ts =>
-                {
-                    allocationAmount -= ts.Amount;
-                });
+
+                var splits = await transactionManagementService.GetTransactionSplitsForAllocationAsync(allocation.Id);
+                allocationAmount -= splits.Sum(ts => ts.Amount);
             }
         }
 
