@@ -191,12 +191,28 @@ public partial class PlanBudgetModel : ObservableObject
         // Get all categories first
         var categories = await _categoryService.GetCategoriesForUserAsync();
         
+        // Determine prior month/year
+        var priorMonth = month - 1;
+        var priorYear = year;
+        
+        if (priorMonth < 1)
+        {
+            priorMonth = 12;
+            priorYear--;
+        }
+        
         foreach (var category in categories)
         {
             var allocations = await _allocationService.GetAllocationsForCategoryAsync(category.Id);
-            var allocation = allocations.FirstOrDefault(a => 
-                a.Month == month && 
+            var allocation = allocations.FirstOrDefault(a =>
+                a.Month == month &&
                 a.Year == year);
+
+            var pastMonthAllocation = allocations.FirstOrDefault(a =>
+                a.Month == priorMonth &&
+                a.Year == priorYear);
+
+                
             
             // If no allocation exists for this category/month, create a temporary one
             if (allocation == null)
@@ -209,13 +225,19 @@ public partial class PlanBudgetModel : ObservableObject
                     BudgetedAmount = 0,
                     Month = month,
                     Year = year,
-                    IsActive = false, // Auto-hide new allocations
+                    IsActive = pastMonthAllocation?.IsActive ?? false, // New allocations follow past month status
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                
+
+
                 // New allocations always go to hidden
-                HiddenAllocations.Add(allocation);
+                if (!allocation.IsActive)
+                {
+                    HiddenAllocations.Add(allocation);
+                }else{
+                    BudgetAllocations.Add(allocation);
+                }
             }
             else
             {
