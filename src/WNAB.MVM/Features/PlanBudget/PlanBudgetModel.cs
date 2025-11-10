@@ -225,7 +225,7 @@ public partial class PlanBudgetModel : ObservableObject
                     BudgetedAmount = 0,
                     Month = month,
                     Year = year,
-                    IsActive = pastMonthAllocation?.IsActive ?? false, // New allocations follow past month status
+                    IsActive = pastMonthAllocation?.IsActive ?? category.IsActive, // New allocations follow past month status
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -235,7 +235,9 @@ public partial class PlanBudgetModel : ObservableObject
                 if (!allocation.IsActive)
                 {
                     HiddenAllocations.Add(allocation);
-                }else{
+                }
+                else
+                {
                     BudgetAllocations.Add(allocation);
                 }
             }
