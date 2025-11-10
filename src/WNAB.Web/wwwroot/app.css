@@ -25,8 +25,15 @@ a, .btn-link {
 }
 
 .page-container {
-    padding: 2rem;
-    width: 100%;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 12px;
+    }
 }
 
 h1:focus {
