@@ -78,57 +78,51 @@ public class ReadyToAssignTests
     public async Task CalculateRTA_GivenOverspending()
     {
         // Arrange
-        var allocation1 = new CategoryAllocation
+        var allocations = new List<CategoryAllocation>
         {
-            Id = 1,
-            CategoryId = 1,
-            BudgetedAmount = 100m,
-            Month = 11,
-            Year = 2025
+            new CategoryAllocation { CategoryId = 1, BudgetedAmount = 100m, Month = 10, Year = 2025 },
+            new CategoryAllocation { CategoryId = 1, BudgetedAmount = 250m, Month = 11, Year = 2025 },
+            new CategoryAllocation { CategoryId = 1, BudgetedAmount = 150m, Month = 12, Year = 2025 }
         };
 
-        var allocation2 = new CategoryAllocation
+        var transactionSplits = new List<TransactionSplit>
         {
-            Id = 2,
-            CategoryId = 2,
-            BudgetedAmount = 200m,
-            Month = 11,
-            Year = 2025
+            new TransactionSplit { Id = 1, CategoryAllocationId = 1, Amount = 150m, Description = "Overspending transaction" },
+            new TransactionSplit { Id = 2, CategoryAllocationId = null, Amount = 300m, Description = "Income transaction" }
         };
 
-        var allocations = new List<CategoryAllocation> { allocation1, allocation2 };
 
-        // Transaction split that overspends allocation1 by $50
-        var transactionSplit = new TransactionSplit
-        {
-            Id = 1,
-            CategoryAllocationId = 1,
-            Amount = 150m,  // Spending $150 when only $100 is budgeted
-            Description = "Overspending transaction"
-        };
-
-        var incomeTransaction = new TransactionSplit
-        {
-            Id = 2,
-            Amount = 300m,  // Income of $50
-            Description = "Income transaction"
-        };
-
-        allocation1.TransactionSplits.Add(transactionSplit);
-
-        var expectedRTA = -50m; // 300 budgeted - 50 overspent = -50 remaining
-
-        // Mock the ICategoryAllocationManagementService to return our allocations
-        var mockAllocationService = Substitute.For<ICategoryAllocationManagementService>();
-        mockAllocationService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
+        _categoryAllocationManagementService.GetAllAllocationsAsync(Arg.Any<CancellationToken>())
+                    .Returns(Task.FromResult(allocations));
+        _categoryAllocationManagementService.GetAllocationsForCategoryAsync(Arg.Any<int>())
             .Returns(Task.FromResult(allocations));
 
-        var mockTransactionService = Substitute.For<ITransactionManagementService>();
-        var mockHttpClient = Substitute.For<HttpClient>();
-        var budgetService = new BudgetService(mockHttpClient, mockAllocationService, mockTransactionService);
+        _transactionManagementService.GetTransactionSplitsAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(transactionSplits.ToList().ConvertAll(ts =>
+                new TransactionSplitResponse(
+                    Id: ts.Id,
+                    CategoryAllocationId: ts.CategoryAllocationId,
+                    TransactionId: 1,
+                    CategoryName: ts.CategoryAllocationId.HasValue ? "Some Category" : "Income",
+                    Amount: ts.Amount,
+                    Description: ts.Description
+                ))));
+        _transactionManagementService.GetTransactionSplitsForAllocationAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new List<TransactionSplitResponse> { new TransactionSplitResponse(
+                    Id: transactionSplits.First().Id,
+                    CategoryAllocationId: transactionSplits.First().CategoryAllocationId,
+                    TransactionId: 1,
+                    CategoryName: transactionSplits.First().CategoryAllocationId.HasValue ? "Some Category" : "Income",
+                    Amount: transactionSplits.First().Amount,
+                    Description: transactionSplits.First().Description
+                )
+            }));
+
+
+        var expectedRTA = -250m;
 
         // Act
-        var actualRTA = await budgetService.CalculateReadyToAssign(11, 2025);
+        var actualRTA = await _budgetService.CalculateReadyToAssign(10, 2025);
 
         // Assert
         actualRTA.ShouldBe(expectedRTA);

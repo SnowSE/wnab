@@ -9,14 +9,14 @@ namespace WNAB.MVM;
 public class BudgetService : IBudgetService
 {
     private readonly HttpClient _http;
-    private readonly ICategoryAllocationManagementService categoryAllocationService;
+    private readonly ICategoryAllocationManagementService categoryAllocationManagementService;
     private readonly ITransactionManagementService transactionManagementService;
 
 
     public BudgetService(HttpClient http, ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
-        this.categoryAllocationService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
+        this.categoryAllocationManagementService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
         this.transactionManagementService = transactionManagementService ?? throw new ArgumentNullException(nameof(transactionManagementService));
     }
 
@@ -25,15 +25,56 @@ public class BudgetService : IBudgetService
         // pull out things from the context
 
         // do the calculations for RTA
-        var allocations = await categoryAllocationService.GetAllAllocationsAsync();
+        var allocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
         var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
         var income = allTransactions.Where(t => t.CategoryAllocationId is null).Sum(t => t.Amount);
 
         decimal allocationAmount = 0m;
+        
         foreach (var allocation in allocations)
         {
-            allocationAmount += allocation.BudgetedAmount;
+            // Only include allocations from current month forward
+            if (allocation.Year > year || (allocation.Year == year && allocation.Month >= month))
+            {
+                allocationAmount += allocation.BudgetedAmount;
+            }
         }
+
+        // Calculate available once per unique category
+        decimal available = 0m;
+        var uniqueCategories = allocations.Select(a => a.CategoryId).Distinct();
+        foreach (var categoryId in uniqueCategories)
+        {
+            available += await CalculateAvailable(categoryId, month, year);
+        }
+
+        if (available < 0)
+        {
+            return income - allocationAmount + available;
+        }
+
         return income - allocationAmount;
+    }
+
+    public async Task<decimal> CalculateAvailable(int categoryId, int month, int year)
+    {
+
+        List<CategoryAllocation> allocations = categoryAllocationManagementService.GetAllocationsForCategoryAsync(categoryId).Result;
+
+        decimal allocationAmount = 0m;
+        foreach (var allocation in allocations)
+        {
+            if (allocation.Year < year || (allocation.Year == year && allocation.Month <= month))
+            {
+                allocationAmount += allocation.BudgetedAmount;
+                
+                transactionManagementService.GetTransactionSplitsForAllocationAsync(allocation.Id).Result.ForEach(ts =>
+                {
+                    allocationAmount -= ts.Amount;
+                });
+            }
+        }
+
+        return allocationAmount;
     }
 }
