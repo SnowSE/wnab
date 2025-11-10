@@ -98,11 +98,11 @@
                                 <div class="account-header">
                                     <h3 class="account-name">@account.AccountName</h3>
                                     <div class="account-actions">
-                                        <button class="btn-icon" @onclick="() => OnEditAccountClick(account)" title="Edit">
-                                            ✏️
+                                        <button class="btn btn-link btn-sm text-dark p-1" @onclick="() => OnEditAccountClick(account)" title="Edit">
+                                            <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn-icon" @onclick="() => OnDeleteAccountClick(account)" title="Delete">
-                                            🗑️
+                                        <button class="btn btn-link btn-sm text-danger p-1" @onclick="() => OnDeleteAccountClick(account)" title="Delete">
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -123,11 +123,11 @@
                                            @bind="account.EditAccountName" 
                                            placeholder="Account Name" />
                                     <div class="account-actions">
-                                        <button class="btn-icon" @onclick="() => OnSaveAccountClick(account)" title="Save">
-                                            ✅
+                                        <button class="btn btn-link btn-sm text-success p-1" @onclick="() => OnSaveAccountClick(account)" title="Save">
+                                            <i class="bi bi-check-circle"></i>
                                         </button>
-                                        <button class="btn-icon" @onclick="() => OnCancelEditClick(account)" title="Cancel">
-                                            ❌
+                                        <button class="btn btn-link btn-sm text-danger p-1" @onclick="() => OnCancelEditClick(account)" title="Cancel">
+                                            <i class="bi bi-x-circle"></i>
                                         </button>
                                     </div>
                                 </div>
