@@ -85,7 +85,7 @@
 				<div class="row g-3 mt-2">
 					<div class="col-md-9">
 						<div class="d-flex align-items-center gap-2 mb-2">
-							<label class="form-label mb-0">Category</label>
+							<label class="form-label mb-0">Category (Optional)</label>
 							<button type="button" class="btn btn-sm btn-outline-primary" @onclick="ViewModel.AddTransactionViewModel.ToggleSplitTransactionCommand.Execute">
 								@(ViewModel.AddTransactionViewModel.Model.IsSplitTransaction ? "Single Category" : "Split Transaction")
 							</button>
@@ -93,7 +93,7 @@
 
 						@if (!ViewModel.AddTransactionViewModel.Model.IsSplitTransaction)
 						{
-							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId" required>
+							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId">
 								<option value="0">Select a category...</option>
 								@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 								{

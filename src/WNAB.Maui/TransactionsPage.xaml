@@ -105,7 +105,7 @@
                             TextColor="Black" />
 
                     <!-- Category Picker (Single) -->
-                    <Label Text="Category"
+                    <Label Text="Category (Optional)"
                            FontAttributes="Bold"
                            TextColor="Black"
                            IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
