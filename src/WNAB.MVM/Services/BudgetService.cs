@@ -36,11 +36,6 @@ public class BudgetService : IBudgetService
         public decimal Available { get; set; }
     }
 
-    public async Task<decimal> CalculateReadyToAssign(int month, int year)
-    {
-        return await CalculateReadyToAssign(month, year, null, null);
-    }
-
     public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot, DateTime? accountCreationDate)
     {
         if (snapshot != null)
@@ -77,72 +72,85 @@ public class BudgetService : IBudgetService
         }
     }
 
-    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime accountCreationDate)
+    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime? accountCreationDate)
     {
-        int currentMonth, currentYear;
-
-        if (previousSnapshot == null)
+        if (previousSnapshot == null && accountCreationDate == null)
         {
-            // First snapshot - use account creation date
-            currentMonth = accountCreationDate.Month;
-            currentYear = accountCreationDate.Year;
-
-            var income = await GetIncomeForMonth(currentMonth, currentYear);
-            var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
-            var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
-
-            var firstSnapshot = new BudgetSnapshot
-            {
-                Month = currentMonth,
-                Year = currentYear,
-                RTA = income - allocations,
-                Categories = categoryData
-            };
-
-            // Check if we need to continue building
-            if (currentYear < targetYear || (currentYear == targetYear && currentMonth < targetMonth))
-            {
-                return await RebuildSnapshots(firstSnapshot, targetMonth, targetYear, accountCreationDate);
-            }
-
-            return firstSnapshot;
+            throw new ArgumentNullException(nameof(accountCreationDate), "Account creation date is required when there is no previous snapshot");
         }
-        else
+
+        var snapshot = previousSnapshot == null
+            ? await CreateFirstSnapshot(accountCreationDate!.Value)
+            : await CreateNextSnapshot(previousSnapshot);
+
+        if (ShouldContinueBuilding(snapshot, targetMonth, targetYear))
         {
-            // Calculate next month
-            currentMonth = previousSnapshot.Month + 1;
-            currentYear = previousSnapshot.Year;
-
-            if (currentMonth > 12)
-            {
-                currentMonth = 1;
-                currentYear++;
-            }
-
-            var income = await GetIncomeForMonth(currentMonth, currentYear);
-            var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
-            var overspend = previousSnapshot.Categories
-                .Where(c => c.Available < 0)
-                .Sum(c => Math.Abs(c.Available));
-
-            var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
-
-            var newSnapshot = new BudgetSnapshot
-            {
-                Month = currentMonth,
-                Year = currentYear,
-                RTA = previousSnapshot.RTA + income - allocations - overspend,
-                Categories = categoryData
-            };
-
-            // Check if we need to continue building
-            if (currentYear < targetYear || (currentYear == targetYear && currentMonth < targetMonth))
-            {
-                return await RebuildSnapshots(newSnapshot, targetMonth, targetYear, accountCreationDate);
-            }
-
-            return newSnapshot;
+            return await RebuildSnapshots(snapshot, targetMonth, targetYear, accountCreationDate);
         }
+
+        return snapshot;
+    }
+
+    private async Task<BudgetSnapshot> CreateFirstSnapshot(DateTime accountCreationDate)
+    {
+        var currentMonth = accountCreationDate.Month;
+        var currentYear = accountCreationDate.Year;
+
+        var income = await GetIncomeForMonth(currentMonth, currentYear);
+        var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
+        var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
+
+        return new BudgetSnapshot
+        {
+            Month = currentMonth,
+            Year = currentYear,
+            RTA = income - allocations,
+            Categories = categoryData
+        };
+    }
+
+    private async Task<BudgetSnapshot> CreateNextSnapshot(BudgetSnapshot previousSnapshot)
+    {
+        var (currentMonth, currentYear) = CalculateNextMonth(previousSnapshot.Month, previousSnapshot.Year);
+
+        var income = await GetIncomeForMonth(currentMonth, currentYear);
+        var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
+        var overspend = CalculateOverspend(previousSnapshot);
+        var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
+
+        return new BudgetSnapshot
+        {
+            Month = currentMonth,
+            Year = currentYear,
+            RTA = previousSnapshot.RTA + income - allocations - overspend,
+            Categories = categoryData
+        };
+    }
+
+    private (int month, int year) CalculateNextMonth(int currentMonth, int currentYear)
+    {
+        var nextMonth = currentMonth + 1;
+        var nextYear = currentYear;
+
+        if (nextMonth > 12)
+        {
+            nextMonth = 1;
+            nextYear++;
+        }
+
+        return (nextMonth, nextYear);
+    }
+
+    private decimal CalculateOverspend(BudgetSnapshot snapshot)
+    {
+        return snapshot.Categories
+            .Where(c => c.Available < 0)
+            .Sum(c => Math.Abs(c.Available));
+    }
+
+    private bool ShouldContinueBuilding(BudgetSnapshot snapshot, int targetMonth, int targetYear)
+    {
+        return snapshot.Year < targetYear || (snapshot.Year == targetYear && snapshot.Month < targetMonth);
     }
 
     private async Task<decimal> GetIncomeForMonth(int month, int year)
