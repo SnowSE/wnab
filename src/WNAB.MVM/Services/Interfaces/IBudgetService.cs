@@ -6,4 +6,6 @@ namespace WNAB.MVM;
 public interface IBudgetService
 {
     Task<decimal> CalculateReadyToAssign(int month, int year);
+    Task<decimal> CalculateReadyToAssign(int month, int year, BudgetService.BudgetSnapshot? snapshot, DateTime? accountCreationDate);
+    Task<BudgetService.BudgetSnapshot> RebuildSnapshots(BudgetService.BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime accountCreationDate);
 }

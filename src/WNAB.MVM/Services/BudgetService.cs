@@ -20,40 +20,189 @@ public class BudgetService : IBudgetService
         this.transactionManagementService = transactionManagementService ?? throw new ArgumentNullException(nameof(transactionManagementService));
     }
 
+    public class BudgetSnapshot
+    {
+        public int Month { get; set; }
+        public int Year { get; set; }
+        public decimal RTA { get; set; }
+        public List<CategorySnapshotData> Categories { get; set; } = new();
+    }
+
+    public class CategorySnapshotData
+    {
+        public int CategoryId { get; set; }
+        public decimal AssignedValue { get; set; }
+        public decimal Activity { get; set; }
+        public decimal Available { get; set; }
+    }
+
     public async Task<decimal> CalculateReadyToAssign(int month, int year)
     {
-        // pull out things from the context
+        return await CalculateReadyToAssign(month, year, null, null);
+    }
 
-        // do the calculations for RTA
-        var allocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
-        var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
-        var income = allTransactions.Where(t => t.CategoryAllocationId is null).Sum(t => t.Amount);
-
-        decimal allocationAmount = 0m;
-        
-        foreach (var allocation in allocations)
+    public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot, DateTime? accountCreationDate)
+    {
+        if (snapshot != null)
         {
-            // Only include allocations from current month forward
-            if (allocation.Year > year || (allocation.Year == year && allocation.Month >= month))
-            {
-                allocationAmount += allocation.BudgetedAmount;
-            }
-        }
+            // Calculate from snapshot
+            var currentMonthIncome = await GetIncomeForMonth(month, year);
+            var currentMonthAllocations = await GetAllocationsForMonth(month, year);
+            var overspend = snapshot.Categories
+                .Where(c => c.Available < 0)
+                .Sum(c => Math.Abs(c.Available));
 
-        // Calculate available once per unique category
-        decimal available = 0m;
-        var uniqueCategories = allocations.Select(a => a.CategoryId).Distinct();
+            return snapshot.RTA + currentMonthIncome - currentMonthAllocations - overspend;
+        }
+        else
+        {
+            // Calculate from beginning of time
+            if (accountCreationDate == null)
+            {
+                throw new ArgumentNullException(nameof(accountCreationDate), "Account creation date is required when snapshot is null");
+            }
+
+            var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
+            var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
+
+            var income = allTransactions
+                .Where(t => t.CategoryAllocationId is null)
+                .Sum(t => t.Amount);
+
+            var allocations = allAllocations
+                .Where(a => a.Year < year || (a.Year == year && a.Month <= month))
+                .Sum(a => a.BudgetedAmount);
+
+            return income - allocations;
+        }
+    }
+
+    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime accountCreationDate)
+    {
+        int currentMonth, currentYear;
+
+        if (previousSnapshot == null)
+        {
+            // First snapshot - use account creation date
+            currentMonth = accountCreationDate.Month;
+            currentYear = accountCreationDate.Year;
+
+            var income = await GetIncomeForMonth(currentMonth, currentYear);
+            var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
+            var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
+
+            var firstSnapshot = new BudgetSnapshot
+            {
+                Month = currentMonth,
+                Year = currentYear,
+                RTA = income - allocations,
+                Categories = categoryData
+            };
+
+            // Check if we need to continue building
+            if (currentYear < targetYear || (currentYear == targetYear && currentMonth < targetMonth))
+            {
+                return await RebuildSnapshots(firstSnapshot, targetMonth, targetYear, accountCreationDate);
+            }
+
+            return firstSnapshot;
+        }
+        else
+        {
+            // Calculate next month
+            currentMonth = previousSnapshot.Month + 1;
+            currentYear = previousSnapshot.Year;
+
+            if (currentMonth > 12)
+            {
+                currentMonth = 1;
+                currentYear++;
+            }
+
+            var income = await GetIncomeForMonth(currentMonth, currentYear);
+            var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
+            var overspend = previousSnapshot.Categories
+                .Where(c => c.Available < 0)
+                .Sum(c => Math.Abs(c.Available));
+
+            var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
+
+            var newSnapshot = new BudgetSnapshot
+            {
+                Month = currentMonth,
+                Year = currentYear,
+                RTA = previousSnapshot.RTA + income - allocations - overspend,
+                Categories = categoryData
+            };
+
+            // Check if we need to continue building
+            if (currentYear < targetYear || (currentYear == targetYear && currentMonth < targetMonth))
+            {
+                return await RebuildSnapshots(newSnapshot, targetMonth, targetYear, accountCreationDate);
+            }
+
+            return newSnapshot;
+        }
+    }
+
+    private async Task<decimal> GetIncomeForMonth(int month, int year)
+    {
+        var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
+        return allTransactions
+            .Where(t => t.CategoryAllocationId is null)
+            .Sum(t => t.Amount);
+    }
+
+    private async Task<decimal> GetAllocationsForMonth(int month, int year)
+    {
+        var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
+        return allAllocations
+            .Where(a => a.Month == month && a.Year == year)
+            .Sum(a => a.BudgetedAmount);
+    }
+
+    private async Task<List<CategorySnapshotData>> BuildCategorySnapshotData(int month, int year)
+    {
+        var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
+        var categoryData = new List<CategorySnapshotData>();
+
+        var uniqueCategories = allAllocations
+            .Where(a => a.Year < year || (a.Year == year && a.Month <= month))
+            .Select(a => a.CategoryId)
+            .Distinct();
+
         foreach (var categoryId in uniqueCategories)
         {
-            available += await CalculateAvailable(categoryId, month, year);
+            var categoryAllocations = allAllocations
+                .Where(a => a.CategoryId == categoryId && (a.Year < year || (a.Year == year && a.Month <= month)))
+                .ToList();
+
+            var assignedValue = categoryAllocations
+                .Where(a => a.Month == month && a.Year == year)
+                .Sum(a => a.BudgetedAmount);
+
+            decimal activity = 0m;
+            foreach (var allocation in categoryAllocations)
+            {
+                var splits = await transactionManagementService.GetTransactionSplitsForAllocationAsync(allocation.Id);
+                activity += splits
+                    .Where(s => s.CategoryAllocationId == allocation.Id)
+                    .Sum(s => s.Amount);
+            }
+
+            var totalAllocated = categoryAllocations.Sum(a => a.BudgetedAmount);
+            var available = totalAllocated - activity;
+
+            categoryData.Add(new CategorySnapshotData
+            {
+                CategoryId = categoryId,
+                AssignedValue = assignedValue,
+                Activity = activity,
+                Available = available
+            });
         }
 
-        if (available < 0)
-        {
-            return income - allocationAmount + available;
-        }
-
-        return income - allocationAmount;
+        return categoryData;
     }
 
     public async Task<decimal> CalculateAvailable(int categoryId, int month, int year)
