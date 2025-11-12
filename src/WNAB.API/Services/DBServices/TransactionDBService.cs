@@ -100,14 +100,24 @@ public class TransactionDBService
             throw new InvalidOperationException("Account not found or does not belong to user");
 
         // Validate all category allocations belong to user's categories and load them
-        var allocationIds = splits.Select(s => s.CategoryAllocationId).Distinct().ToList();
-        var allocations = await _db.Allocations
-            .Include(a => a.Category)
-            .Where(a => allocationIds.Contains(a.Id) && a.Category.UserId == userId)
-            .ToListAsync(cancellationToken);
+        // Allow transactions without category allocations (uncategorized)
+        var allocationIds = splits
+            .Where(s => s.CategoryAllocationId.HasValue)
+            .Select(s => s.CategoryAllocationId!.Value)
+            .Distinct()
+            .ToList();
 
-        if (allocations.Count != allocationIds.Count)
-            throw new InvalidOperationException("One or more category allocations do not belong to user");
+        var allocations = new List<CategoryAllocation>();
+        if (allocationIds.Count > 0)
+        {
+            allocations = await _db.Allocations
+                .Include(a => a.Category)
+                .Where(a => allocationIds.Contains(a.Id) && a.Category.UserId == userId)
+                .ToListAsync(cancellationToken);
+
+            if (allocations.Count != allocationIds.Count)
+                throw new InvalidOperationException("One or more category allocations do not belong to user");
+        }
 
         var utcNow = DateTime.UtcNow;
         var utcTransactionDate = transactionDate.Kind == DateTimeKind.Utc
@@ -129,9 +139,15 @@ public class TransactionDBService
         _db.Transactions.Add(transaction);
         await _db.SaveChangesAsync(cancellationToken);
 
+        // Create splits only if provided and not all null
         foreach (var splitRecord in splits)
         {
-            var allocation = allocations.First(a => a.Id == splitRecord.CategoryAllocationId);
+            CategoryAllocation? allocation = null;
+            if (splitRecord.CategoryAllocationId.HasValue)
+            {
+                allocation = allocations.First(a => a.Id == splitRecord.CategoryAllocationId.Value);
+            }
+
             var split = new TransactionSplit
             {
                 TransactionId = transaction.Id,

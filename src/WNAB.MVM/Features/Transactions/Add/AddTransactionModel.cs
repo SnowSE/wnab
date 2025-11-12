@@ -189,6 +189,18 @@ public partial class AddTransactionModel : ObservableObject
     }
 
     /// <summary>
+    /// Update SelectedCategory when CategoryId is changed directly (e.g., from Blazor binding).
+    /// </summary>
+    partial void OnCategoryIdChanged(int value)
+    {
+        var category = AvailableCategories.FirstOrDefault(c => c.Id == value);
+        if (SelectedCategory != category)
+        {
+            SelectedCategory = category;
+        }
+    }
+
+    /// <summary>
     /// Recalculate split totals when amount changes.
     /// </summary>
     partial void OnAmountChanged(decimal value)
@@ -270,9 +282,7 @@ public partial class AddTransactionModel : ObservableObject
         if (Amount == 0)
             return "Please enter an amount";
 
-        // Validate category selection (allocation will be checked during save)
-        if (!IsSplitTransaction && SelectedCategory == null)
-            return "Please select a category";
+        // Category is now optional for simple transactions
 
         // Validate splits if in split mode
         if (IsSplitTransaction)
@@ -352,29 +362,28 @@ public partial class AddTransactionModel : ObservableObject
             }
             else
             {
-                // For simple transactions, find the CategoryAllocation for the selected category and date
-                if (SelectedCategory == null)
+                // For simple transactions:
+                // - If a category is selected, create a single split with the full transaction amount
+                // - If no category is selected, create transaction without splits (uncategorized)
+                var splitRecords = new List<TransactionSplitRecord>();
+                
+                if (SelectedCategory != null)
                 {
-                    StatusMessage = "Please select a category";
-                    return (false, "Please select a category");
+                    var allocation = await _allocations.FindAllocationAsync(
+                        SelectedCategory.Id, 
+                        TransactionDate.Month, 
+                        TransactionDate.Year);
+                    
+                    if (allocation == null)
+                    {
+                        var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                        StatusMessage = errorMsg;
+                        return (false, errorMsg);
+                    }
+                    
+                    splitRecords.Add(new TransactionSplitRecord(allocation.Id, -1, Amount, null));
                 }
-                
-                var allocation = await _allocations.FindAllocationAsync(
-                    SelectedCategory.Id, 
-                    TransactionDate.Month, 
-                    TransactionDate.Year);
-                
-                if (allocation == null)
-                {
-                    var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                    StatusMessage = errorMsg;
-                    return (false, errorMsg);
-                }
-                
-                var splitRecords = new List<TransactionSplitRecord>
-                {
-                    new TransactionSplitRecord(allocation.Id, -1, Amount, null)
-                };
+                // else: no category selected, splitRecords remains empty (uncategorized transaction)
                 
                 record = new TransactionRecord(
                     AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
