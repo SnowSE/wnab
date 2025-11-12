@@ -29,7 +29,7 @@ builder.AddProject<Projects.WNAB_Maui>("wnab-maui")
     .WithReference(api);
 
 builder.AddDevTunnel("wnab-tunnel")
-    .WithAnonymousAccess()
+    .WithAnonymousAccess()    
     .WithReference(web.GetEndpoint("http"));
 
 builder.AddScalarApiReference()
