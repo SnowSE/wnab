@@ -238,6 +238,16 @@ app.MapGet("/transactionsplits", async (HttpContext context, int? allocationId, 
     return Results.Ok(new GetTransactionSplitsResponse(transactionSplits));
 }).RequireAuthorization();
 
+app.MapGet("/transactionsplitsbymonth", async (HttpContext context, int month, int year, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var transactionSplits = await transactionSplitService.GetTransactionSplitsForUserByMonthAsync(user.Id, month, year);
+
+    return Results.Ok(new GetTransactionSplitsResponse(transactionSplits));
+});
+
 app.MapGet("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);

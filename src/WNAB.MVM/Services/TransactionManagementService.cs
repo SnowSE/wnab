@@ -106,6 +106,13 @@ public class TransactionManagementService : ITransactionManagementService
         return result?.TransactionSplits ?? new();
     }
 
+    public async Task<List<TransactionSplitResponse>> GetTransactionSplitsByMonthAsync(DateTime date, CancellationToken ct = default)
+    {
+        var result = await _http.GetFromJsonAsync<GetTransactionSplitsResponse>($"transactionsplitsbymonth?year={date.Year}&month={date.Month}", ct);
+
+        return result?.TransactionSplits ?? new();
+    }
+
     public async Task<TransactionSplitResponse?> GetTransactionSplitByIdAsync(int splitId, CancellationToken ct = default)
     {
         try

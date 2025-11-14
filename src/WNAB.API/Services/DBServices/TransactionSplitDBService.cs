@@ -252,4 +252,25 @@ public class TransactionSplitDBService
         return await _db.Allocations
             .AnyAsync(a => a.Id == allocationId && a.Category.UserId == userId, cancellationToken);
     }
+
+    public async Task<List<TransactionSplitResponse>> GetTransactionSplitsForUserByMonthAsync(int id, int month, int year)
+    {
+        return await _db.TransactionSplits
+            .Include(ts => ts.Transaction)
+            .Where(ts => ts.Transaction.Account.UserId == id &&
+                         ts.Transaction.TransactionDate.Month == month &&
+                         ts.Transaction.TransactionDate.Year == year)
+            .OrderByDescending(ts => ts.Transaction.TransactionDate)
+            .Select(ts => new TransactionSplitResponse(
+                ts.Id,
+                ts.CategoryAllocationId,
+                ts.TransactionId,
+                ts.Transaction.TransactionDate,
+                ts.CategoryAllocation.Category.Name,
+                ts.Amount,
+                ts.Description
+            ))
+            .AsNoTracking()
+            .ToListAsync();
+    }
 }

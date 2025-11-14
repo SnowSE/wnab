@@ -155,11 +155,9 @@ public class BudgetService : IBudgetService
 
     public async Task<decimal> GetIncomeForMonth(int month, int year)
     {
-        var firstDayOfMonth = new DateTime(year, month, 1);
-        var lastDayOfMonth = new DateTime(year, month, 1).AddMonths(1).AddDays(-1);
-        var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
+        var allTransactions = await transactionManagementService.GetTransactionSplitsByMonthAsync(new DateTime(year, month, 1));
         return allTransactions
-            .Where(t => t.CategoryAllocationId is null && t.TransactionDate <= lastDayOfMonth && t.TransactionDate >= firstDayOfMonth)
+            .Where(t => t.CategoryAllocationId is null)
             .Sum(t => t.Amount);
     }
 

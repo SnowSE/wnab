@@ -20,4 +20,5 @@ public interface ITransactionManagementService
     Task<TransactionSplitResponse> UpdateTransactionSplitAsync(EditTransactionSplitRequest request, CancellationToken ct = default);
     Task DeleteTransactionAsync(int transactionId, CancellationToken ct = default);
     Task DeleteTransactionSplitAsync(int transactionSplitId, CancellationToken ct = default);
+    Task<List<TransactionSplitResponse>> GetTransactionSplitsByMonthAsync(DateTime date, CancellationToken ct = default);
 }

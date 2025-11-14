@@ -317,6 +317,27 @@ public partial class StepDefinitions
         service.GetTransactionSplitsAsync(Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(transactionSplitResponses));
 
+        service.GetTransactionSplitsByMonthAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var date = callInfo.Arg<DateTime>();
+                var matchingSplits = transactionSplits
+                    .Where(ts => ts.Transaction != null &&
+                                 ts.Transaction.TransactionDate.Month == date.Month &&
+                                 ts.Transaction.TransactionDate.Year == date.Year)
+                    .Select(ts => new TransactionSplitResponse(
+                        Id: ts.Id,
+                        CategoryAllocationId: ts.CategoryAllocationId,
+                        TransactionId: 1,
+                        TransactionDate: ts.Transaction?.TransactionDate ?? DateTime.MinValue,
+                        CategoryName: ts.CategoryAllocationId.HasValue ? "Some Category" : "Income",
+                        Amount: ts.Amount,
+                        Description: ts.Description
+                    ))
+                    .ToList();
+                return Task.FromResult(matchingSplits);
+            });
+
         service.GetTransactionSplitsForAllocationAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
