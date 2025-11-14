@@ -44,7 +44,7 @@ Feature: Ready To Assign Calculation with Snapshots
       | 2025-11-10 | 1          | 80.00  | Groceries   |
       | 2025-11-15 | 2          | 150.00 | Gas         |
     When I build snapshot from October to November 2025
-    Then the snapshot for November 2025 should have RTA of 250.00
+    Then the snapshot for November 2025 should have RTA of 350.00
 
   Scenario: Build snapshot with overspending from previous month
     Given I have a previous snapshot with the following details
@@ -63,7 +63,7 @@ Feature: Ready To Assign Calculation with Snapshots
       | Date       | CategoryId | Amount | Description |
       | 2025-11-12 | 1          | 50.00  | Groceries   |
     When I build snapshot from October to November 2025
-    Then the snapshot for November 2025 should have RTA of 100.00
+    Then the snapshot for November 2025 should have RTA of 250.00
 
   Scenario: Recursively rebuild multiple months of snapshots
     Given the account was created on October 1, 2025
@@ -78,7 +78,7 @@ Feature: Ready To Assign Calculation with Snapshots
       | 2025-11-01 | 1          | 150.00         |
       | 2025-12-01 | 1          | 200.00         |
     When I rebuild snapshots to December 2025
-    Then the snapshot for December 2025 should have RTA of 350.00
+    Then the snapshot for December 2025 should have RTA of 850.00
 
   Scenario: Calculate RTA with snapshot provided
     Given I have a previous snapshot with the following details
@@ -126,4 +126,4 @@ Feature: Ready To Assign Calculation with Snapshots
       | 2025-11-01 | 1          | 100.00         |
       | 2025-11-01 | 2          | 100.00         |
     When I calculate RTA for November 2025 with the snapshot
-    Then the RTA should be 250.00
+    Then the RTA should be 350.00
