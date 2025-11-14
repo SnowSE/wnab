@@ -77,6 +77,7 @@ Feature: Ready To Assign Calculation with Snapshots
       | 2025-10-01 | 1          | 300.00         |
       | 2025-11-01 | 1          | 150.00         |
       | 2025-12-01 | 1          | 200.00         |
+	Then the income for 10/31/2025 should be 500.00
     When I rebuild snapshots to December 2025
     Then the snapshot for December 2025 should have RTA of 850.00
 

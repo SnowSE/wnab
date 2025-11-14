@@ -91,7 +91,7 @@ public class BudgetService : IBudgetService
         return snapshot;
     }
 
-    private async Task<BudgetSnapshot> CreateFirstSnapshot(DateTime accountCreationDate)
+    public async Task<BudgetSnapshot> CreateFirstSnapshot(DateTime accountCreationDate)
     {
         var currentMonth = accountCreationDate.Month;
         var currentYear = accountCreationDate.Year;
@@ -109,7 +109,7 @@ public class BudgetService : IBudgetService
         };
     }
 
-    private async Task<BudgetSnapshot> CreateNextSnapshot(BudgetSnapshot previousSnapshot)
+    public async Task<BudgetSnapshot> CreateNextSnapshot(BudgetSnapshot previousSnapshot)
     {
         var (currentMonth, currentYear) = CalculateNextMonth(previousSnapshot.Month, previousSnapshot.Year);
 
@@ -127,7 +127,7 @@ public class BudgetService : IBudgetService
         };
     }
 
-    private (int month, int year) CalculateNextMonth(int currentMonth, int currentYear)
+    public (int month, int year) CalculateNextMonth(int currentMonth, int currentYear)
     {
         var nextMonth = currentMonth + 1;
         var nextYear = currentYear;
@@ -141,27 +141,29 @@ public class BudgetService : IBudgetService
         return (nextMonth, nextYear);
     }
 
-    private decimal CalculateOverspend(BudgetSnapshot snapshot)
+    public decimal CalculateOverspend(BudgetSnapshot snapshot)
     {
         return snapshot.Categories
             .Where(c => c.Available < 0)
             .Sum(c => Math.Abs(c.Available));
     }
 
-    private bool ShouldContinueBuilding(BudgetSnapshot snapshot, int targetMonth, int targetYear)
+    public bool ShouldContinueBuilding(BudgetSnapshot snapshot, int targetMonth, int targetYear)
     {
         return snapshot.Year < targetYear || (snapshot.Year == targetYear && snapshot.Month < targetMonth);
     }
 
-    private async Task<decimal> GetIncomeForMonth(int month, int year)
+    public async Task<decimal> GetIncomeForMonth(int month, int year)
     {
+        var firstDayOfMonth = new DateTime(year, month, 1);
+        var lastDayOfMonth = new DateTime(year, month, 1).AddMonths(1).AddDays(-1);
         var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
         return allTransactions
-            .Where(t => t.CategoryAllocationId is null)
+            .Where(t => t.CategoryAllocationId is null && t.TransactionDate <= lastDayOfMonth && t.TransactionDate >= firstDayOfMonth)
             .Sum(t => t.Amount);
     }
 
-    private async Task<decimal> GetAllocationsForMonth(int month, int year)
+    public async Task<decimal> GetAllocationsForMonth(int month, int year)
     {
         var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
         return allAllocations
@@ -169,7 +171,7 @@ public class BudgetService : IBudgetService
             .Sum(a => a.BudgetedAmount);
     }
 
-    private async Task<List<CategorySnapshotData>> BuildCategorySnapshotData(int month, int year)
+    public async Task<List<CategorySnapshotData>> BuildCategorySnapshotData(int month, int year)
     {
         var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
         var categoryData = new List<CategorySnapshotData>();

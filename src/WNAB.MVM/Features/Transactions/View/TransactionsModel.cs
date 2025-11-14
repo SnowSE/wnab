@@ -179,13 +179,13 @@ public partial class TransactionsModel : ObservableObject
             foreach (var t in list)
             {
                 Items.Add(new TransactionItem(
-          t.Id,
-         t.TransactionDate,
-        t.Payee,
-          t.Description,
-          t.Amount,
-          t.AccountName,
-          new List<TransactionSplitResponse>()));
+                    t.Id,
+                    t.TransactionDate,
+                    t.Payee,
+                    t.Description,
+                    t.Amount,
+                    t.AccountName,
+                    new List<TransactionSplitResponse>()));
             }
 
             StatusMessage = list.Count == 0 ? "No transactions found" : $"Loaded {list.Count} transactions";

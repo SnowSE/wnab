@@ -30,10 +30,10 @@ public partial class StepDefinitions
     [Given(@"the following income transactions exist")]
     public void GivenTheFollowingIncomeTransactionsExist(DataTable dataTable)
     {
-        var transactionSplits = context.ContainsKey("TransactionSplits") 
-            ? context.Get<List<TransactionSplit>>("TransactionSplits") 
+        var transactionSplits = context.ContainsKey("TransactionSplits")
+            ? context.Get<List<TransactionSplit>>("TransactionSplits")
             : new List<TransactionSplit>();
-        
+
         var transactionManagementService = GetOrCreateTransactionManagementService();
 
         foreach (var row in dataTable.Rows)
@@ -43,7 +43,11 @@ public partial class StepDefinitions
                 Id = transactionSplits.Count + 1,
                 CategoryAllocationId = null,
                 Amount = decimal.Parse(row["Amount"]),
-                Description = row["Description"]
+                Description = row["Description"],
+                Transaction = new Transaction
+                {
+                    TransactionDate = DateTime.Parse(row["Date"])
+                }
             };
             transactionSplits.Add(transactionSplit);
         }
@@ -55,16 +59,16 @@ public partial class StepDefinitions
     [Given(@"the following category allocations exist")]
     public void GivenTheFollowingCategoryAllocationsExist(DataTable dataTable)
     {
-        var allocations = context.ContainsKey("CategoryAllocationsForSnapshot") 
-            ? context.Get<List<CategoryAllocation>>("CategoryAllocationsForSnapshot") 
+        var allocations = context.ContainsKey("CategoryAllocationsForSnapshot")
+            ? context.Get<List<CategoryAllocation>>("CategoryAllocationsForSnapshot")
             : new List<CategoryAllocation>();
-        
+
         var categoryAllocationManagementService = GetOrCreateCategoryAllocationService();
 
         foreach (var row in dataTable.Rows)
         {
             var date = DateTime.Parse(row["Date"]);
-            
+
             var allocation = new CategoryAllocation
             {
                 Id = allocations.Count + 1,
@@ -84,19 +88,19 @@ public partial class StepDefinitions
     public void GivenTheFollowingSpendingExists(DataTable dataTable)
     {
         var allocations = context.Get<List<CategoryAllocation>>("CategoryAllocationsForSnapshot");
-        var transactionSplits = context.ContainsKey("TransactionSplits") 
-            ? context.Get<List<TransactionSplit>>("TransactionSplits") 
+        var transactionSplits = context.ContainsKey("TransactionSplits")
+            ? context.Get<List<TransactionSplit>>("TransactionSplits")
             : new List<TransactionSplit>();
-        
+
         var transactionManagementService = GetOrCreateTransactionManagementService();
 
         foreach (var row in dataTable.Rows)
         {
             var date = DateTime.Parse(row["Date"]);
             var categoryId = int.Parse(row["CategoryId"]);
-            var allocation = allocations.FirstOrDefault(a => 
-                a.CategoryId == categoryId && 
-                a.Month == date.Month && 
+            var allocation = allocations.FirstOrDefault(a =>
+                a.CategoryId == categoryId &&
+                a.Month == date.Month &&
                 a.Year == date.Year);
 
             var transactionSplit = new TransactionSplit
@@ -120,7 +124,7 @@ public partial class StepDefinitions
         var month = int.Parse(row["Month"]);
         var year = int.Parse(row["Year"]);
         var rta = decimal.Parse(row["RTA"]);
-        
+
         var previousSnapshot = new BudgetSnapshot
         {
             Month = month,
@@ -135,7 +139,7 @@ public partial class StepDefinitions
     public void GivenThePreviousSnapshotHasTheFollowingCategories(DataTable dataTable)
     {
         var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
-        
+
         if (previousSnapshot == null)
         {
             throw new InvalidOperationException("Previous snapshot must be initialized first");
@@ -153,15 +157,24 @@ public partial class StepDefinitions
         }
     }
 
+    [Then("the income for {DateTime} should be {float}")]
+    public async Task ThenTheIncomeForOctoberShouldBe(DateTime date, Decimal expectedIncome)
+    {
+        var budgetService = GetOrCreateBudgetService();
+        var actualIncome = await budgetService.GetIncomeForMonth(date.Month, date.Year);
+        actualIncome.ShouldBe(expectedIncome);
+    }
+
+
     [When(@"I rebuild snapshots to (.*) (.*)")]
     public async Task WhenIRebuildSnapshotsTo(string monthName, int year)
     {
         var month = DateTime.Parse($"1 {monthName} {year}").Month;
-        var accountCreationDate = context.ContainsKey("AccountCreationDate") 
+        var accountCreationDate = context.ContainsKey("AccountCreationDate")
             ? context.Get<DateTime>("AccountCreationDate")
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
-        
+
         var resultSnapshot = await budgetService.RebuildSnapshots(null, month, year, accountCreationDate);
         context["ResultSnapshot"] = resultSnapshot;
     }
@@ -172,7 +185,7 @@ public partial class StepDefinitions
         var toMonth = DateTime.Parse($"1 {toMonthName} {year}").Month;
         var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
         var budgetService = GetOrCreateBudgetService();
-        
+
         var resultSnapshot = await budgetService.RebuildSnapshots(previousSnapshot, toMonth, year, null);
         context["ResultSnapshot"] = resultSnapshot;
     }
@@ -182,11 +195,11 @@ public partial class StepDefinitions
     {
         var month = DateTime.Parse($"1 {monthName} {year}").Month;
         var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
-        var accountCreationDate = context.ContainsKey("AccountCreationDate") 
+        var accountCreationDate = context.ContainsKey("AccountCreationDate")
             ? context.Get<DateTime>("AccountCreationDate")
             : new DateTime(previousSnapshot.Year, previousSnapshot.Month, 1); // Default to snapshot's month if not specified
         var budgetService = GetOrCreateBudgetService();
-        
+
         var actualRTA = await budgetService.CalculateReadyToAssign(month, year, previousSnapshot, accountCreationDate);
         context["ActualRTA"] = actualRTA;
     }
@@ -195,11 +208,11 @@ public partial class StepDefinitions
     public async Task WhenICalculateRTAWithoutSnapshot(string monthName, int year)
     {
         var month = DateTime.Parse($"1 {monthName} {year}").Month;
-        var accountCreationDate = context.ContainsKey("AccountCreationDate") 
+        var accountCreationDate = context.ContainsKey("AccountCreationDate")
             ? context.Get<DateTime>("AccountCreationDate")
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
-        
+
         var actualRTA = await budgetService.CalculateReadyToAssign(month, year, null, accountCreationDate);
         context["ActualRTA"] = actualRTA;
     }
@@ -217,14 +230,14 @@ public partial class StepDefinitions
     {
         var resultSnapshot = context.Get<BudgetSnapshot>("ResultSnapshot");
         resultSnapshot.ShouldNotBeNull();
-        
+
         foreach (var row in dataTable.Rows)
         {
             var categoryId = int.Parse(row["CategoryId"]);
             var assigned = decimal.Parse(row["Assigned"]);
             var activity = decimal.Parse(row["Activity"]);
             var available = decimal.Parse(row["Available"]);
-            
+
             var category = resultSnapshot.Categories.FirstOrDefault(c => c.CategoryId == categoryId);
             category.ShouldNotBeNull();
             category.AssignedValue.ShouldBe(assigned);
@@ -295,6 +308,7 @@ public partial class StepDefinitions
                 Id: ts.Id,
                 CategoryAllocationId: ts.CategoryAllocationId,
                 TransactionId: 1,
+                TransactionDate: ts.Transaction?.TransactionDate ?? DateTime.MinValue,
                 CategoryName: ts.CategoryAllocationId.HasValue ? "Some Category" : "Income",
                 Amount: ts.Amount,
                 Description: ts.Description
@@ -313,6 +327,7 @@ public partial class StepDefinitions
                         Id: ts.Id,
                         CategoryAllocationId: ts.CategoryAllocationId,
                         TransactionId: 1,
+                        TransactionDate: ts.Transaction?.TransactionDate ?? DateTime.MinValue,
                         CategoryName: "Some Category",
                         Amount: ts.Amount,
                         Description: ts.Description

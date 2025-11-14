@@ -28,4 +28,4 @@ public record CreateTransactionSplitRequest(int TransactionId, string Name, deci
 public record GetTransactionsResponse(List<TransactionResponse> Transactions);
 public record GetTransactionSplitsResponse(List<TransactionSplitResponse> TransactionSplits);
 public record TransactionResponse(int Id, int AccountId, string AccountName, string Payee, string Description, decimal Amount, DateTime TransactionDate, bool IsReconciled, DateTime CreatedAt, DateTime UpdatedAt);
-public record TransactionSplitResponse(int Id, int? CategoryAllocationId, int TransactionId, string CategoryName, decimal Amount, string? Description);
+public record TransactionSplitResponse(int Id, int? CategoryAllocationId, int TransactionId, DateTime TransactionDate, string CategoryName, decimal Amount, string? Description);

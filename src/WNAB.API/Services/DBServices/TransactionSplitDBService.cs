@@ -25,6 +25,7 @@ public class TransactionSplitDBService
     {
         // Base query: all splits for transactions that belong to the current user's accounts
         var query = _db.TransactionSplits
+            .Include(ts => ts.Transaction)
             .Where(ts => ts.Transaction.Account.UserId == userId);
 
         if (allocationId.HasValue)
@@ -38,6 +39,7 @@ public class TransactionSplitDBService
                 ts.Id,
                 ts.CategoryAllocationId,
                 ts.TransactionId,
+                ts.Transaction.TransactionDate,
                 ts.CategoryAllocation.Category.Name,
                 ts.Amount,
                 ts.Description
@@ -55,11 +57,13 @@ public class TransactionSplitDBService
         CancellationToken cancellationToken = default)
     {
         return await _db.TransactionSplits
+            .Include(ts => ts.Transaction)
             .Where(ts => ts.Id == splitId && ts.Transaction.Account.UserId == userId)
             .Select(ts => new TransactionSplitResponse(
                 ts.Id,
                 ts.CategoryAllocationId,
                 ts.TransactionId,
+                ts.Transaction.TransactionDate,
                 ts.CategoryAllocation.Category.Name,
                 ts.Amount,
                 ts.Description
@@ -127,6 +131,7 @@ public class TransactionSplitDBService
             split.Id,
             split.CategoryAllocationId,
             split.TransactionId,
+            transaction.TransactionDate,
             allocation?.Category.Name ?? "Income",
             split.Amount,
             split.Description
@@ -191,6 +196,7 @@ public class TransactionSplitDBService
             split.Id,
             split.CategoryAllocationId,
             split.TransactionId,
+            split.Transaction.TransactionDate,
             split.CategoryAllocation.Category.Name,
             split.Amount,
             split.Description
