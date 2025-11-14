@@ -100,17 +100,18 @@ builder.Services.AddTransient<TransactionManagementService>(sp =>
 builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 
+// Register Budget logic services
+builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
+builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
+
 // Register all Models (business logic layer)
 builder.Services.AddScoped<AccountsModel>();
 builder.Services.AddScoped<AddCategoryModel>();
 builder.Services.AddScoped<EditCategoryModel>();
 builder.Services.AddScoped<CategoriesModel>();
 builder.Services.AddScoped<TransactionsModel>();
-builder.Services.AddScoped<PlanBudgetModel>(sp => new PlanBudgetModel(
-    sp.GetRequiredService<CategoryManagementService>(),
-    sp.GetRequiredService<CategoryAllocationManagementService>(),
-    sp.GetRequiredService<TransactionManagementService>(),
-    sp.GetRequiredService<WNAB.MVM.IAuthenticationService>()));
+builder.Services.AddScoped<PlanBudgetModel>();
 
 // Register Modal/Popup Models
 builder.Services.AddScoped<AddAccountModel>();

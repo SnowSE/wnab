@@ -15,6 +15,7 @@ public partial class PlanBudgetModel : ObservableObject
     private readonly CategoryAllocationManagementService _allocationService;
     private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
+    private readonly IBudgetService _budgetService;
 
     // Available categories - categories not yet allocated
     public ObservableCollection<Category> AvailableCategories { get; } = new();
@@ -54,7 +55,10 @@ public partial class PlanBudgetModel : ObservableObject
     
     [ObservableProperty]
     private decimal monthlyLimit = 0m;
-    
+
+    [ObservableProperty]
+    private decimal readyToAssign = 0m;
+
     [ObservableProperty]
     private bool isEditMode = false;
     
@@ -66,13 +70,15 @@ public partial class PlanBudgetModel : ObservableObject
         CategoryManagementService categoryService,
         CategoryAllocationManagementService allocationService,
         TransactionManagementService transactionService,
-        IAuthenticationService authService)
+        IAuthenticationService authService,
+        IBudgetService budgetService)
     {
         _categoryService = categoryService;
         _allocationService = allocationService;
         _transactionService = transactionService;
         _authService = authService;
-        
+        _budgetService = budgetService;
+
         // Default to current month/year
         var now = DateTime.Now;
         CurrentMonth = now.Month;
@@ -262,10 +268,34 @@ public partial class PlanBudgetModel : ObservableObject
             
             _allocatedCategoryIds.Add(category.Id);
         }
-        
+
+        // Calculate Ready To Assign for the current month
+        await CalculateReadyToAssignAsync(month, year);
+
         // Notify UI that collections have changed
         OnPropertyChanged(nameof(BudgetAllocations));
         OnPropertyChanged(nameof(HiddenAllocations));
+    }
+
+    /// <summary>
+    /// Calculate the Ready To Assign value for the specified month/year.
+    /// </summary>
+    private async Task CalculateReadyToAssignAsync(int month, int year)
+    {
+        try
+        {
+            // Use a default account creation date of Jan 1, 2020 if not available
+            // In the future, this could be stored in user settings
+            var accountCreationDate = new DateTime(2020, 1, 1);
+
+            // Calculate RTA using the budget service
+            ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year, null, accountCreationDate);
+        }
+        catch (Exception)
+        {
+            // If calculation fails, default to 0
+            ReadyToAssign = 0m;
+        }
     }
     
     /// <summary>

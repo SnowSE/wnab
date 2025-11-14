@@ -33,8 +33,13 @@ public static class MauiProgram
 			builder.Configuration.AddConfiguration(config);
 		}
 
-		// Authentication services
-		builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+		// Register Budget logic services
+		builder.Services.AddScoped<IBudgetService, BudgetService>();
+        builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
+		builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
+
+        // Authentication services
+        builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 		builder.Services.AddSingleton<AuthenticationDelegatingHandler>();
 
 		// DI registrations for MVVM
@@ -58,7 +63,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AddSplitToTransactionModel>();
 		builder.Services.AddSingleton<AddSplitToTransactionViewModel>();
 
-      builder.Services.AddSingleton<AddCategoryModel>();
+		builder.Services.AddSingleton<AddCategoryModel>();
 		builder.Services.AddSingleton<AddCategoryViewModel>();
 		builder.Services.AddSingleton<AddCategoryPopup>();
 
@@ -89,18 +94,14 @@ public static class MauiProgram
 		builder.Services.AddSingleton<CategoriesPage>();
 
         builder.Services.AddSingleton<AccountsModel>();
-   builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
+		builder.Services.AddSingleton<WNAB.MVM.AccountsViewModel>();
         builder.Services.AddSingleton<AccountsPage>();
 
 		builder.Services.AddSingleton<TransactionsModel>();
 		builder.Services.AddSingleton<TransactionsViewModel>();
 		builder.Services.AddSingleton<TransactionsPage>();
 
-		builder.Services.AddSingleton<PlanBudgetModel>(sp => new PlanBudgetModel(
-			sp.GetRequiredService<CategoryManagementService>(),
-			sp.GetRequiredService<CategoryAllocationManagementService>(),
-			sp.GetRequiredService<TransactionManagementService>(),
-			sp.GetRequiredService<IAuthenticationService>()));
+		builder.Services.AddSingleton<PlanBudgetModel>();
 		builder.Services.AddSingleton<PlanBudgetViewModel>();
 
 #if DEBUG

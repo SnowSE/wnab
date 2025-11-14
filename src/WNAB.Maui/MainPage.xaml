@@ -128,11 +128,21 @@
                     
                     <Grid ColumnDefinitions="*,Auto">
                         <!-- Unallocated -->
-                        <Label Grid.Column="0" Text="Unallocated:" 
+                        <Label Grid.Column="0" Text="Unallocated:"
                                TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1" 
+                        <Label Grid.Column="1"
                                Text="{Binding UnallocatedFormatted}"
                                TextColor="Green"
+                               FontAttributes="Bold"/>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto">
+                        <!-- Ready To Assign -->
+                        <Label Grid.Column="0" Text="Ready To Assign:"
+                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Label Grid.Column="1"
+                               Text="{Binding ReadyToAssignFormatted}"
+                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
                                FontAttributes="Bold"/>
                     </Grid>
                 </VerticalStackLayout>

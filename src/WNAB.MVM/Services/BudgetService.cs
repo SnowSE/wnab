@@ -38,6 +38,7 @@ public class BudgetService : IBudgetService
 
     public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot, DateTime? accountCreationDate)
     {
+        throw new NotImplementedException("this needs to call rebuild snapshots, also what about a 'isvalidsnapshot' flag?");
         if (snapshot != null)
         {
             // Calculate from snapshot

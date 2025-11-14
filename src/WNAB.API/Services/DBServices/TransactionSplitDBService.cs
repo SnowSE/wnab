@@ -7,10 +7,12 @@ namespace WNAB.API;
 public class TransactionSplitDBService
 {
     private readonly WnabContext _db;
+    private readonly ILogger<TransactionSplitDBService> logger;
 
-    public TransactionSplitDBService(WnabContext db)
+    public TransactionSplitDBService(WnabContext db, ILogger<TransactionSplitDBService> logger )
     {
         _db = db;
+        this.logger = logger;
     }
 
     public WnabContext DbContext => _db;
@@ -255,6 +257,7 @@ public class TransactionSplitDBService
 
     public async Task<List<TransactionSplitResponse>> GetTransactionSplitsForUserByMonthAsync(int id, int month, int year)
     {
+        logger.LogInformation("Getting transaction splits for user {UserId} for {Month}/{Year}", id, month, year);
         return await _db.TransactionSplits
             .Include(ts => ts.Transaction)
             .Where(ts => ts.Transaction.Account.UserId == id &&
