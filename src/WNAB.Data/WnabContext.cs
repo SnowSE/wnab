@@ -9,11 +9,12 @@ public class WnabContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<Category> Categories => Set<Category>();
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<Category> Categories => Set<Category>();
+    public DbSet<CategoryAllocation> Allocations => Set<CategoryAllocation>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TransactionSplit> TransactionSplits => Set<TransactionSplit>();
-    public DbSet<CategoryAllocation> Allocations => Set<CategoryAllocation>();
+    public DbSet<BudgetSnapshot> BudgetSnapshots => Set<BudgetSnapshot>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

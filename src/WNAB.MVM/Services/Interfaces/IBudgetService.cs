@@ -1,10 +1,12 @@
 namespace WNAB.MVM;
 
+using WNAB.Data;
+
 /// <summary>
 /// Interface for budget-related calculations and operations.
 /// </summary>
 public interface IBudgetService
 {
-    Task<decimal> CalculateReadyToAssign(int month, int year, BudgetService.BudgetSnapshot? snapshot, DateTime? accountCreationDate);
-    Task<BudgetService.BudgetSnapshot> RebuildSnapshots(BudgetService.BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime? accountCreationDate);
+    Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot);
+    Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear);
 }

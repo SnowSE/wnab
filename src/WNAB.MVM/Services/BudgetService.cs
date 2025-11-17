@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Maui.Controls.Internals;
 using WNAB.Data;
@@ -8,92 +9,57 @@ namespace WNAB.MVM;
 
 public class BudgetService : IBudgetService
 {
-    private readonly HttpClient _http;
     private readonly ICategoryAllocationManagementService categoryAllocationManagementService;
     private readonly ITransactionManagementService transactionManagementService;
+    private readonly IUserService userService;
 
-
-    public BudgetService(HttpClient http, ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService)
+    public BudgetService(ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService, IUserService userService)
     {
-        _http = http ?? throw new ArgumentNullException(nameof(http));
         this.categoryAllocationManagementService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
         this.transactionManagementService = transactionManagementService ?? throw new ArgumentNullException(nameof(transactionManagementService));
+        this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
     }
 
-    public class BudgetSnapshot
-    {
-        public int Month { get; set; }
-        public int Year { get; set; }
-        public decimal RTA { get; set; }
-        public List<CategorySnapshotData> Categories { get; set; } = new();
-    }
+    
 
-    public class CategorySnapshotData
+    public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot)
     {
-        public int CategoryId { get; set; }
-        public decimal AssignedValue { get; set; }
-        public decimal Activity { get; set; }
-        public decimal Available { get; set; }
-    }
 
-    public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot, DateTime? accountCreationDate)
-    {
-        throw new NotImplementedException("this needs to call rebuild snapshots, also what about a 'isvalidsnapshot' flag?");
-        if (snapshot != null)
+        if (snapshot is null)
         {
-            // Calculate from snapshot
-            var currentMonthIncome = await GetIncomeForMonth(month, year);
-            var currentMonthAllocations = await GetAllocationsForMonth(month, year);
-            var overspend = snapshot.Categories
-                .Where(c => c.Available < 0)
-                .Sum(c => Math.Abs(c.Available));
-
-            return snapshot.RTA + currentMonthIncome - currentMonthAllocations - overspend;
+            snapshot = await RebuildSnapshots(null, month, year);
         }
-        else
-        {
-            // Calculate from beginning of time
-            if (accountCreationDate == null)
-            {
-                throw new ArgumentNullException(nameof(accountCreationDate), "Account creation date is required when snapshot is null");
-            }
 
-            var allTransactions = await transactionManagementService.GetTransactionSplitsAsync();
-            var allAllocations = await categoryAllocationManagementService.GetAllAllocationsAsync();
+        // Calculate from snapshot
+        var currentMonthIncome = await GetIncomeForMonth(month, year);
+        var currentMonthAllocations = await GetAllocationsForMonth(month, year);
+        var overspend = snapshot.Categories
+            .Where(c => c.Available < 0)
+            .Sum(c => Math.Abs(c.Available));
 
-            var income = allTransactions
-                .Where(t => t.CategoryAllocationId is null)
-                .Sum(t => t.Amount);
-
-            var allocations = allAllocations
-                .Where(a => a.Year < year || (a.Year == year && a.Month <= month))
-                .Sum(a => a.BudgetedAmount);
-
-            return income - allocations;
-        }
+        return snapshot.SnapshotReadyToAssign + currentMonthIncome - currentMonthAllocations - overspend;
     }
 
-    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear, DateTime? accountCreationDate)
+    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear)
     {
-        if (previousSnapshot == null && accountCreationDate == null)
-        {
-            throw new ArgumentNullException(nameof(accountCreationDate), "Account creation date is required when there is no previous snapshot");
-        }
+       
 
         var snapshot = previousSnapshot == null
-            ? await CreateFirstSnapshot(accountCreationDate!.Value)
+            ? await CreateFirstSnapshot()
             : await CreateNextSnapshot(previousSnapshot);
 
         if (ShouldContinueBuilding(snapshot, targetMonth, targetYear))
         {
-            return await RebuildSnapshots(snapshot, targetMonth, targetYear, accountCreationDate);
+            return await RebuildSnapshots(snapshot, targetMonth, targetYear);
         }
 
         return snapshot;
     }
 
-    public async Task<BudgetSnapshot> CreateFirstSnapshot(DateTime accountCreationDate)
+    public async Task<BudgetSnapshot> CreateFirstSnapshot()
     {
+        // make it the earliest transaction date. 
+        var accountCreationDate = await userService.GetEarliestActivityDate();
         var currentMonth = accountCreationDate.Month;
         var currentYear = accountCreationDate.Year;
 
@@ -105,7 +71,7 @@ public class BudgetService : IBudgetService
         {
             Month = currentMonth,
             Year = currentYear,
-            RTA = income - allocations,
+            SnapshotReadyToAssign = income - allocations,
             Categories = categoryData
         };
     }
@@ -123,7 +89,7 @@ public class BudgetService : IBudgetService
         {
             Month = currentMonth,
             Year = currentYear,
-            RTA = previousSnapshot.RTA + income - allocations - overspend,
+            SnapshotReadyToAssign = previousSnapshot.SnapshotReadyToAssign + income - allocations - overspend,
             Categories = categoryData
         };
     }
@@ -232,4 +198,5 @@ public class BudgetService : IBudgetService
 
         return allocationAmount;
     }
+
 }

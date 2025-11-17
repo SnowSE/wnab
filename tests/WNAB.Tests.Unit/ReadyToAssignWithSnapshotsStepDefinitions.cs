@@ -129,7 +129,7 @@ public partial class StepDefinitions
         {
             Month = month,
             Year = year,
-            RTA = rta,
+            SnapshotReadyToAssign = rta,
             Categories = new List<CategorySnapshotData>()
         };
         context["PreviousSnapshot"] = previousSnapshot;
@@ -175,7 +175,7 @@ public partial class StepDefinitions
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var resultSnapshot = await budgetService.RebuildSnapshots(null, month, year, accountCreationDate);
+        var resultSnapshot = await budgetService.RebuildSnapshots(null, month, year);
         context["ResultSnapshot"] = resultSnapshot;
     }
 
@@ -186,7 +186,7 @@ public partial class StepDefinitions
         var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
         var budgetService = GetOrCreateBudgetService();
 
-        var resultSnapshot = await budgetService.RebuildSnapshots(previousSnapshot, toMonth, year, null);
+        var resultSnapshot = await budgetService.RebuildSnapshots(previousSnapshot, toMonth, year);
         context["ResultSnapshot"] = resultSnapshot;
     }
 
@@ -200,7 +200,7 @@ public partial class StepDefinitions
             : new DateTime(previousSnapshot.Year, previousSnapshot.Month, 1); // Default to snapshot's month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, previousSnapshot, accountCreationDate);
+        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, previousSnapshot);
         context["ActualRTA"] = actualRTA;
     }
 
@@ -213,7 +213,7 @@ public partial class StepDefinitions
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, null, accountCreationDate);
+        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, null);
         context["ActualRTA"] = actualRTA;
     }
 
@@ -222,7 +222,7 @@ public partial class StepDefinitions
     {
         var resultSnapshot = context.Get<BudgetSnapshot>("ResultSnapshot");
         resultSnapshot.ShouldNotBeNull();
-        resultSnapshot.RTA.ShouldBe(expectedRTA);
+        resultSnapshot.SnapshotReadyToAssign.ShouldBe(expectedRTA);
     }
 
     [Then(@"the snapshot should have the following categories")]
@@ -274,14 +274,25 @@ public partial class StepDefinitions
         return context.Get<ITransactionManagementService>("TransactionManagementService");
     }
 
+    private IUserService GetOrCreateUserService()
+    {
+        if (!context.ContainsKey("UserService"))
+        {
+            var service = Substitute.For<IUserService>();
+            context["UserService"] = service;
+        }
+        return context.Get<IUserService>("UserService");
+    }
+
+
     private BudgetService GetOrCreateBudgetService()
     {
         if (!context.ContainsKey("BudgetService"))
         {
-            var httpClient = Substitute.For<HttpClient>();
             var categoryAllocationService = GetOrCreateCategoryAllocationService();
             var transactionService = GetOrCreateTransactionManagementService();
-            var service = new BudgetService(httpClient, categoryAllocationService, transactionService);
+            var userService = GetOrCreateUserService();
+            var service = new BudgetService(categoryAllocationService, transactionService, userService);
             context["BudgetService"] = service;
         }
         return context.Get<BudgetService>("BudgetService");
@@ -320,7 +331,7 @@ public partial class StepDefinitions
         service.GetTransactionSplitsByMonthAsync(Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
             .Returns(callInfo =>
             {
-                var date = callInfo.Arg<DateTime>();
+                var date = callInfo.Arg<DateTime>();//TODO Stop this from blowing up.
                 var matchingSplits = transactionSplits
                     .Where(ts => ts.Transaction != null &&
                                  ts.Transaction.TransactionDate.Month == date.Month &&
