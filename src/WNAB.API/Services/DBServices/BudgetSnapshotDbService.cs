@@ -15,20 +15,32 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
     public WnabContext DbContext => _db;
 
     /// <summary>
-    /// Gets a budget snapshot for a specific month and year
+    /// Gets a budget snapshot for a specific month and year, filtered by user
     /// </summary>
-    public async Task<BudgetSnapshot?> GetSnapshotAsync(int month, int year, CancellationToken cancellationToken = default)
+    public async Task<BudgetSnapshot?> GetSnapshotAsync(int month, int year, int userId, CancellationToken cancellationToken = default)
     {
-        return await _db.BudgetSnapshots
+        // Get the snapshot and filter categories to only those belonging to this user
+        var snapshot = await _db.BudgetSnapshots
             .Include(s => s.Categories)
             .ThenInclude(c => c.Category)
             .FirstOrDefaultAsync(s => s.Month == month && s.Year == year, cancellationToken);
+
+        if (snapshot == null)
+            return null;
+
+        // Filter to only categories owned by this user
+        snapshot.Categories = snapshot.Categories
+            .Where(c => c.Category != null && c.Category.UserId == userId)
+            .ToList();
+
+        return snapshot;
     }
 
     /// <summary>
     /// Saves a new budget snapshot or updates an existing one
+    /// Only saves categories that belong to the specified user
     /// </summary>
-    public async Task<BudgetSnapshot> SaveSnapshotAsync(BudgetSnapshot snapshot, CancellationToken cancellationToken = default)
+    public async Task<BudgetSnapshot> SaveSnapshotAsync(BudgetSnapshot snapshot, int userId, CancellationToken cancellationToken = default)
     {
         // Guard: prevent saving unrelated pending changes in this context
         if (_db.ChangeTracker.HasChanges())
@@ -36,6 +48,7 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
 
         var existingSnapshot = await _db.BudgetSnapshots
             .Include(s => s.Categories)
+            .ThenInclude(c => c.Category)
             .FirstOrDefaultAsync(s => s.Month == snapshot.Month && s.Year == snapshot.Year, cancellationToken);
 
         if (existingSnapshot is not null)
@@ -43,9 +56,14 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
             // Update existing snapshot
             existingSnapshot.SnapshotReadyToAssign = snapshot.SnapshotReadyToAssign;
             
-            // Remove old categories and add new ones
-            _db.RemoveRange(existingSnapshot.Categories);
-            existingSnapshot.Categories = snapshot.Categories;
+            // Remove old categories that belong to this user
+            var userCategories = existingSnapshot.Categories
+                .Where(c => c.Category != null && c.Category.UserId == userId)
+                .ToList();
+            _db.RemoveRange(userCategories);
+            
+            // Add new categories (they should already be validated to belong to this user)
+            existingSnapshot.Categories.AddRange(snapshot.Categories);
         }
         else
         {

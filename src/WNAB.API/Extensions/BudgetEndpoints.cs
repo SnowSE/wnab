@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WNAB.API.Services;
 using WNAB.Data;
 
 namespace WNAB.API.Extensions;
@@ -16,16 +17,21 @@ public static class BudgetEndpoints
 
     [Authorize]
     private static async Task<IResult> GetSnapshot(
+        HttpContext context,
         [FromQuery] int month,
         [FromQuery] int year,
-        [FromServices] IBudgetSnapshotDbService snapshotService)
+        [FromServices] IBudgetSnapshotDbService snapshotService,
+        [FromServices] UserProvisioningService provisioningService)
     {
         if (month < 1 || month > 12 || year < 2000 || year > 2100)
         {
             return Results.BadRequest("Invalid month or year");
         }
 
-        var snapshot = await snapshotService.GetSnapshotAsync(month, year);
+        var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+        if (user is null) return Results.Unauthorized();
+
+        var snapshot = await snapshotService.GetSnapshotAsync(month, year, user.Id);
 
         if (snapshot == null)
         {
@@ -37,8 +43,10 @@ public static class BudgetEndpoints
 
     [Authorize]
     private static async Task<IResult> SaveSnapshot(
+        HttpContext context,
         [FromBody] BudgetSnapshot snapshot,
-        [FromServices] IBudgetSnapshotDbService snapshotService)
+        [FromServices] IBudgetSnapshotDbService snapshotService,
+        [FromServices] UserProvisioningService provisioningService)
     {
         if (snapshot == null)
         {
@@ -50,7 +58,10 @@ public static class BudgetEndpoints
             return Results.BadRequest("Invalid month or year");
         }
 
-        await snapshotService.SaveSnapshotAsync(snapshot);
+        var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+        if (user is null) return Results.Unauthorized();
+
+        await snapshotService.SaveSnapshotAsync(snapshot, user.Id);
 
         return Results.Ok(new { snapshot.Id, snapshot.Month, snapshot.Year });
     }

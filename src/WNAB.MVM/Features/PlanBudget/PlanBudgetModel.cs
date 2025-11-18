@@ -53,9 +53,6 @@ public partial class PlanBudgetModel : ObservableObject
 
     [ObservableProperty]
     private int currentYear;
-    
-    [ObservableProperty]
-    private decimal monthlyLimit = 0m;
 
     [ObservableProperty]
     private decimal readyToAssign = 0m;
@@ -68,7 +65,6 @@ public partial class PlanBudgetModel : ObservableObject
     private BudgetSnapshot? currentSnapshot;
     
     // Backup state for undo functionality
-    private decimal _backupMonthlyLimit;
     private List<(int CategoryId, decimal BudgetedAmount)> _backupAllocations = new();
 
     public PlanBudgetModel(
@@ -151,10 +147,12 @@ public partial class PlanBudgetModel : ObservableObject
         {
             IsBusy = true;
             StatusMessage = "Loading categories and allocations...";
-            
+
             // Load existing allocations first to know which categories are already allocated
             await LoadExistingAllocationsAsync(CurrentMonth, CurrentYear);
-            
+
+            await CalculateReadyToAssignAsync(CurrentMonth, CurrentYear);
+
             // Then load available categories (excluding already allocated ones)
             await LoadCategoriesAsync();
 
@@ -294,21 +292,16 @@ public partial class PlanBudgetModel : ObservableObject
     /// <summary>
     /// Calculate the Ready To Assign value for the specified month/year.
     /// </summary>
-    private async Task CalculateReadyToAssignAsync(int month, int year)
+    public async Task CalculateReadyToAssignAsync(int month, int year)
     {
         try
         {
-            // Use a default account creation date of Jan 1, 2020 if not available
-            // In the future, this could be stored in user settings
-            var accountCreationDate = new DateTime(2020, 1, 1);
-
             // Calculate RTA using the budget service
             ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year);
         }
         catch (Exception)
         {
-            // If calculation fails, default to 0
-            ReadyToAssign = 0m;
+            throw new InvalidOperationException("Failed to calculate Ready To Assign");
         }
     }
 
@@ -368,20 +361,11 @@ public partial class PlanBudgetModel : ObservableObject
     }
     
     /// <summary>
-    /// Calculate unallocated amount (monthly limit minus allocated).
-    /// </summary>
-    public decimal GetUnallocated()
-    {
-        return MonthlyLimit - GetTotalAllocated();
-    }
-    
-    /// <summary>
     /// Enter edit mode and backup current state for undo.
     /// </summary>
     public void EnterEditMode()
     {
         IsEditMode = true;
-        _backupMonthlyLimit = MonthlyLimit;
         _backupAllocations = BudgetAllocations
             .Select(a => (a.CategoryId, a.BudgetedAmount))
             .ToList();
@@ -392,8 +376,6 @@ public partial class PlanBudgetModel : ObservableObject
     /// </summary>
     public void UndoChanges()
     {
-        MonthlyLimit = _backupMonthlyLimit;
-        
         foreach (var backup in _backupAllocations)
         {
             var allocation = BudgetAllocations.FirstOrDefault(a => a.CategoryId == backup.CategoryId);

@@ -99,36 +99,19 @@
                 </div>
             }
 
-            <!-- Monthly Limit Section -->
+            <!-- Ready to Assign Section -->
             <div class="monthly-limit-card">
-                <h6 class="fw-bold mb-3">Monthly Limit</h6>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Total Income/Limit:</span>
-                            @if (ViewModel.Model.IsEditMode)
-                            {
-                                <div class="input-group input-group-sm" style="width: 150px;">
-                                    <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control text-end" @bind="ViewModel.Model.MonthlyLimit" step="0.01" />
-                                </div>
-                            }
-                            else
-                            {
-                                <span class="fw-bold">@ViewModel.Model.MonthlyLimit.ToString("C")</span>
-                            }
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="rta-display">
+                            <h5 class="text-muted mb-2 fw-normal">Ready to Assign</h5>
+                            <h2 class="fw-bold mb-0 text-success">@ViewModel.Model.ReadyToAssign.ToString("C")</h2>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-6">
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Allocated:</span>
+                            <span class="text-muted">Allocated This Month:</span>
                             <span class="fw-bold">@ViewModel.Model.GetTotalAllocated().ToString("C")</span>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Unallocated:</span>
-                            <span class="fw-bold text-success">@ViewModel.Model.GetUnallocated().ToString("C")</span>
                         </div>
                     </div>
                 </div>
@@ -329,7 +312,7 @@
             // Subscribe to property changes to trigger UI updates
             ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
             ViewModel.PropertyChanged += OnViewModelPropertyChanged;
-     
+            
             await ViewModel.InitializeAsync();
             _isInitialized = true;
         }

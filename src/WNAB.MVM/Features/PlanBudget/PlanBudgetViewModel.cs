@@ -197,11 +197,9 @@ public partial class PlanBudgetViewModel : ObservableObject
         // Subscribe to model changes to update computed properties
         Model.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(Model.MonthlyLimit) ||
-                e.PropertyName == nameof(Model.BudgetAllocations))
+            if (e.PropertyName == nameof(Model.BudgetAllocations))
             {
                 OnPropertyChanged(nameof(TotalAllocatedFormatted));
-                OnPropertyChanged(nameof(UnallocatedFormatted));
                 OnPropertyChanged(nameof(HasNoBudgetAllocations));
             }
 
@@ -221,11 +219,6 @@ public partial class PlanBudgetViewModel : ObservableObject
     /// Formatted total allocated amount for MAUI binding.
     /// </summary>
     public string TotalAllocatedFormatted => Model.GetTotalAllocated().ToString("C");
-    
-    /// <summary>
-    /// Formatted unallocated amount for MAUI binding.
-    /// </summary>
-    public string UnallocatedFormatted => Model.GetUnallocated().ToString("C");
 
     /// <summary>
     /// Formatted Ready To Assign amount for MAUI binding.
@@ -254,6 +247,7 @@ public partial class PlanBudgetViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await Model.InitializeAsync();
+        
     }
 
     /// <summary>
