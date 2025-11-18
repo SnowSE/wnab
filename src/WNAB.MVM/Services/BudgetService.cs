@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using Microsoft.Maui.Controls.Internals;
 using WNAB.Data;
+using WNAB.API;
 
 namespace WNAB.MVM;
 
@@ -12,46 +13,64 @@ public class BudgetService : IBudgetService
     private readonly ICategoryAllocationManagementService categoryAllocationManagementService;
     private readonly ITransactionManagementService transactionManagementService;
     private readonly IUserService userService;
+    private readonly IBudgetSnapshotDbService budgetSnapshotDbService;
 
-    public BudgetService(ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService, IUserService userService)
+    public BudgetService(ICategoryAllocationManagementService categoryAllocationService, ITransactionManagementService transactionManagementService, IUserService userService, IBudgetSnapshotDbService budgetSnapshotDbService)
     {
         this.categoryAllocationManagementService = categoryAllocationService ?? throw new ArgumentNullException(nameof(categoryAllocationService));
         this.transactionManagementService = transactionManagementService ?? throw new ArgumentNullException(nameof(transactionManagementService));
         this.userService = userService ?? throw new ArgumentNullException(nameof(userService));
+        this.budgetSnapshotDbService = budgetSnapshotDbService ?? throw new ArgumentNullException(nameof(budgetSnapshotDbService));
     }
 
     
 
-    public async Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot)
+    public async Task<decimal> CalculateReadyToAssign(int month, int year)
     {
+        var snapshot = await budgetSnapshotDbService.GetSnapshotAsync(month, year);
 
         if (snapshot is null)
         {
-            snapshot = await RebuildSnapshots(null, month, year);
+            snapshot = await RebuildSnapshots(month, year);
         }
 
         // Calculate from snapshot
-        var currentMonthIncome = await GetIncomeForMonth(month, year);
-        var currentMonthAllocations = await GetAllocationsForMonth(month, year);
+        var futureAllocations = await categoryAllocationManagementService.GetAllFutureAllocationsAsync(month, year);
         var overspend = snapshot.Categories
             .Where(c => c.Available < 0)
             .Sum(c => Math.Abs(c.Available));
 
-        return snapshot.SnapshotReadyToAssign + currentMonthIncome - currentMonthAllocations - overspend;
+        return snapshot.SnapshotReadyToAssign - futureAllocations.Sum(f => f.BudgetedAmount);
     }
 
-    public async Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear)
+    public async Task<BudgetSnapshot> RebuildSnapshots(int targetMonth, int targetYear)
     {
-       
-
-        var snapshot = previousSnapshot == null
-            ? await CreateFirstSnapshot()
-            : await CreateNextSnapshot(previousSnapshot);
-
-        if (ShouldContinueBuilding(snapshot, targetMonth, targetYear))
+        // Build the snapshot for the target month
+        BudgetSnapshot snapshot;
+        
+        // Check if this is the first snapshot (at earliest activity date)
+        var earliestDate = await userService.GetEarliestActivityDate();
+        if (targetMonth == earliestDate.Month && targetYear == earliestDate.Year)
         {
-            return await RebuildSnapshots(snapshot, targetMonth, targetYear);
+            snapshot = await CreateFirstSnapshot();
         }
+        else
+        {
+            // Need to get the previous month's snapshot first
+            var (prevMonth, prevYear) = CalculatePreviousMonth(targetMonth, targetYear);
+            
+            // Check if previous snapshot exists, if not rebuild it
+            var previousSnapshot = await budgetSnapshotDbService.GetSnapshotAsync(prevMonth, prevYear);
+            if (previousSnapshot == null)
+            {
+                previousSnapshot = await RebuildSnapshots(prevMonth, prevYear);
+            }
+            
+            snapshot = await CreateNextSnapshot(previousSnapshot);
+        }
+
+        // Save the newly created/rebuilt snapshot
+        await budgetSnapshotDbService.SaveSnapshotAsync(snapshot);
 
         return snapshot;
     }
@@ -106,6 +125,20 @@ public class BudgetService : IBudgetService
         }
 
         return (nextMonth, nextYear);
+    }
+
+    public (int month, int year) CalculatePreviousMonth(int currentMonth, int currentYear)
+    {
+        var prevMonth = currentMonth - 1;
+        var prevYear = currentYear;
+
+        if (prevMonth < 1)
+        {
+            prevMonth = 12;
+            prevYear--;
+        }
+
+        return (prevMonth, prevYear);
     }
 
     public decimal CalculateOverspend(BudgetSnapshot snapshot)

@@ -289,7 +289,7 @@ public partial class PlanBudgetModel : ObservableObject
             var accountCreationDate = new DateTime(2020, 1, 1);
 
             // Calculate RTA using the budget service
-            ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year, null);
+            ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year);
         }
         catch (Exception)
         {

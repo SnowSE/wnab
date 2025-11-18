@@ -128,3 +128,53 @@ Feature: Ready To Assign Calculation with Snapshots
       | 2025-11-01 | 2          | 100.00         |
     When I calculate RTA for November 2025 with the snapshot
     Then the RTA should be 350.00
+
+  Scenario: Calculate RTA with future allocations reduces available RTA
+    Given I have a previous snapshot with the following details
+      | Month | Year | RTA    |
+      | 11    | 2025 | 500.00 |
+    And the previous snapshot has the following categories
+      | CategoryId | Assigned | Activity | Available |
+      | 1          | 300.00   | 200.00   | 100.00    |
+    And the following category allocations exist
+      | Date       | CategoryId | BudgetedAmount |
+      | 2025-12-01 | 1          | 150.00         |
+      | 2026-01-01 | 1          | 100.00         |
+    When I calculate RTA for November 2025 with the snapshot
+    Then the RTA should be 250.00
+
+  Scenario: Calculate RTA with no future allocations
+    Given I have a previous snapshot with the following details
+      | Month | Year | RTA    |
+      | 11    | 2025 | 500.00 |
+    And the previous snapshot has the following categories
+      | CategoryId | Assigned | Activity | Available |
+      | 1          | 300.00   | 200.00   | 100.00    |
+    And the following category allocations exist
+      | Date       | CategoryId | BudgetedAmount |
+      | 2025-11-01 | 1          | 300.00         |
+      | 2025-10-01 | 1          | 200.00         |
+    When I calculate RTA for November 2025 with the snapshot
+    Then the RTA should be 500.00
+
+  Scenario: Calculate RTA with mix of current and future allocations
+    Given I have a previous snapshot with the following details
+      | Month | Year | RTA    |
+      | 11    | 2025 | 600.00 |
+    And the previous snapshot has the following categories
+      | CategoryId | Assigned | Activity | Available |
+      | 1          | 300.00   | 200.00   | 100.00    |
+      | 2          | 200.00   | 150.00   | 50.00     |
+    And the following category allocations exist
+      | Date       | CategoryId | BudgetedAmount |
+      | 2025-10-01 | 1          | 200.00         |
+      | 2025-11-01 | 1          | 300.00         |
+      | 2025-11-01 | 2          | 200.00         |
+      | 2025-12-01 | 1          | 100.00         |
+      | 2025-12-01 | 2          | 50.00          |
+      | 2026-01-01 | 1          | 75.00          |
+    When I calculate RTA for November 2025 with the snapshot
+    Then the RTA should be 375.00
+
+
+    

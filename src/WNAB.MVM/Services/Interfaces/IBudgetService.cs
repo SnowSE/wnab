@@ -7,6 +7,6 @@ using WNAB.Data;
 /// </summary>
 public interface IBudgetService
 {
-    Task<decimal> CalculateReadyToAssign(int month, int year, BudgetSnapshot? snapshot);
-    Task<BudgetSnapshot> RebuildSnapshots(BudgetSnapshot? previousSnapshot, int targetMonth, int targetYear);
+    Task<decimal> CalculateReadyToAssign(int month, int year);
+    Task<BudgetSnapshot> RebuildSnapshots(int targetMonth, int targetYear);
 }

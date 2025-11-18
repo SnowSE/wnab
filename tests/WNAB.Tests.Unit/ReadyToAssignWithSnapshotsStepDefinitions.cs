@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NSubstitute;
 using Reqnroll;
 using Shouldly;
+using WNAB.API;
 using WNAB.Data;
 using WNAB.MVM;
 using WNAB.SharedDTOs;
@@ -25,6 +26,9 @@ public partial class StepDefinitions
     {
         var accountCreationDate = DateTime.Parse(dateString);
         context["AccountCreationDate"] = accountCreationDate;
+        
+        var userService = GetOrCreateUserService();
+        SetupUserMocks(accountCreationDate, userService);
     }
 
     [Given(@"the following income transactions exist")]
@@ -132,13 +136,24 @@ public partial class StepDefinitions
             SnapshotReadyToAssign = rta,
             Categories = new List<CategorySnapshotData>()
         };
-        context["PreviousSnapshot"] = previousSnapshot;
+        
+        // Ensure the snapshot store exists by getting/creating the service first
+        GetOrCreateBudgetSnapshotDbService();
+        
+        // Store in snapshot store for the mock database
+        var snapshotStore = context.Get<Dictionary<(int month, int year), BudgetSnapshot>>("SnapshotStore");
+        snapshotStore[(month, year)] = previousSnapshot;
     }
 
     [Given(@"the previous snapshot has the following categories")]
     public void GivenThePreviousSnapshotHasTheFollowingCategories(DataTable dataTable)
     {
-        var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
+        // Ensure the snapshot store exists
+        GetOrCreateBudgetSnapshotDbService();
+        
+        // Get the snapshot from the store
+        var snapshotStore = context.Get<Dictionary<(int month, int year), BudgetSnapshot>>("SnapshotStore");
+        var previousSnapshot = snapshotStore.Values.LastOrDefault();
 
         if (previousSnapshot == null)
         {
@@ -175,7 +190,7 @@ public partial class StepDefinitions
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var resultSnapshot = await budgetService.RebuildSnapshots(null, month, year);
+        var resultSnapshot = await budgetService.RebuildSnapshots(month, year);
         context["ResultSnapshot"] = resultSnapshot;
     }
 
@@ -183,10 +198,9 @@ public partial class StepDefinitions
     public async Task WhenIBuildSnapshotFromTo(string fromMonthName, string toMonthName, int year)
     {
         var toMonth = DateTime.Parse($"1 {toMonthName} {year}").Month;
-        var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
         var budgetService = GetOrCreateBudgetService();
 
-        var resultSnapshot = await budgetService.RebuildSnapshots(previousSnapshot, toMonth, year);
+        var resultSnapshot = await budgetService.RebuildSnapshots(toMonth, year);
         context["ResultSnapshot"] = resultSnapshot;
     }
 
@@ -194,13 +208,9 @@ public partial class StepDefinitions
     public async Task WhenICalculateRTAWithTheSnapshot(string monthName, int year)
     {
         var month = DateTime.Parse($"1 {monthName} {year}").Month;
-        var previousSnapshot = context.Get<BudgetSnapshot>("PreviousSnapshot");
-        var accountCreationDate = context.ContainsKey("AccountCreationDate")
-            ? context.Get<DateTime>("AccountCreationDate")
-            : new DateTime(previousSnapshot.Year, previousSnapshot.Month, 1); // Default to snapshot's month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, previousSnapshot);
+        var actualRTA = await budgetService.CalculateReadyToAssign(month, year);
         context["ActualRTA"] = actualRTA;
     }
 
@@ -213,7 +223,7 @@ public partial class StepDefinitions
             : new DateTime(year, month, 1); // Default to first day of the month if not specified
         var budgetService = GetOrCreateBudgetService();
 
-        var actualRTA = await budgetService.CalculateReadyToAssign(month, year, null);
+        var actualRTA = await budgetService.CalculateReadyToAssign(month, year);
         context["ActualRTA"] = actualRTA;
     }
 
@@ -279,6 +289,12 @@ public partial class StepDefinitions
         if (!context.ContainsKey("UserService"))
         {
             var service = Substitute.For<IUserService>();
+            
+            // Setup default earliest activity date if not specified
+            var defaultDate = new DateTime(2024, 1, 1);
+            service.GetEarliestActivityDate()
+                .Returns(Task.FromResult(defaultDate));
+            
             context["UserService"] = service;
         }
         return context.Get<IUserService>("UserService");
@@ -292,10 +308,44 @@ public partial class StepDefinitions
             var categoryAllocationService = GetOrCreateCategoryAllocationService();
             var transactionService = GetOrCreateTransactionManagementService();
             var userService = GetOrCreateUserService();
-            var service = new BudgetService(categoryAllocationService, transactionService, userService);
+            var budgetSnapshotDbService = GetOrCreateBudgetSnapshotDbService();
+            
+            var service = new BudgetService(categoryAllocationService, transactionService, userService, budgetSnapshotDbService);
             context["BudgetService"] = service;
         }
         return context.Get<BudgetService>("BudgetService");
+    }
+
+    private IBudgetSnapshotDbService GetOrCreateBudgetSnapshotDbService()
+    {
+        if (!context.ContainsKey("BudgetSnapshotDbService"))
+        {
+            var service = Substitute.For<IBudgetSnapshotDbService>();
+            var snapshotStore = new Dictionary<(int month, int year), BudgetSnapshot>();
+            
+            // Setup GetSnapshotAsync to return snapshots from our store
+            service.GetSnapshotAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var month = callInfo.ArgAt<int>(0);
+                    var year = callInfo.ArgAt<int>(1);
+                    snapshotStore.TryGetValue((month, year), out var snapshot);
+                    return Task.FromResult(snapshot);
+                });
+            
+            // Setup SaveSnapshotAsync to store snapshots
+            service.SaveSnapshotAsync(Arg.Any<BudgetSnapshot>(), Arg.Any<CancellationToken>())
+                .Returns(callInfo =>
+                {
+                    var snapshot = callInfo.ArgAt<BudgetSnapshot>(0);
+                    snapshotStore[(snapshot.Month, snapshot.Year)] = snapshot;
+                    return Task.FromResult(snapshot);
+                });
+            
+            context["BudgetSnapshotDbService"] = service;
+            context["SnapshotStore"] = snapshotStore;
+        }
+        return context.Get<IBudgetSnapshotDbService>("BudgetSnapshotDbService");
     }
 
     private void SetupAllocationMocks(List<CategoryAllocation> allocations, ICategoryAllocationManagementService service)
@@ -309,6 +359,17 @@ public partial class StepDefinitions
                 var categoryId = callInfo.Arg<int>();
                 var categoryAllocations = allocations.Where(a => a.CategoryId == categoryId).ToList();
                 return Task.FromResult(categoryAllocations);
+            });
+
+        service.GetAllFutureAllocationsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var month = callInfo.ArgAt<int>(0);
+                var year = callInfo.ArgAt<int>(1);
+                var futureAllocations = allocations
+                    .Where(a => a.Year > year || (a.Year == year && a.Month > month))
+                    .ToList();
+                return Task.FromResult((IEnumerable<CategoryAllocation>)futureAllocations);
             });
     }
 
@@ -367,5 +428,11 @@ public partial class StepDefinitions
                     .ToList();
                 return Task.FromResult(matchingSplits);
             });
+    }
+
+    private void SetupUserMocks(DateTime accountCreationDate, IUserService service)
+    {
+        service.GetEarliestActivityDate()
+            .Returns(Task.FromResult(accountCreationDate));
     }
 }

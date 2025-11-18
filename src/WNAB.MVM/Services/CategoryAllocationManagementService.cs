@@ -65,4 +65,13 @@ public class CategoryAllocationManagementService : ICategoryAllocationManagement
         var allocations = await _http.GetFromJsonAsync<List<CategoryAllocation>>($"allocations", ct);
         return allocations ?? throw new InvalidOperationException("API returned no content when retrieving all allocations.");
     }
+
+    public async Task<IEnumerable<CategoryAllocation>> GetAllFutureAllocationsAsync(int month, int year, CancellationToken ct = default)
+    {
+
+        var allocations = await _http.GetFromJsonAsync<IEnumerable<CategoryAllocation>>($"allocations", ct);
+        if (allocations is null) throw new NotImplementedException("Null allocations!");
+        return allocations.Where(a => a.Year > year || (a.Month > month && a.Year == year));
+        
+    }
 }
