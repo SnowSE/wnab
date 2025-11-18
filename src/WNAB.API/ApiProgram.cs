@@ -78,6 +78,8 @@ builder.Services.AddScoped<AllocationDBService>();
 builder.Services.AddScoped<TransactionDBService>();
 // Register transaction splits DB service
 builder.Services.AddScoped<TransactionSplitDBService>();
+// Register budget snapshot DB service
+builder.Services.AddScoped<IBudgetSnapshotDbService, BudgetSnapshotDbService>();
 
 // Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
 var connectionString = builder.Configuration.GetConnectionString("wnabdb")
@@ -595,6 +597,8 @@ app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id,
     return Results.NoContent();
 }).RequireAuthorization();
 
+// Map budget endpoints
+app.MapBudgetEndpoints();
 
 
 // Apply EF Core migrations at startup so the database schema is up to date.

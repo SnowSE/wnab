@@ -15,6 +15,7 @@ public partial class PlanBudgetModel : ObservableObject
     private readonly CategoryAllocationManagementService _allocationService;
     private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
+    private readonly IBudgetSnapshotService _budgetSnapshotService;
     private readonly IBudgetService _budgetService;
 
     // Available categories - categories not yet allocated
@@ -62,6 +63,10 @@ public partial class PlanBudgetModel : ObservableObject
     [ObservableProperty]
     private bool isEditMode = false;
     
+    // Current budget snapshot for the displayed month/year
+    [ObservableProperty]
+    private BudgetSnapshot? currentSnapshot;
+    
     // Backup state for undo functionality
     private decimal _backupMonthlyLimit;
     private List<(int CategoryId, decimal BudgetedAmount)> _backupAllocations = new();
@@ -71,12 +76,14 @@ public partial class PlanBudgetModel : ObservableObject
         CategoryAllocationManagementService allocationService,
         TransactionManagementService transactionService,
         IAuthenticationService authService,
+        IBudgetSnapshotService budgetSnapshotService,
         IBudgetService budgetService)
     {
         _categoryService = categoryService;
         _allocationService = allocationService;
         _transactionService = transactionService;
         _authService = authService;
+        _budgetSnapshotService = budgetSnapshotService;
         _budgetService = budgetService;
 
         // Default to current month/year
@@ -197,6 +204,10 @@ public partial class PlanBudgetModel : ObservableObject
         // Get all categories first
         var categories = await _categoryService.GetCategoriesForUserAsync();
         
+        // Get the budget snapshot for this month and store it
+        var snapshot = await _budgetSnapshotService.GetSnapshotAsync(month, year);
+        CurrentSnapshot = snapshot;
+        
         // Determine prior month/year
         var priorMonth = month - 1;
         var priorYear = year;
@@ -266,6 +277,9 @@ public partial class PlanBudgetModel : ObservableObject
                 await LoadSpentAmountAsync(allocation.Id);
             }
             
+            // TODO: Map snapshot data to allocation for display
+            // Snapshot data will be accessed separately for UI display
+            
             _allocatedCategoryIds.Add(category.Id);
         }
 
@@ -297,6 +311,7 @@ public partial class PlanBudgetModel : ObservableObject
             ReadyToAssign = 0m;
         }
     }
+
     
     /// <summary>
     /// Load the spent amount for a specific allocation from transaction splits.

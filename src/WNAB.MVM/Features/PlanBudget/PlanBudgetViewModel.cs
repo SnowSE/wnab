@@ -471,4 +471,81 @@ public partial class PlanBudgetViewModel : ObservableObject
     {
         IsHiddenCategoriesExpanded = !IsHiddenCategoriesExpanded;
     }
+    
+    /// <summary>
+    /// Get formatted activity (spent) amount for an allocation from snapshot data.
+    /// </summary>
+    public string GetActivityFormatted(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return "$0.00";
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Activity.ToString("C") ?? "$0.00";
+    }
+    
+    /// <summary>
+    /// Get formatted available (remaining) amount for an allocation from snapshot data.
+    /// </summary>
+    public string GetAvailableFormatted(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return "$0.00";
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Available.ToString("C") ?? "$0.00";
+    }
+    
+    /// <summary>
+    /// Get progress percentage (0-1) for an allocation from snapshot data.
+    /// </summary>
+    public double GetProgressPercentage(CategoryAllocation allocation)
+    {
+        if (allocation.BudgetedAmount <= 0 || Model.CurrentSnapshot == null)
+            return 0;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        if (categorySnapshot == null)
+            return 0;
+            
+        var percentage = (double)Math.Abs(categorySnapshot.Activity) / (double)allocation.BudgetedAmount;
+        return Math.Min(percentage, 1.0); // Cap at 100%
+    }
+    
+    /// <summary>
+    /// Check if allocation is overspent using snapshot data.
+    /// </summary>
+    public bool IsOverspent(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return false;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Available < 0;
+    }
+    
+    /// <summary>
+    /// Get color for available amount (green if positive, red if negative) from snapshot data.
+    /// </summary>
+    public Color GetAvailableColor(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return Colors.Gray;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        if (categorySnapshot == null)
+            return Colors.Gray;
+            
+        return categorySnapshot.Available >= 0 ? Colors.Green : Colors.Red;
+    }
 }
