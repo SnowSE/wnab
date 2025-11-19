@@ -298,7 +298,7 @@
         
         if (!confirmed) return;
 
-        var result = await ViewModel.Model.DeleteAccountAsync(account.Id);
+        var result = await ViewModel.Model.DeactivateAccountAsync(account.Id);
         var success = result.Success;
         var errorMessage = result.ErrorMessage;
         if (!success)

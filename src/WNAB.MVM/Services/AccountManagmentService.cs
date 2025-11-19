@@ -114,7 +114,7 @@ public class AccountManagementService
 	/// Delete an account for the current authenticated user.
 	/// Returns a tuple with success status and error message (if any).
 	/// </summary>
-	public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId, CancellationToken ct = default)
+	public async Task<(bool Success, string? ErrorMessage)> DeactivateAccountAsync(int accountId, CancellationToken ct = default)
 	{
 		var response = await _http.DeleteAsync($"accounts/{accountId}", ct);
 		

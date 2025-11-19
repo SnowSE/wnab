@@ -528,7 +528,7 @@ app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext 
 
     try
     {
-        var (success, errorMessage) = await accountsService.DeleteAccountAsync(id, user.Id);
+        var (success, errorMessage) = await accountsService.DeactivateAccountAsync(id, user.Id);
 
         if (!success)
         {

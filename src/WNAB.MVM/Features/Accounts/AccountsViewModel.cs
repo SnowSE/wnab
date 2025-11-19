@@ -143,7 +143,7 @@ public partial class AccountsViewModel : ObservableObject
         if (!confirm)
             return;
 
-        var (success, errorMessage) = await Model.DeleteAccountAsync(accountItem.Id);
+        var (success, errorMessage) = await Model.DeactivateAccountAsync(accountItem.Id);
 
         if (!success)
         {
