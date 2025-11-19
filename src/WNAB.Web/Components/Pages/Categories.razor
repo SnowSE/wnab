@@ -30,11 +30,6 @@
         </div>
     </div>
 
-@if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
-{
-    <div class="alert alert-info">@ViewModel.Model.StatusMessage</div>
-}
-
 @if (!ViewModel.Model.IsLoggedIn)
 {
     <div class="alert alert-warning">

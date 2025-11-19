@@ -28,11 +28,6 @@
 	</div>
 </div>
 
-@if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
-{
-	<div class="alert alert-info">@ViewModel.Model.StatusMessage</div>
-}
-
 @if (!ViewModel.Model.IsLoggedIn)
 {
 	<div class="alert alert-warning">
@@ -126,7 +121,7 @@
 											<button type="button" class="btn btn-sm btn-danger w-100"
 													@onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
 													disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
-												×
+												ï¿½
 											</button>
 										</div>
 									</div>

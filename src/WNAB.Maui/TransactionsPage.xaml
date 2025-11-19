@@ -19,16 +19,14 @@
                              Spacing="12">
 
             <!-- Header with Add and Refresh buttons -->
-            <Grid ColumnDefinitions="*,Auto,Auto"
+            <Grid ColumnDefinitions="*,*"
                   ColumnSpacing="8"
-                  VerticalOptions="Center">
-                <Label Text="{Binding Model.StatusMessage}"
-                       VerticalOptions="Center" />
-                <Button Grid.Column="1"
+                  HorizontalOptions="End">
+                <Button Grid.Column="0"
                         Text="{Binding IsAddFormVisible, Converter={StaticResource AddFormButtonTextConverter}}"
                         Command="{Binding ToggleAddFormCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}" />
-                <Button Grid.Column="2"
+                <Button Grid.Column="1"
                         Text="Refresh"
                         Command="{Binding RefreshCommand}" />
             </Grid>
