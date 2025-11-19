@@ -91,60 +91,19 @@
                 </Grid>
             </Border>
 
-            <!-- Monthly Limit Section -->
+            <!-- Ready to Assign Section -->
             <Border Padding="20"
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     StrokeThickness="1"
                     Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
-                <VerticalStackLayout Spacing="15">
-                    <Label Text="Monthly Limit" FontSize="16" FontAttributes="Bold"/>
-                    
-                    <Grid ColumnDefinitions="*,Auto" RowSpacing="10">
-                        <!-- Total Income/Limit -->
-                        <Label Grid.Column="0" Text="Total Income/Limit:" 
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                               VerticalOptions="Center"/>
-                        <HorizontalStackLayout Grid.Column="1" Spacing="5" IsVisible="{Binding Model.IsEditMode}">
-                            <Label Text="$" VerticalOptions="Center"/>
-                            <Entry Text="{Binding Model.MonthlyLimit, Mode=TwoWay}"
-                                   Keyboard="Numeric"
-                                   WidthRequest="120"
-                                   HorizontalTextAlignment="End"/>
-                        </HorizontalStackLayout>
-                        <Label Grid.Column="1" 
-                               Text="{Binding Model.MonthlyLimit, StringFormat='{0:C}'}"
-                               FontAttributes="Bold"
-                               IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
-                    </Grid>
-                    
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Allocated -->
-                        <Label Grid.Column="0" Text="Allocated:" 
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1" 
-                               Text="{Binding TotalAllocatedFormatted}"
-                               FontAttributes="Bold"/>
-                    </Grid>
-                    
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Unallocated -->
-                        <Label Grid.Column="0" Text="Unallocated:"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1"
-                               Text="{Binding UnallocatedFormatted}"
-                               TextColor="Green"
-                               FontAttributes="Bold"/>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Ready To Assign -->
-                        <Label Grid.Column="0" Text="Ready To Assign:"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1"
-                               Text="{Binding ReadyToAssignFormatted}"
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                               FontAttributes="Bold"/>
-                    </Grid>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Ready to Assign"
+                           FontSize="16"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                    <Label Text="{Binding ReadyToAssignFormatted}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
                 </VerticalStackLayout>
             </Border>
 
@@ -229,24 +188,27 @@
                                            FontAttributes="Bold"
                                            VerticalOptions="Center"/>
                                     
-                                    <!-- Hide/Show Button (eye icon) -->
+                                    <!-- Deactivate Button (eye icon) -->
                                     <Button Grid.Column="2"
-                                            Text="👁"
-                                            FontSize="20"
-                                            WidthRequest="40"
-                                            HeightRequest="40"
+                                            Text="&#xf070;"
+                                            FontFamily="FontAwesomeSolid"
+                                            FontSize="16"
+                                            WidthRequest="36"
+                                            HeightRequest="36"
                                             Padding="0"
                                             BackgroundColor="Transparent"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.HideAllocationCommand}"
+                                            TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.DeactivateAllocationCommand}"
                                             CommandParameter="{Binding}"
-                                            ToolTipProperties.Text="Hide this category"
+                                            ToolTipProperties.Text="Deactivate"
                                             VerticalOptions="Center"
-                                            Margin="5,0"/>
+                                            Margin="0,0,8,0"/>
                                     
                                     <!-- Budget Amount (view mode) -->
                                     <Label Grid.Column="3"
                                            Text="{Binding BudgetedAmount, StringFormat='{0:C}'}"
                                            FontAttributes="Bold"
+                                           VerticalOptions="Center"
                                            IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
                                 </Grid>
 
@@ -323,10 +285,10 @@
                        TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
             </VerticalStackLayout>
 
-            <!-- Hidden Categories Section -->
+            <!-- Inactive Categories Section -->
             <VerticalStackLayout Spacing="5"
                                  Margin="0,20,0,0"
-                                 IsVisible="{Binding HasHiddenAllocations}">
+                                 IsVisible="{Binding HasInactiveAllocations}">
                 <!-- Header with dropdown toggle -->
                 <Border Padding="15,10"
                         BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}"
@@ -338,28 +300,28 @@
                                VerticalOptions="Center">
                             <Label.FormattedText>
                                 <FormattedString>
-                                    <Span Text="Hidden Categories (" />
-                                    <Span Text="{Binding Model.HiddenAllocations.Count}" />
+                                    <Span Text="Inactive Categories (" />
+                                    <Span Text="{Binding Model.InactiveAllocations.Count}" />
                                     <Span Text=")" />
                                 </FormattedString>
                             </Label.FormattedText>
                         </Label>
                         <Button Grid.Column="1"
-                                Text="{Binding IsHiddenCategoriesExpanded, Converter={StaticResource BoolToExpandIconConverter}}"
+                                Text="{Binding IsInactiveCategoriesExpanded, Converter={StaticResource BoolToExpandIconConverter}}"
                                 FontSize="20"
                                 WidthRequest="40"
                                 HeightRequest="40"
                                 Padding="0"
                                 BackgroundColor="Transparent"
-                                Command="{Binding ToggleHiddenCategoriesCommand}"
+                                Command="{Binding ToggleInactiveCategoriesCommand}"
                                 VerticalOptions="Center"/>
                     </Grid>
                 </Border>
 
-                <!-- Hidden Categories List -->
-                <CollectionView ItemsSource="{Binding Model.HiddenAllocations}"
+                <!-- Inactive Categories List -->
+                <CollectionView ItemsSource="{Binding Model.InactiveAllocations}"
                                 SelectionMode="None"
-                                IsVisible="{Binding IsHiddenCategoriesExpanded}">
+                                IsVisible="{Binding IsInactiveCategoriesExpanded}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="data:CategoryAllocation">
                             <Border Padding="15,10"
@@ -393,14 +355,14 @@
                                            Margin="0,0,10,0"
                                            VerticalOptions="Center"/>
                                     
-                                    <!-- Unhide Button -->
+                                    <!-- Activate Button -->
                                     <Button Grid.Column="3"
-                                            Text="Show"
+                                            Text="Activate"
                                             FontSize="12"
                                             Padding="10,5"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
                                             TextColor="White"
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.UnhideAllocationCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ActivateAllocationCommand}"
                                             CommandParameter="{Binding}"
                                             VerticalOptions="Center"/>
                                 </Grid>

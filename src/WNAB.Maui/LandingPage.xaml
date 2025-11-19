@@ -24,7 +24,7 @@
                     StrokeShape="RoundRectangle 60"
                     HorizontalOptions="Center"
                     Margin="0,0,0,20">
-                <Label Text="??"
+                <Label Text="💰"
                        FontSize="60"
                        HorizontalOptions="Center"
                        VerticalOptions="Center"/>
@@ -95,7 +95,7 @@
                         Shadow="{Shadow Brush=#00000020, Offset='0,2', Radius=8}"
                         StrokeShape="RoundRectangle 12">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+                        <Label Text="📊" FontSize="32" HorizontalOptions="Center"/>
                         <Label Text="Smart Budgeting"
                                FontSize="16"
                                FontAttributes="Bold"
@@ -116,7 +116,7 @@
                         Shadow="{Shadow Brush=#00000020, Offset='0,2', Radius=8}"
                         StrokeShape="RoundRectangle 12">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+                        <Label Text="💳" FontSize="32" HorizontalOptions="Center"/>
                         <Label Text="Transaction Tracking"
                                FontSize="16"
                                FontAttributes="Bold"
@@ -137,7 +137,7 @@
                         Shadow="{Shadow Brush=#00000020, Offset='0,2', Radius=8}"
                         StrokeShape="RoundRectangle 12">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="??" FontSize="32" HorizontalOptions="Center"/>
+                        <Label Text="📈" FontSize="32" HorizontalOptions="Center"/>
                         <Label Text="Visual Insights"
                                FontSize="16"
                                FontAttributes="Bold"
@@ -158,7 +158,7 @@
                         Shadow="{Shadow Brush=#00000020, Offset='0,2', Radius=8}"
                         StrokeShape="RoundRectangle 12">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="???" FontSize="32" HorizontalOptions="Center"/>
+                        <Label Text="🔒" FontSize="32" HorizontalOptions="Center"/>
                         <Label Text="Secure &amp; Private"
                                FontSize="16"
                                FontAttributes="Bold"

@@ -208,9 +208,9 @@ public partial class PlanBudgetViewModel : ObservableObject
                 OnPropertyChanged(nameof(ReadyToAssignFormatted));
             }
 
-            if (e.PropertyName == nameof(Model.HiddenAllocations))
+            if (e.PropertyName == nameof(Model.InactiveAllocations))
             {
-                OnPropertyChanged(nameof(HasHiddenAllocations));
+                OnPropertyChanged(nameof(HasInactiveAllocations));
             }
         };
     }
@@ -231,15 +231,15 @@ public partial class PlanBudgetViewModel : ObservableObject
     public bool HasNoBudgetAllocations => Model.BudgetAllocations == null || Model.BudgetAllocations.Count == 0;
     
     /// <summary>
-    /// Check if there are hidden allocations to show the dropdown.
+    /// Check if there are inactive allocations to show the dropdown.
     /// </summary>
-    public bool HasHiddenAllocations => Model.HiddenAllocations != null && Model.HiddenAllocations.Count > 0;
+    public bool HasInactiveAllocations => Model.InactiveAllocations != null && Model.InactiveAllocations.Count > 0;
     
     /// <summary>
-    /// Gets or sets whether the hidden categories section is expanded.
+    /// Gets or sets whether the inactive categories section is expanded.
     /// </summary>
     [ObservableProperty]
-    private bool _isHiddenCategoriesExpanded;
+    private bool _isInactiveCategoriesExpanded;
 
     /// <summary>
     /// Initialize the ViewModel by delegating to the Model.
@@ -420,50 +420,50 @@ public partial class PlanBudgetViewModel : ObservableObject
     }
     
     /// <summary>
-    /// Hide allocation command - delegates to Model.
-    /// Moves allocation from active to hidden section.
+    /// Deactivate allocation command - delegates to Model.
+    /// Moves allocation from active to inactive section.
     /// </summary>
     [RelayCommand]
-    private async Task HideAllocation(CategoryAllocation allocation)
+    private async Task DeactivateAllocation(CategoryAllocation allocation)
     {
         try
         {
-            await Model.HideAllocationAsync(allocation);
+            await Model.DeactivateAllocationAsync(allocation);
             OnPropertyChanged(nameof(HasNoBudgetAllocations));
-            OnPropertyChanged(nameof(HasHiddenAllocations));
+            OnPropertyChanged(nameof(HasInactiveAllocations));
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to hide category: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}", "OK");
         }
     }
     
     /// <summary>
-    /// Unhide allocation command - delegates to Model.
-    /// Moves allocation from hidden to active section.
+    /// Activate allocation command - delegates to Model.
+    /// Moves allocation from inactive to active section.
     /// </summary>
     [RelayCommand]
-    private async Task UnhideAllocation(CategoryAllocation allocation)
+    private async Task ActivateAllocation(CategoryAllocation allocation)
     {
         try
         {
-            await Model.UnhideAllocationAsync(allocation);
+            await Model.ActivateAllocationAsync(allocation);
             OnPropertyChanged(nameof(HasNoBudgetAllocations));
-            OnPropertyChanged(nameof(HasHiddenAllocations));
+            OnPropertyChanged(nameof(HasInactiveAllocations));
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to unhide category: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}", "OK");
         }
     }
     
     /// <summary>
-    /// Toggle the hidden categories section visibility.
+    /// Toggle the inactive categories section visibility.
     /// </summary>
     [RelayCommand]
-    private void ToggleHiddenCategories()
+    private void ToggleInactiveCategories()
     {
-        IsHiddenCategoriesExpanded = !IsHiddenCategoriesExpanded;
+        IsInactiveCategoriesExpanded = !IsInactiveCategoriesExpanded;
     }
     
     /// <summary>
