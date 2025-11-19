@@ -363,10 +363,10 @@ public partial class AddTransactionModel : ObservableObject
                     if (split.Model.SelectedCategory != null && split.Model.SelectedCategory.Name == "Income")
                     {
                         splitRecords.Add(new TransactionSplitRecord(
-                            allocationId: null,
-                            transactionId: -1,
-                            amount: split.Model.Amount,
-                            notes: split.Model.Notes));
+                            CategoryAllocationId: null,
+                            TransactionId: -1,
+                            Amount: split.Model.Amount,
+                            Notes: split.Model.Notes));
                         continue;
                     }
 
