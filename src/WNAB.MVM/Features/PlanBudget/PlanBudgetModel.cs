@@ -24,8 +24,8 @@ public partial class PlanBudgetModel : ObservableObject
     // Budget allocations - allocated categories with budget amounts (active only)
     public ObservableCollection<CategoryAllocation> BudgetAllocations { get; } = new();
     
-    // Hidden allocations - allocated categories that are hidden (IsActive = false)
-    public ObservableCollection<CategoryAllocation> HiddenAllocations { get; } = new();
+    // Inactive allocations - allocated categories that are inactive (IsActive = false)
+    public ObservableCollection<CategoryAllocation> InactiveAllocations { get; } = new();
     
     // Changed allocations - changed allocated categories with budget amounts
     public ObservableCollection<CategoryAllocation> ChangedAllocations { get; } = new();
@@ -119,9 +119,9 @@ public partial class PlanBudgetModel : ObservableObject
                 StatusMessage = "Error checking login status";
                 AvailableCategories.Clear();
                 BudgetAllocations.Clear();
-                HiddenAllocations.Clear();
+                InactiveAllocations.Clear();
                 OnPropertyChanged(nameof(BudgetAllocations));
-                OnPropertyChanged(nameof(HiddenAllocations));
+                OnPropertyChanged(nameof(InactiveAllocations));
             }
         }
         catch
@@ -130,9 +130,9 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = "Error checking login status";
             AvailableCategories.Clear();
             BudgetAllocations.Clear();
-            HiddenAllocations.Clear();
+            InactiveAllocations.Clear();
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
     }
 
@@ -190,12 +190,12 @@ public partial class PlanBudgetModel : ObservableObject
     /// <summary>
     /// Load existing allocations for the specified month/year.
     /// Creates allocations for ALL categories - both those with existing data and new ones.
-    /// New categories (Id=0) are automatically hidden until user shows them.
+    /// New categories (Id=0) are automatically inactive until user activates them.
     /// </summary>
     private async Task LoadExistingAllocationsAsync(int month, int year)
     {
         BudgetAllocations.Clear();
-        HiddenAllocations.Clear();
+        InactiveAllocations.Clear();
         _allocatedCategoryIds.Clear();
         _spentAmounts.Clear();
 
@@ -246,10 +246,10 @@ public partial class PlanBudgetModel : ObservableObject
                 };
 
 
-                // New allocations always go to hidden
+                // New allocations always go to inactive if not active
                 if (!allocation.IsActive)
                 {
-                    HiddenAllocations.Add(allocation);
+                    InactiveAllocations.Add(allocation);
                 }
                 else
                 {
@@ -268,7 +268,7 @@ public partial class PlanBudgetModel : ObservableObject
                 }
                 else
                 {
-                    HiddenAllocations.Add(allocation);
+                    InactiveAllocations.Add(allocation);
                 }
                 
                 // Load spent amount for existing allocations
@@ -286,7 +286,7 @@ public partial class PlanBudgetModel : ObservableObject
 
         // Notify UI that collections have changed
         OnPropertyChanged(nameof(BudgetAllocations));
-        OnPropertyChanged(nameof(HiddenAllocations));
+        OnPropertyChanged(nameof(InactiveAllocations));
     }
 
     /// <summary>
@@ -595,11 +595,11 @@ public partial class PlanBudgetModel : ObservableObject
     }
 
     /// <summary>
-    /// Hide a category allocation (set IsActive to false).
-    /// Moves allocation from BudgetAllocations to HiddenAllocations.
+    /// Deactivate a category allocation (set IsActive to false).
+    /// Moves allocation from BudgetAllocations to InactiveAllocations.
     /// For new allocations (Id=0), just updates in memory without API call.
     /// </summary>
-    public async Task HideAllocationAsync(CategoryAllocation allocation)
+    public async Task DeactivateAllocationAsync(CategoryAllocation allocation)
     {
         if (allocation == null)
             return;
@@ -620,25 +620,25 @@ public partial class PlanBudgetModel : ObservableObject
             // Update local state (for both new and existing allocations)
             allocation.IsActive = false;
             BudgetAllocations.Remove(allocation);
-            HiddenAllocations.Add(allocation);
+            InactiveAllocations.Add(allocation);
             
             // Notify UI that collections have changed
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error hiding category: {ex.Message}";
+            StatusMessage = $"Error deactivating category: {ex.Message}";
             throw;
         }
     }
 
     /// <summary>
-    /// Unhide a category allocation (set IsActive to true).
-    /// Moves allocation from HiddenAllocations to BudgetAllocations.
+    /// Activate a category allocation (set IsActive to true).
+    /// Moves allocation from InactiveAllocations to BudgetAllocations.
     /// For new allocations (Id=0), just updates in memory without API call.
     /// </summary>
-    public async Task UnhideAllocationAsync(CategoryAllocation allocation)
+    public async Task ActivateAllocationAsync(CategoryAllocation allocation)
     {
         if (allocation == null)
             return;
@@ -658,16 +658,16 @@ public partial class PlanBudgetModel : ObservableObject
             
             // Update local state (for both new and existing allocations)
             allocation.IsActive = true;
-            HiddenAllocations.Remove(allocation);
+            InactiveAllocations.Remove(allocation);
             BudgetAllocations.Add(allocation);
             
             // Notify UI that collections have changed
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error unhiding category: {ex.Message}";
+            StatusMessage = $"Error activating category: {ex.Message}";
             throw;
         }
     }

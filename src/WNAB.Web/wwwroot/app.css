@@ -430,15 +430,15 @@ h1:focus {
 }
 .swatch-selected { box-shadow: 0 0 0 3px rgba(0,0,0,0.06); border: 3px solid rgba(255,255,255,0.85); }
 
-/* Hidden Categories Section */
-.hidden-categories-section {
+/* Inactive Categories Section */
+.inactive-categories-section {
     background: #f8f9fa;
     border-radius: 8px;
     padding: 0;
     overflow: hidden;
 }
 
-.hidden-categories-header {
+.inactive-categories-header {
     padding: 16px 20px;
     background: #e9ecef;
     cursor: pointer;
@@ -449,16 +449,16 @@ h1:focus {
     transition: background-color 0.2s;
 }
 
-.hidden-categories-header:hover {
+.inactive-categories-header:hover {
     background: #dee2e6;
 }
 
-.hidden-categories-list {
+.inactive-categories-list {
     padding: 12px 20px;
     background: #fff;
 }
 
-.hidden-category-item {
+.inactive-category-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -466,7 +466,7 @@ h1:focus {
     border-bottom: 1px solid #f1f3f5;
 }
 
-.hidden-category-item:last-child {
+.inactive-category-item:last-child {
     border-bottom: none;
 }
 

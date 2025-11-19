@@ -101,7 +101,7 @@
                                         <button class="btn btn-link btn-sm text-dark p-1" @onclick="() => OnEditAccountClick(account)" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-                                        <button class="btn btn-link btn-sm text-danger p-1" @onclick="() => OnDeleteAccountClick(account)" title="Delete">
+                                        <button class="btn btn-link btn-sm text-danger p-1" @onclick="() => OnDeactivateAccountClick(account)" title="Deactivate">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
@@ -158,8 +158,8 @@
             {
                 <div class="empty-state">
                     <div class="empty-icon">📭</div>
-                    <h3 class="empty-title">No inactive or deleted accounts to show</h3>
-                    <p class="empty-subtitle">Deleted accounts will appear here</p>
+                    <h3 class="empty-title">No inactive accounts to show</h3>
+                    <p class="empty-subtitle">Deactivated accounts will appear here</p>
                 </div>
             }
             else
@@ -291,10 +291,10 @@
         ViewModel.CancelEditAccountCommand.Execute(account);
     }
 
-    private async Task OnDeleteAccountClick(AccountItemViewModel account)
+    private async Task OnDeactivateAccountClick(AccountItemViewModel account)
     {
         var confirmed = await JS.InvokeAsync<bool>("confirm", 
-            $"Are you sure you want to delete '{account.AccountName}'?");
+            $"Are you sure you want to deactivate '{account.AccountName}'?");
         
         if (!confirmed) return;
 
@@ -303,7 +303,7 @@
         var errorMessage = result.ErrorMessage;
         if (!success)
         {
-            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to delete account. Please try again.");
+            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to deactivate account. Please try again.");
         }
     }
 
