@@ -91,60 +91,19 @@
                 </Grid>
             </Border>
 
-            <!-- Monthly Limit Section -->
+            <!-- Ready to Assign Section -->
             <Border Padding="20"
                     BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
                     StrokeThickness="1"
                     Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray900}}">
-                <VerticalStackLayout Spacing="15">
-                    <Label Text="Monthly Limit" FontSize="16" FontAttributes="Bold"/>
-                    
-                    <Grid ColumnDefinitions="*,Auto" RowSpacing="10">
-                        <!-- Total Income/Limit -->
-                        <Label Grid.Column="0" Text="Total Income/Limit:" 
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                               VerticalOptions="Center"/>
-                        <HorizontalStackLayout Grid.Column="1" Spacing="5" IsVisible="{Binding Model.IsEditMode}">
-                            <Label Text="$" VerticalOptions="Center"/>
-                            <Entry Text="{Binding Model.MonthlyLimit, Mode=TwoWay}"
-                                   Keyboard="Numeric"
-                                   WidthRequest="120"
-                                   HorizontalTextAlignment="End"/>
-                        </HorizontalStackLayout>
-                        <Label Grid.Column="1" 
-                               Text="{Binding Model.MonthlyLimit, StringFormat='{0:C}'}"
-                               FontAttributes="Bold"
-                               IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"/>
-                    </Grid>
-                    
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Allocated -->
-                        <Label Grid.Column="0" Text="Allocated:" 
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1" 
-                               Text="{Binding TotalAllocatedFormatted}"
-                               FontAttributes="Bold"/>
-                    </Grid>
-                    
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Unallocated -->
-                        <Label Grid.Column="0" Text="Unallocated:"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1"
-                               Text="{Binding UnallocatedFormatted}"
-                               TextColor="Green"
-                               FontAttributes="Bold"/>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="*,Auto">
-                        <!-- Ready To Assign -->
-                        <Label Grid.Column="0" Text="Ready To Assign:"
-                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Label Grid.Column="1"
-                               Text="{Binding ReadyToAssignFormatted}"
-                               TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                               FontAttributes="Bold"/>
-                    </Grid>
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Ready to Assign"
+                           FontSize="16"
+                           TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                    <Label Text="{Binding ReadyToAssignFormatted}"
+                           FontSize="24"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"/>
                 </VerticalStackLayout>
             </Border>
 

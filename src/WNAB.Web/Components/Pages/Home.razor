@@ -101,19 +101,9 @@
 
             <!-- Ready to Assign Section -->
             <div class="monthly-limit-card">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="rta-display">
-                            <h5 class="text-muted mb-2 fw-normal">Ready to Assign</h5>
-                            <h2 class="fw-bold mb-0 text-success">@ViewModel.Model.ReadyToAssign.ToString("C")</h2>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted">Allocated This Month:</span>
-                            <span class="fw-bold">@ViewModel.Model.GetTotalAllocated().ToString("C")</span>
-                        </div>
-                    </div>
+                <div class="rta-display">
+                    <h5 class="text-muted mb-2 fw-normal">Ready to Assign</h5>
+                    <h2 class="fw-bold mb-0 text-success">@ViewModel.Model.ReadyToAssign.ToString("C")</h2>
                 </div>
             </div>
         </div>
