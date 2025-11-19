@@ -597,6 +597,25 @@ app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id,
     return Results.NoContent();
 }).RequireAuthorization();
 
+// User endpoints
+app.MapGet("/user/earliestactivity", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    // Get the earliest transaction date for this user
+    var earliestTransaction = await db.Transactions
+        .Where(t => t.Account.UserId == user.Id)
+        .OrderBy(t => t.TransactionDate)
+        .Select(t => t.TransactionDate)
+        .FirstOrDefaultAsync();
+
+    // If no transactions exist, return current month
+    var earliestDate = earliestTransaction == default ? DateTime.UtcNow : earliestTransaction;
+    
+    return Results.Ok(earliestDate);
+}).RequireAuthorization();
+
 // Map budget endpoints
 app.MapBudgetEndpoints();
 

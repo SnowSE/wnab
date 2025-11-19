@@ -184,9 +184,12 @@ public partial class EditTransactionSplitModel : ObservableObject
             IsBusy = true;
             StatusMessage = "Updating split...";
 
+            // Convert -1 (Income) to null for CategoryAllocationId
+            int? allocationId = CategoryAllocationId == -1 ? null : (CategoryAllocationId == 0 ? null : CategoryAllocationId);
+
             var request = new EditTransactionSplitRequest(
                 SplitId,
-                CategoryAllocationId,
+                allocationId,
                 Amount,
                 Description
             );

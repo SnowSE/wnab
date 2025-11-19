@@ -94,7 +94,8 @@
 						@if (!ViewModel.AddTransactionViewModel.Model.IsSplitTransaction)
 						{
 							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId">
-								<option value="0">Select a category...</option>
+								<option value="-1">Income</option>
+								<option value="0">No Category</option>
 								@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 								{
 									<option value="@category.Id">@category.Name</option>
@@ -111,7 +112,8 @@
 											<select class="form-select form-select-sm"
 													value="@(split.Model.SelectedCategory?.Id ?? 0)"
 													@onchange="(e) => OnSplitCategoryChanged(split, e)">
-												<option value="0">Select category...</option>
+												<option value="-1">Income</option>
+												<option value="0">No Category</option>
 												@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 												{
 													<option value="@category.Id">@category.Name</option>
@@ -126,7 +128,7 @@
 											<button type="button" class="btn btn-sm btn-danger w-100"
 													@onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
 													disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
-												×
+												ï¿½
 											</button>
 										</div>
 									</div>
@@ -315,8 +317,9 @@
 				<div class="row g-3">
 					<div class="col-md-6">
 						<label class="form-label">Category</label>
-						<select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId" required>
-							<option value="0">Select category...</option>
+						<select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId">
+							<option value="-1">Income</option>
+							<option value="0">No Category</option>
 							@foreach (var category in ViewModel.EditTransactionSplitViewModel.Model.AvailableCategories)
 							{
 								<option value="@category.Id">@category.Name</option>
@@ -523,8 +526,20 @@
 	{
 		if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
 		{
-			var category = ViewModel.AddTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
-			split.Model.SelectedCategory = category;
+			if (categoryId == -1)
+			{
+				// Create a virtual "Income" category
+				split.Model.SelectedCategory = new Category { Id = -1, Name = "Income", UserId = 0 };
+			}
+			else if (categoryId == 0)
+			{
+				split.Model.SelectedCategory = null;
+			}
+			else
+			{
+				var category = ViewModel.AddTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
+				split.Model.SelectedCategory = category;
+			}
 		}
 	}
 

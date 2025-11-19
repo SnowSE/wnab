@@ -8,6 +8,6 @@ namespace WNAB.MVM;
 public class UserService(HttpClient _http) : IUserService
 {
 
-    public async Task<DateTime> GetEarliestActivityDate() => await _http.GetFromJsonAsync<DateTime>("user/earliestActivity");
+    public async Task<DateTime> GetEarliestActivityDate() => await _http.GetFromJsonAsync<DateTime>("user/earliestactivity");
 
 }

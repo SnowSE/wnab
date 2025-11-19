@@ -299,9 +299,12 @@ public partial class PlanBudgetModel : ObservableObject
             // Calculate RTA using the budget service
             ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw new InvalidOperationException("Failed to calculate Ready To Assign");
+            // Log the actual error for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to calculate RTA: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw new InvalidOperationException($"Failed to calculate Ready To Assign: {ex.Message}", ex);
         }
     }
 
@@ -562,6 +565,12 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = message.Count > 0 
                 ? string.Join(", ", message)
                 : "No changes to save";
+            
+            // Invalidate snapshots from current month forward since allocations changed
+            if (savedCount > 0 || updatedCount > 0)
+            {
+                await _budgetSnapshotService.InvalidateSnapshotsFromMonthAsync(CurrentMonth, CurrentYear);
+            }
                 
             // Exit edit mode after successful save
             IsEditMode = false;

@@ -28,7 +28,7 @@ public class BudgetService : IBudgetService
     {
         var snapshot = await budgetSnapshotService.GetSnapshotAsync(month, year);
 
-        if (snapshot is null)
+        if (snapshot is null || !snapshot.IsValid)
         {
             snapshot = await RebuildSnapshots(month, year);
         }

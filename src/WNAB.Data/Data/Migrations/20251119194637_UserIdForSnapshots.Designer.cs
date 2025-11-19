@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WNAB.Data;
 
 #nullable disable
 
-namespace WNAB.Data.Migrations
+namespace WNAB.Data.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
-    partial class WnabContextModelSnapshot : ModelSnapshot
+    [Migration("20251119194637_UserIdForSnapshots")]
+    partial class UserIdForSnapshots
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,9 +81,6 @@ namespace WNAB.Data.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("Month")
                         .HasColumnType("integer");

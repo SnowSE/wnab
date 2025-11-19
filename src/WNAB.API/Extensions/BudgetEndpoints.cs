@@ -13,6 +13,7 @@ public static class BudgetEndpoints
 
         group.MapGet("/snapshot", GetSnapshot);
         group.MapPost("/snapshot", SaveSnapshot);
+        group.MapPost("/snapshot/invalidate", InvalidateSnapshots);
     }
 
     [Authorize]
@@ -64,5 +65,26 @@ public static class BudgetEndpoints
         await snapshotService.SaveSnapshotAsync(snapshot, user.Id);
 
         return Results.Ok(new { snapshot.Id, snapshot.Month, snapshot.Year });
+    }
+
+    [Authorize]
+    private static async Task<IResult> InvalidateSnapshots(
+        HttpContext context,
+        [FromQuery] int month,
+        [FromQuery] int year,
+        [FromServices] IBudgetSnapshotDbService snapshotService,
+        [FromServices] UserProvisioningService provisioningService)
+    {
+        if (month < 1 || month > 12 || year < 2000 || year > 2100)
+        {
+            return Results.BadRequest("Invalid month or year");
+        }
+
+        var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+        if (user is null) return Results.Unauthorized();
+
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(month, year, user.Id);
+
+        return Results.Ok(new { Message = $"Invalidated snapshots from {month}/{year} onwards" });
     }
 }

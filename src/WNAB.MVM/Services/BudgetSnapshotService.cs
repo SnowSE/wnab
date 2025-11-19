@@ -44,4 +44,17 @@ public class BudgetSnapshotService : IBudgetSnapshotService
             throw new InvalidOperationException($"Failed to save snapshot: {ex.Message}", ex);
         }
     }
+
+    public async Task InvalidateSnapshotsFromMonthAsync(int month, int year)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync($"budget/snapshot/invalidate?month={month}&year={year}", null);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to invalidate snapshots: {ex.Message}", ex);
+        }
+    }
 }

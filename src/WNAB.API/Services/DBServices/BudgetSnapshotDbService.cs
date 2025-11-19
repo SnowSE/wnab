@@ -19,26 +19,14 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
     /// </summary>
     public async Task<BudgetSnapshot?> GetSnapshotAsync(int month, int year, int userId, CancellationToken cancellationToken = default)
     {
-        // Get the snapshot and filter categories to only those belonging to this user
-        var snapshot = await _db.BudgetSnapshots
+        return await _db.BudgetSnapshots
             .Include(s => s.Categories)
             .ThenInclude(c => c.Category)
-            .FirstOrDefaultAsync(s => s.Month == month && s.Year == year, cancellationToken);
-
-        if (snapshot == null)
-            return null;
-
-        // Filter to only categories owned by this user
-        snapshot.Categories = snapshot.Categories
-            .Where(c => c.Category != null && c.Category.UserId == userId)
-            .ToList();
-
-        return snapshot;
+            .FirstOrDefaultAsync(s => s.Month == month && s.Year == year && s.UserId == userId, cancellationToken);
     }
 
     /// <summary>
     /// Saves a new budget snapshot or updates an existing one
-    /// Only saves categories that belong to the specified user
     /// </summary>
     public async Task<BudgetSnapshot> SaveSnapshotAsync(BudgetSnapshot snapshot, int userId, CancellationToken cancellationToken = default)
     {
@@ -48,31 +36,44 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
 
         var existingSnapshot = await _db.BudgetSnapshots
             .Include(s => s.Categories)
-            .ThenInclude(c => c.Category)
-            .FirstOrDefaultAsync(s => s.Month == snapshot.Month && s.Year == snapshot.Year, cancellationToken);
+            .FirstOrDefaultAsync(s => s.Month == snapshot.Month && s.Year == snapshot.Year && s.UserId == userId, cancellationToken);
 
         if (existingSnapshot is not null)
         {
             // Update existing snapshot
             existingSnapshot.SnapshotReadyToAssign = snapshot.SnapshotReadyToAssign;
+            existingSnapshot.IsValid = true; // Mark as valid after rebuild
             
-            // Remove old categories that belong to this user
-            var userCategories = existingSnapshot.Categories
-                .Where(c => c.Category != null && c.Category.UserId == userId)
-                .ToList();
-            _db.RemoveRange(userCategories);
-            
-            // Add new categories (they should already be validated to belong to this user)
-            existingSnapshot.Categories.AddRange(snapshot.Categories);
+            // Remove old categories and add new ones
+            _db.RemoveRange(existingSnapshot.Categories);
+            existingSnapshot.Categories = snapshot.Categories;
         }
         else
         {
-            // Add new snapshot
+            // Add new snapshot with userId
+            snapshot.UserId = userId;
+            snapshot.IsValid = true; // New snapshots are valid
             _db.BudgetSnapshots.Add(snapshot);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
 
         return existingSnapshot ?? snapshot;
+    }
+
+    public async Task InvalidateSnapshotsFromMonthAsync(int month, int year, int userId, CancellationToken cancellationToken = default)
+    {
+        // Invalidate the specified month and all future months
+        var snapshots = await _db.BudgetSnapshots
+            .Where(s => s.UserId == userId &&
+                       (s.Year > year || (s.Year == year && s.Month >= month)))
+            .ToListAsync(cancellationToken);
+
+        foreach (var snapshot in snapshots)
+        {
+            snapshot.IsValid = false;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
     }
 }

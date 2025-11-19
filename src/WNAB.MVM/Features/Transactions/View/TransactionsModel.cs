@@ -12,6 +12,7 @@ public partial class TransactionsModel : ObservableObject
 {
     private readonly TransactionManagementService _transactions;
     private readonly IAuthenticationService _authService;
+    private readonly IBudgetSnapshotService _budgetSnapshotService;
 
     public ObservableCollection<TransactionItem> Items { get; } = new();
 
@@ -27,10 +28,11 @@ public partial class TransactionsModel : ObservableObject
     [ObservableProperty]
     private string statusMessage = "Loading...";
 
-    public TransactionsModel(TransactionManagementService transactions, IAuthenticationService authService)
+    public TransactionsModel(TransactionManagementService transactions, IAuthenticationService authService, IBudgetSnapshotService budgetSnapshotService)
     {
         _transactions = transactions;
         _authService = authService;
+        _budgetSnapshotService = budgetSnapshotService;
     }
 
     /// <summary>
@@ -267,7 +269,16 @@ public partial class TransactionsModel : ObservableObject
             IsBusy = true;
             StatusMessage = "Deleting transaction...";
 
+            // Get transaction details before deleting to know which month to invalidate
+            var transaction = await _transactions.GetTransactionByIdAsync(transactionId);
+            
             await _transactions.DeleteTransactionAsync(transactionId);
+            
+            // Invalidate snapshots from the deleted transaction's month forward
+            if (transaction != null)
+            {
+                await _budgetSnapshotService.InvalidateSnapshotsFromMonthAsync(transaction.TransactionDate.Month, transaction.TransactionDate.Year);
+            }
 
             StatusMessage = "Transaction deleted successfully";
         }
