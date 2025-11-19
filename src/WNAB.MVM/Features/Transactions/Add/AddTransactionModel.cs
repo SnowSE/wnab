@@ -57,6 +57,20 @@ public partial class AddTransactionModel : ObservableObject
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
 
+    /// <summary>
+    /// Categories plus "Income" option for pickers.
+    /// </summary>
+    public ObservableCollection<Category> AvailableCategoriesWithIncome
+    {
+        get
+        {
+            var list = new ObservableCollection<Category>(AvailableCategories);
+            // Add "Income" option (Id = 0, Name = "Income")
+            list.Insert(0, new Category { Id = 0, Name = "Income" });
+            return list;
+        }
+    }
+
     // Collection for managing transaction splits
     public ObservableCollection<AddTransactionSplitViewModel> Splits { get; } = new();
 
@@ -185,7 +199,17 @@ public partial class AddTransactionModel : ObservableObject
     /// </summary>
     partial void OnSelectedCategoryChanged(Category? value)
     {
-        CategoryId = value?.Id ?? 0;
+        // If "Income" option selected, set SelectedCategory to null
+        if (value != null && value.Id == 0 && value.Name == "Income")
+        {
+            SelectedCategory = null;
+            CategoryId = 0;
+        }
+        else
+        {
+            SelectedCategory = value;
+            CategoryId = value?.Id ?? 0;
+        }
     }
 
     /// <summary>
@@ -282,9 +306,6 @@ public partial class AddTransactionModel : ObservableObject
         if (Amount == 0)
             return "Please enter an amount";
 
-        // Category is now optional for simple transactions
-
-        // Validate splits if in split mode
         if (IsSplitTransaction)
         {
             if (Splits.Count == 0)
@@ -293,9 +314,15 @@ public partial class AddTransactionModel : ObservableObject
             if (!AreSplitsBalanced)
                 return $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
 
-            // Validate each split has a category selected
-            if (Splits.Any(s => s.Model.SelectedCategory == null))
+            // Validate each split has a category selected (or "Income" option)
+            if (Splits.Any(s => s.Model.SelectedCategory == null && (s.Model.SelectedCategory?.Name != "Income")))
                 return "Please select a category for all splits";
+        }
+        else
+        {
+            // For simple transaction, category is required (must select a category or "Income")
+            if (SelectedCategory == null && (SelectedCategory?.Name != "Income"))
+                return "Please select a category or choose Income";
         }
 
         return null; // Valid
@@ -332,6 +359,17 @@ public partial class AddTransactionModel : ObservableObject
                 
                 foreach (var split in Splits)
                 {
+                    // If "Income" selected, allocation is null and category is null
+                    if (split.Model.SelectedCategory != null && split.Model.SelectedCategory.Name == "Income")
+                    {
+                        splitRecords.Add(new TransactionSplitRecord(
+                            allocationId: null,
+                            transactionId: -1,
+                            amount: split.Model.Amount,
+                            notes: split.Model.Notes));
+                        continue;
+                    }
+
                     if (split.Model.SelectedCategory == null)
                     {
                         StatusMessage = "Please select a category for all splits";
@@ -362,12 +400,14 @@ public partial class AddTransactionModel : ObservableObject
             }
             else
             {
-                // For simple transactions:
-                // - If a category is selected, create a single split with the full transaction amount
-                // - If no category is selected, create transaction without splits (uncategorized)
                 var splitRecords = new List<TransactionSplitRecord>();
                 
-                if (SelectedCategory != null)
+                // If "Income" selected, do not add a split (category is null)
+                if (SelectedCategory != null && SelectedCategory.Name == "Income")
+                {
+                    // No split, category is null
+                }
+                else if (SelectedCategory != null)
                 {
                     var allocation = await _allocations.FindAllocationAsync(
                         SelectedCategory.Id, 
@@ -383,7 +423,7 @@ public partial class AddTransactionModel : ObservableObject
                     
                     splitRecords.Add(new TransactionSplitRecord(allocation.Id, -1, Amount, null));
                 }
-                // else: no category selected, splitRecords remains empty (uncategorized transaction)
+                // else: no category selected, splitRecords remains empty (should not happen due to validation)
                 
                 record = new TransactionRecord(
                     AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);

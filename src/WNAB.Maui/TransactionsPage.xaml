@@ -104,12 +104,12 @@
                             BackgroundColor="LightBlue"
                             TextColor="Black" />
 
-                    <!-- Category Picker (Single) -->
-                    <Label Text="Category (Optional)"
+<!-- Category Picker (Required) -->
+                    <Label Text="Category"
                            FontAttributes="Bold"
                            TextColor="Black"
                            IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
-                    <Picker ItemsSource="{Binding AddTransactionViewModel.Model.AvailableCategories}"
+                    <Picker ItemsSource="{Binding AddTransactionViewModel.Model.AvailableCategoriesWithIncome}"
                             ItemDisplayBinding="{Binding Name}"
                             SelectedItem="{Binding AddTransactionViewModel.Model.SelectedCategory}"
                             TextColor="Black"
@@ -131,7 +131,7 @@
                                            BorderColor="Gray"
                                            BackgroundColor="#F0F0F0">
                                         <VerticalStackLayout Spacing="4">
-                                            <Picker ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=AddTransactionViewModel.Model.AvailableCategories}"
+<Picker ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=AddTransactionViewModel.Model.AvailableCategoriesWithIncome}"
                                                     ItemDisplayBinding="{Binding Name}"
                                                     SelectedItem="{Binding Model.SelectedCategory}"
                                                     TextColor="Black" />
@@ -289,7 +289,7 @@
                     <Label Text="Category"
                            FontAttributes="Bold"
                            TextColor="Black" />
-                    <Picker ItemsSource="{Binding EditTransactionSplitViewModel.Model.AvailableCategories}"
+<Picker ItemsSource="{Binding EditTransactionSplitViewModel.Model.AvailableCategoriesWithIncome}"
                             ItemDisplayBinding="{Binding Name}"
                             SelectedItem="{Binding EditTransactionSplitViewModel.Model.SelectedCategory}"
                             TextColor="Black" />
@@ -347,7 +347,7 @@
                     <Label Text="Category"
                            FontAttributes="Bold"
                            TextColor="Black" />
-                    <Picker ItemsSource="{Binding AddSplitToTransactionViewModel.Model.AvailableCategories}"
+<Picker ItemsSource="{Binding AddSplitToTransactionViewModel.Model.AvailableCategoriesWithIncome}"
                             ItemDisplayBinding="{Binding Name}"
                             SelectedItem="{Binding AddSplitToTransactionViewModel.Model.SelectedCategory}"
                             TextColor="Black" />

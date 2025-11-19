@@ -93,8 +93,8 @@
 
 						@if (!ViewModel.AddTransactionViewModel.Model.IsSplitTransaction)
 						{
-							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId">
-								<option value="0">Select a category...</option>
+<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId" required>
+								<option value="0">Income</option>
 								@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 								{
 									<option value="@category.Id">@category.Name</option>
@@ -108,10 +108,10 @@
 								{
 									<div class="row g-2 mb-2 align-items-center">
 										<div class="col-md-6">
-											<select class="form-select form-select-sm"
+<select class="form-select form-select-sm"
 													value="@(split.Model.SelectedCategory?.Id ?? 0)"
-													@onchange="(e) => OnSplitCategoryChanged(split, e)">
-												<option value="0">Select category...</option>
+													@onchange="(e) => OnSplitCategoryChanged(split, e)" required>
+												<option value="0">Income</option>
 												@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 												{
 													<option value="@category.Id">@category.Name</option>
@@ -126,7 +126,7 @@
 											<button type="button" class="btn btn-sm btn-danger w-100"
 													@onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
 													disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
-												×
+												Ã—
 											</button>
 										</div>
 									</div>
@@ -257,11 +257,11 @@
 				<div class="row g-3">
 					<div class="col-md-6">
 						<label class="form-label">Category</label>
-						<select class="form-select"
+<select class="form-select"
 								value="@(ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory?.Id ?? 0)"
 								@onchange="OnAddSplitCategoryChanged"
 								required>
-							<option value="0">Select category...</option>
+							<option value="0">Income</option>
 							@foreach (var category in ViewModel.AddSplitToTransactionViewModel.Model.AvailableCategories)
 							{
 								<option value="@category.Id">@category.Name</option>
@@ -315,8 +315,8 @@
 				<div class="row g-3">
 					<div class="col-md-6">
 						<label class="form-label">Category</label>
-						<select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId" required>
-							<option value="0">Select category...</option>
+<select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId" required>
+							<option value="0">Income</option>
 							@foreach (var category in ViewModel.EditTransactionSplitViewModel.Model.AvailableCategories)
 							{
 								<option value="@category.Id">@category.Name</option>

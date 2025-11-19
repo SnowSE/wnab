@@ -12,6 +12,11 @@ public partial class AddTransactionSplitModel : ObservableObject
     [ObservableProperty]
     private Category? selectedCategory;
 
+    /// <summary>
+    /// Categories plus "Income" option for pickers.
+    /// </summary>
+    public ObservableCollection<Category> AvailableCategoriesWithIncome { get; set; } = new();
+
     [ObservableProperty]
     private decimal amount;
 
@@ -28,7 +33,7 @@ public partial class AddTransactionSplitModel : ObservableObject
     /// <summary>
     /// Validates that all required fields are populated.
     /// </summary>
-    public bool IsValid => SelectedCategory != null && Amount != 0;
+    public bool IsValid => (SelectedCategory != null || IsIncome) && Amount != 0;
 
     /// <summary>
     /// Gets validation error message if the split is invalid.
@@ -37,7 +42,7 @@ public partial class AddTransactionSplitModel : ObservableObject
     {
         get
         {
-            if (SelectedCategory == null)
+            if (SelectedCategory == null && !IsIncome)
                 return "Category is required";
             if (Amount == 0)
                 return "Amount must be non-zero";
@@ -50,6 +55,15 @@ public partial class AddTransactionSplitModel : ObservableObject
     /// </summary>
     partial void OnSelectedCategoryChanged(Category? value)
     {
+        // If "Income" option selected, set SelectedCategory to null
+        if (value != null && value.Id == 0 && value.Name == "Income")
+        {
+            SelectedCategory = null;
+        }
+        else
+        {
+            SelectedCategory = value;
+        }
         OnPropertyChanged(nameof(CategoryName));
         OnPropertyChanged(nameof(IsValid));
         OnPropertyChanged(nameof(ValidationError));
