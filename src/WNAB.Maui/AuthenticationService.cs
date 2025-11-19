@@ -40,7 +40,7 @@ public class AuthenticationService : IAuthenticationService
         {
             Authority = authority,
             ClientId = clientId,
-            Scope = "openid profile email",
+            Scope = "openid profile email offline_access",
             RedirectUri = redirectUri,
             Browser = browser,
             Policy = new Policy
@@ -138,32 +138,43 @@ SecureStorage.Remove("id_token");
             // First try to get from memory
             if (!string.IsNullOrEmpty(_currentAccessToken))
             {
-                // Check if token is expired
-                if (_tokenExpiration > DateTimeOffset.UtcNow)
+                // Check if token is expired (with 1 minute buffer)
+                if (_tokenExpiration > DateTimeOffset.UtcNow.AddMinutes(1))
                 {
                     return _currentAccessToken;
                 }
 
-                // Try to refresh token
-                if (_loginResult != null && !string.IsNullOrEmpty(_loginResult.RefreshToken))
+                _logger.LogInformation("Access token expired or expiring soon, attempting refresh...");
+            }
+
+            // Try to refresh token if expired or not in memory
+            var refreshToken = _loginResult?.RefreshToken ?? await SecureStorage.GetAsync("refresh_token");
+            if (!string.IsNullOrEmpty(refreshToken))
+            {
+                _logger.LogInformation("Attempting to refresh access token...");
+                var refreshResult = await _oidcClient.RefreshTokenAsync(refreshToken);
+                if (!refreshResult.IsError)
                 {
-                    var refreshResult = await _oidcClient.RefreshTokenAsync(_loginResult.RefreshToken);
-                    if (!refreshResult.IsError)
-                    {
-                        // Update current token and expiration
-                        _currentAccessToken = refreshResult.AccessToken;
-                        _tokenExpiration = refreshResult.AccessTokenExpiration;
+                    _logger.LogInformation("Successfully refreshed access token");
 
-                        await SecureStorage.SetAsync("access_token", refreshResult.AccessToken);
-                        await SecureStorage.SetAsync("refresh_token", refreshResult.RefreshToken ?? string.Empty);
-                        await SecureStorage.SetAsync("id_token", refreshResult.IdentityToken);
+                    // Update current token and expiration
+                    _currentAccessToken = refreshResult.AccessToken;
+                    _tokenExpiration = refreshResult.AccessTokenExpiration;
 
-                        return refreshResult.AccessToken;
-                    }
+                    // Store updated tokens
+                    await SecureStorage.SetAsync("access_token", refreshResult.AccessToken);
+                    await SecureStorage.SetAsync("refresh_token", refreshResult.RefreshToken ?? string.Empty);
+                    await SecureStorage.SetAsync("id_token", refreshResult.IdentityToken);
+
+                    return refreshResult.AccessToken;
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to refresh token: {Error}", refreshResult.Error);
                 }
             }
 
-            // Try to get from secure storage
+            // If refresh failed or no refresh token, try to get from secure storage
             var storedToken = await SecureStorage.GetAsync("access_token");
             if (!string.IsNullOrEmpty(storedToken))
             {
@@ -175,6 +186,17 @@ SecureStorage.Remove("id_token");
                     var handler = new JwtSecurityTokenHandler();
                     var token = handler.ReadJwtToken(storedToken);
                     _tokenExpiration = token.ValidTo;
+
+                    // Check if stored token is still valid
+                    if (_tokenExpiration > DateTimeOffset.UtcNow.AddMinutes(1))
+                    {
+                        return storedToken;
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Stored access token is expired and refresh failed");
+                        return null;
+                    }
                 }
                 catch
                 {

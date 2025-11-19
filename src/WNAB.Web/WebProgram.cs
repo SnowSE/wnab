@@ -97,6 +97,7 @@ builder.Services.AddTransient<TransactionManagementService>(sp =>
     new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 // Register WNAB.MVM services for shared business logic
+builder.Services.AddScoped<WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 
