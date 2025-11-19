@@ -1,0 +1,197 @@
+@page "/onboarding"
+@using WNAB.Web.Components.Pages
+@inject NavigationManager Navigation
+@inject CategoriesViewModel CategoriesVM
+@inject AccountsViewModel AccountsVM
+
+@* Wizard Step State *@
+@code {
+    private WizardStep CurrentStep = WizardStep.Welcome;
+
+    private enum WizardStep
+    {
+        Welcome,
+        Categories,
+        Accounts,
+        Budget,
+        Transactions,
+        Review,
+        Goodbye
+    }
+
+    private void NextStep()
+    {
+        if (CurrentStep < WizardStep.Goodbye)
+            CurrentStep++;
+    }
+
+    private void PrevStep()
+    {
+        if (CurrentStep > WizardStep.Welcome)
+            CurrentStep--;
+    }
+
+    private void ExitWizard()
+    {
+        Navigation.NavigateTo("/landing");
+    }
+}
+
+<div class="wizard-container">
+    <div class="wizard-content">
+        @if (CurrentStep == WizardStep.Categories)
+        {
+            <div class="wizard-highlight wizard-highlight-categories"></div>
+            <Categories />
+        }
+        else if (CurrentStep == WizardStep.Accounts)
+        {
+            <div class="wizard-highlight wizard-highlight-accounts"></div>
+            <Accounts />
+        }
+        else if (CurrentStep == WizardStep.Budget || CurrentStep == WizardStep.Review)
+        {
+            <div class="wizard-highlight wizard-highlight-budget"></div>
+            <Home />
+        }
+        else if (CurrentStep == WizardStep.Transactions)
+        {
+            <div class="wizard-highlight wizard-highlight-transactions"></div>
+            <Transactions />
+        }
+    </div>
+
+    <div class="wizard-modal-overlay">
+        <div class="wizard-modal">
+            @if (CurrentStep == WizardStep.Welcome)
+            {
+                <h2>Welcome to WNAB!</h2>
+                <p>This wizard will help you set up your budget and teach you the basics of WNAB.</p>
+                <button class="btn btn-primary" @onclick="NextStep">Start</button>
+            }
+            else if (CurrentStep == WizardStep.Categories)
+            {
+                <h2>Step 1: Set Up Categories</h2>
+                <p>Add categories for things you expect to spend money on.</p>
+                <button class="btn btn-secondary" @onclick="PrevStep">Back</button>
+                <button class="btn btn-primary" @onclick="NextStep" disabled="@(CategoriesVM.Model.Items == null || CategoriesVM.Model.Items.Count == 0)">Next</button>
+                @if (CategoriesVM.Model.Items != null && CategoriesVM.Model.Items.Count == 0)
+                {
+                    <div class="text-danger mt-2">Please add at least one category to continue.</div>
+                }
+            }
+            else if (CurrentStep == WizardStep.Accounts)
+            {
+                <h2>Step 2: Add Bank Account(s)</h2>
+                <p>Enter your bank account(s) and starting income.</p>
+                <button class="btn btn-secondary" @onclick="PrevStep">Back</button>
+                <button class="btn btn-primary" @onclick="NextStep" disabled="@(AccountsVM.Model.Items == null || AccountsVM.Model.Items.Count == 0)">Next</button>
+                @if (AccountsVM.Model.Items != null && AccountsVM.Model.Items.Count == 0)
+                {
+                    <div class="text-danger mt-2">Please add at least one account to continue.</div>
+                }
+            }
+            else if (CurrentStep == WizardStep.Budget)
+            {
+                <h2>Step 3: Make a Budget</h2>
+                <p>Set allocations for each category.</p>
+                <button class="btn btn-secondary" @onclick="PrevStep">Back</button>
+                <button class="btn btn-primary" @onclick="NextStep">Next</button>
+            }
+            else if (CurrentStep == WizardStep.Transactions)
+            {
+                <h2>Step 4: Enter a Transaction</h2>
+                <p>Enter a transaction, set the category and amount, and learn about marking income.</p>
+                <button class="btn btn-secondary" @onclick="PrevStep">Back</button>
+                <button class="btn btn-primary" @onclick="NextStep">Next</button>
+            }
+            else if (CurrentStep == WizardStep.Review)
+            {
+                <h2>Step 5: Review Your Budget</h2>
+                <p>See how your transaction reflects in the budget page and learn about Ready To Assign (RTA).</p>
+                <button class="btn btn-secondary" @onclick="PrevStep">Back</button>
+                <button class="btn btn-primary" @onclick="NextStep">Finish</button>
+            }
+            else if (CurrentStep == WizardStep.Goodbye)
+            {
+                <h2>All Done!</h2>
+                <p>You're ready to use WNAB. Good luck and happy budgeting!</p>
+                <button class="btn btn-primary" @onclick="ExitWizard">Exit Wizard</button>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+.wizard-container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    margin: 2rem;
+}
+.wizard-content {
+    flex: 1;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 2rem;
+    z-index: 1;
+}
+.wizard-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(40, 44, 52, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: auto;
+}
+.wizard-modal {
+    min-width: 320px;
+    max-width: 400px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    pointer-events: auto;
+    animation: fadeIn 0.3s;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+.wizard-highlight {
+    position: absolute;
+    border-radius: 8px;
+    pointer-events: none;
+    z-index: 2;
+    box-shadow: 0 0 0 4px #007bff44, 0 2px 8px rgba(0,0,0,0.08);
+    animation: highlightFadeIn 0.5s;
+    transition: box-shadow 0.3s;
+}
+@keyframes highlightFadeIn {
+    from { box-shadow: 0 0 0 0 #007bff00; }
+    to { box-shadow: 0 0 0 4px #007bff44, 0 2px 8px rgba(0,0,0,0.08); }
+}
+
+/* Placeholder highlight positions for each step.
+   Refine these to target the actual UI elements as needed. */
+.wizard-highlight-categories {
+    top: 40px; left: 40px; width: 300px; height: 80px;
+}
+.wizard-highlight-accounts {
+    top: 40px; left: 40px; width: 320px; height: 100px;
+}
+.wizard-highlight-budget {
+    top: 40px; left: 40px; width: 340px; height: 120px;
+}
+.wizard-highlight-transactions {
+    top: 40px; left: 40px; width: 360px; height: 100px;
+}
+</style>
