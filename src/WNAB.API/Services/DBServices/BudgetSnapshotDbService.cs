@@ -57,4 +57,25 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
 
         return existingSnapshot ?? snapshot;
     }
+
+
+    public async Task<List<BudgetSnapshot>> GetPastSnapshotsAsync(int month, int year, CancellationToken cancellationToken = default)
+    {
+        return await _db.BudgetSnapshots
+            .Include(s => s.Categories)
+            .ThenInclude(c => c.Category)
+            .Where(s => s.Year < year || (s.Year == year && s.Month < month))
+            .OrderByDescending(s => s.Year).ThenByDescending(s => s.Month)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<BudgetSnapshot>> GetFutureSnapshotsAsync(int month, int year, CancellationToken cancellationToken = default)
+    {
+        return await _db.BudgetSnapshots
+            .Include(s => s.Categories)
+            .ThenInclude(c => c.Category)
+            .Where(s => s.Year > year || (s.Year == year && s.Month > month))
+            .OrderBy(s => s.Year).ThenBy(s => s.Month)
+            .ToListAsync(cancellationToken);
+    }
 }
