@@ -22,8 +22,6 @@ public class BudgetService : IBudgetService
         this.budgetSnapshotService = budgetSnapshotService ?? throw new ArgumentNullException(nameof(budgetSnapshotService));
     }
 
-    
-
     public async Task<decimal> CalculateReadyToAssign(int month, int year)
     {
         var snapshot = await budgetSnapshotService.GetSnapshotAsync(month, year);
