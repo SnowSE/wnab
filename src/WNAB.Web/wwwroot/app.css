@@ -374,8 +374,15 @@ h1:focus {
 /* Categories card grid styling (matches design screenshots) */
 .category-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+    padding: 12px 14px 12px 12px;
+}
+
+@media (max-width: 768px) {
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .category-card {
@@ -596,6 +603,11 @@ h1:focus {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    transition: box-shadow 0.2s ease;
+}
+
+.account-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {
