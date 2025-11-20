@@ -5,36 +5,37 @@
 @inject IJSRuntime JSRuntime
 @implements IDisposable
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-	<div>
-		<h1>Transactions</h1>
-	</div>
-	<div>
-		<button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
-			<i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
-			@(ViewModel.IsAddFormVisible ? "Cancel" : "New Transaction")
-		</button>
-		<button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
-			@if (ViewModel.Model.IsBusy)
-			{
-				<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-			}
-			else
-			{
-				<i class="bi bi-arrow-clockwise me-1"></i>
-			}
-			Refresh
-		</button>
-	</div>
-</div>
+<div class="page-container">
+    <div class="accounts-header">
+        <div class="header-text">
+            <h1 class="page-title">Transactions</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
+                <i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
+                @(ViewModel.IsAddFormVisible ? "Cancel" : "New Transaction")
+            </button>
+            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+                @if (ViewModel.Model.IsBusy)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                }
+                Refresh
+            </button>
+        </div>
+    </div>
 
-@if (!ViewModel.Model.IsLoggedIn)
-{
-	<div class="alert alert-warning">
-		<i class="bi bi-exclamation-triangle me-1"></i>
-		Please log in to view transactions.
-	</div>
-}
+    @if (!ViewModel.Model.IsLoggedIn)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            Please log in to view transactions.
+        </div>
+    }
 
 <!-- Inline Add Transaction Form -->
 @if (ViewModel.IsAddFormVisible && ViewModel.Model.IsLoggedIn)
@@ -442,6 +443,7 @@
 			</table>
 		</div>
 	}
+</div>
 </div>
 
 @code {
