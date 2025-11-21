@@ -616,6 +616,14 @@ app.MapGet("/user/earliestactivity", async (HttpContext context, WnabContext db,
     return Results.Ok(earliestDate);
 }).RequireAuthorization();
 
+app.MapGet("/user/id", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    return Results.Ok(user.Id);
+}).RequireAuthorization();
+
 // Map budget endpoints
 app.MapBudgetEndpoints();
 

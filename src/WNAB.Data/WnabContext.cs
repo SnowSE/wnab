@@ -15,6 +15,7 @@ public class WnabContext : DbContext
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<TransactionSplit> TransactionSplits => Set<TransactionSplit>();
     public DbSet<BudgetSnapshot> BudgetSnapshots => Set<BudgetSnapshot>();
+    public DbSet<CategorySnapshotData> CategorySnapshotDatas => Set<CategorySnapshotData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -106,6 +107,49 @@ public class WnabContext : DbContext
                 .WithMany(c => c.Allocations)
                 .HasForeignKey(e => e.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict); // Don't delete category if budgets exist
+        });
+
+        // BudgetSnapshot entity configuration
+        modelBuilder.Entity<BudgetSnapshot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()  // or add a navigation property on User if desired
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+             // Configure the relationship to CategorySnapshotData
+            entity.HasMany(e => e.Categories)
+                .WithOne()
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Optional but recommended: ensure unique snapshot per user/month/year
+            entity.HasIndex(e => new { e.UserId, e.Month, e.Year }).IsUnique();
+        });
+
+        // CategorySnapshotData entity configuration
+        modelBuilder.Entity<CategorySnapshotData>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Configure decimal precision for financial fields
+            entity.Property(e => e.AssignedValue).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Activity).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Available).HasColumnType("decimal(18,2)");
+            
+            // Relationship to Category (optional but recommended for data integrity)
+            entity.HasOne(e => e.Category)
+                .WithMany()
+                .HasForeignKey(e => e.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            // Index for performance when querying by category
+            entity.HasIndex(e => e.CategoryId);
+            
+            // NOTE: The relationship to BudgetSnapshot is already configured in BudgetSnapshot's
+            // HasMany(e => e.Categories) on line 124, so we don't need to duplicate it here.
+            // EF Core will handle the inverse relationship automatically.
         });
     }
 }
