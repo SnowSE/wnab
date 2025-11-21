@@ -233,6 +233,12 @@ public class TransactionDBService
         if (affected != 1)
             throw new InvalidOperationException($"Expected to update exactly 1 entry, but updated {affected}.");
 
+        // Reload the Account relationship if it changed to get the correct account name
+        if (transaction.Account?.Id != accountId)
+        {
+            await _db.Entry(transaction).Reference(t => t.Account).LoadAsync(cancellationToken);
+        }
+
         return new TransactionResponse(
             transaction.Id,
             transaction.AccountId,

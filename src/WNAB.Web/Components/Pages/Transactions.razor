@@ -8,7 +8,7 @@
 <div class="page-container">
     <div class="accounts-header">
         <div class="header-text">
-            <h1 class="page-title">Transactions</h1>
+            @* <h1 class="page-title">Transactions</h1> *@
         </div>
         <div class="header-actions">
             <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
@@ -295,9 +295,9 @@
 												<div class="row g-2 mb-2 align-items-end" @key="@($"edit-split-{index}")">
 													<div class="col-md-4">
 														<label class="form-label small">Category</label>
-														<select class="form-select form-select-sm" @bind="split.CategoryAllocationId">
+														<select class="form-select form-select-sm" @bind="split.CategoryId">
 															<option value="-1">Income</option>
-															<option value="">No Category</option>
+															<option value="0">No Category</option>
 															@foreach (var category in _availableCategories)
 															{
 																<option value="@category.Id">@category.Name</option>
@@ -360,6 +360,7 @@
 	{
 		public int Id { get; set; }
 		public int? CategoryAllocationId { get; set; }
+		public int? CategoryId { get; set; }  // Store the category ID, not allocation ID
 		public string CategoryName { get; set; } = "";
 		public decimal Amount { get; set; }
 		public string? Description { get; set; }
@@ -459,13 +460,18 @@
 			_editAccountId = account?.Id ?? 0;
 			
 			// Load splits for this transaction
-			_editingSplits = transaction.Splits.Select(s => new EditingSplit
-			{
-				Id = s.Id,
-				CategoryAllocationId = s.CategoryAllocationId,
-				CategoryName = s.CategoryName,
-				Amount = s.Amount,
-				Description = s.Description
+			_editingSplits = transaction.Splits.Select(s => {
+				// Find the category by name to get its ID
+				var category = _availableCategories.FirstOrDefault(c => c.Name == s.CategoryName);
+				return new EditingSplit
+				{
+					Id = s.Id,
+					CategoryAllocationId = s.CategoryAllocationId,
+					CategoryId = category?.Id ?? (s.CategoryName == "Income" ? -1 : 0),
+					CategoryName = s.CategoryName,
+					Amount = s.Amount,
+					Description = s.Description
+				};
 			}).ToList();
 			
 			// If no splits, add one empty split
@@ -474,7 +480,8 @@
 				_editingSplits.Add(new EditingSplit 
 				{ 
 					Id = 0, 
-					CategoryAllocationId = null, 
+					CategoryAllocationId = null,
+					CategoryId = 0,
 					CategoryName = "No Category",
 					Amount = 0, 
 					Description = "" 
@@ -533,28 +540,49 @@
 			if (editingSplit.Id > 0 && existingSplitIds.Contains(editingSplit.Id))
 			{
 				// Existing split - update it
-				await JSRuntime.InvokeVoidAsync("console.log", $"Updating existing split {editingSplit.Id}");
-				await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
-				ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = editingSplit.CategoryAllocationId ?? 0;
-				ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
-				ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
-				await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+				await JSRuntime.InvokeVoidAsync("console.log", $"Updating existing split {editingSplit.Id} with category ID {editingSplit.CategoryId}");
+				
+				// Find the category by ID and look up its allocation
+				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
+				{
+					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
+					if (category != null)
+					{
+						await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
+						
+						// Set the category so it can find the allocation
+						ViewModel.EditTransactionSplitViewModel.Model.SelectedCategory = category;
+						ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
+						ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
+						
+						await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+					}
+				}
+				else if (editingSplit.CategoryId == -1)
+				{
+					// Income - set CategoryAllocationId to null
+					await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
+					ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = null;
+					ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
+					ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
+					await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+				}
 			}
 			else if (editingSplit.Id == 0)
 			{
 				// New split - create it
 				// Skip if no category is selected
-				if (!editingSplit.CategoryAllocationId.HasValue || editingSplit.CategoryAllocationId.Value == 0)
+				if (!editingSplit.CategoryId.HasValue || editingSplit.CategoryId.Value == 0)
 				{
 					await JSRuntime.InvokeVoidAsync("console.warn", "Skipping split with no category");
 					continue;
 				}
 				
-				// First, load the transaction context
+				// First, load the transaction context (this sets the transaction date)
 				await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
 				
-				// Set the category by finding it in the available categories
-				var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryAllocationId);
+				// Set the category by finding it in the available categories using CategoryId
+				var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
 				if (category != null)
 				{
 					await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
@@ -568,7 +596,7 @@
 				}
 				else
 				{
-					await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryAllocationId}");
+					await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
 				}
 			}
 		}
@@ -587,7 +615,8 @@
 		_editingSplits.Add(new EditingSplit 
 		{ 
 			Id = 0, 
-			CategoryAllocationId = null, 
+			CategoryAllocationId = null,
+			CategoryId = 0,
 			CategoryName = "No Category",
 			Amount = 0, 
 			Description = "" 
