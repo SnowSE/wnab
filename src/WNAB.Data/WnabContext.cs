@@ -132,6 +132,7 @@ public class WnabContext : DbContext
         modelBuilder.Entity<CategorySnapshotData>(entity =>
         {
             entity.HasKey(e => e.Id);
+            entity.ToTable("CategorySnapshotData");
             
             // Configure decimal precision for financial fields
             entity.Property(e => e.AssignedValue).HasColumnType("decimal(18,2)");

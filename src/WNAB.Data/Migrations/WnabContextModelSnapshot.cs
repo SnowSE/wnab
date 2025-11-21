@@ -234,7 +234,7 @@ namespace WNAB.Data.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("CategorySnapshotDatas");
+                    b.ToTable("CategorySnapshotData");
                 });
 
             modelBuilder.Entity("WNAB.Data.Transaction", b =>
