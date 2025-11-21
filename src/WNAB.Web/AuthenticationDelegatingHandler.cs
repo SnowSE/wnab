@@ -35,7 +35,7 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
             {
                 // Add the access token to the Authorization header
                 request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-                _logger.LogInformation("Added Bearer token to request: {Url}", request.RequestUri);
+                _logger.LogTrace("Added Bearer token to request: {Url}", request.RequestUri);
             }
             else
             {

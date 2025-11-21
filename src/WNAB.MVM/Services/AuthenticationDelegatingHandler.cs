@@ -21,7 +21,7 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
         if (!string.IsNullOrEmpty(accessToken))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            _logger.LogInformation("Added Bearer token to request: {Url}", request.RequestUri);
+            _logger.LogTrace("Added Bearer token to request: {Url}", request.RequestUri);
         }
         else
         {

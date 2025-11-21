@@ -266,7 +266,7 @@ public class TransactionSplitDBService
 
     public async Task<List<TransactionSplitResponse>> GetTransactionSplitsForUserByMonthAsync(int id, int month, int year)
     {
-        logger.LogInformation("Getting transaction splits for user {UserId} for {Month}/{Year}", id, month, year);
+        logger.LogTrace("Getting transaction splits for user {UserId} for {Month}/{Year}", id, month, year);
         return await _db.TransactionSplits
             .Include(ts => ts.Transaction)
             .Where(ts => ts.Transaction.Account.UserId == id &&

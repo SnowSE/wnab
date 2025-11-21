@@ -30,7 +30,6 @@ public class AuthenticationService : IAuthenticationService
         var windowsBrowser = new Platforms.Windows.WindowsBrowser(logger);
         redirectUri = windowsBrowser.RedirectUri;
         browser = windowsBrowser;
-        _logger.LogInformation("Using Windows browser with redirect URI: {RedirectUri}", redirectUri);
 #else
         redirectUri = configuration["Keycloak:RedirectUri"] ?? "wnab://callback";
         browser = new WebBrowserAuthenticator();
@@ -50,8 +49,6 @@ public class AuthenticationService : IAuthenticationService
         };
 
         _oidcClient = new OidcClient(options);
-        _logger.LogInformation("OidcClient configured - Authority: {Authority}, ClientId: {ClientId}, RedirectUri: {RedirectUri}",
-            authority, clientId, redirectUri);
     }
 
     public async Task<bool> LoginAsync()
@@ -59,11 +56,6 @@ public class AuthenticationService : IAuthenticationService
         try
         {
             var loginRequest = new LoginRequest();
-            _logger.LogInformation("Starting login with redirect URI: {RedirectUri}", _oidcClient.Options.RedirectUri);
-            _logger.LogInformation("Authority: {Authority}", _oidcClient.Options.Authority);
-            _logger.LogInformation("ClientId: {ClientId}", _oidcClient.Options.ClientId);
-            _logger.LogInformation("Scope: {Scope}", _oidcClient.Options.Scope);
-
             _loginResult = await _oidcClient.LoginAsync(loginRequest);
 
             if (_loginResult.IsError)
@@ -72,11 +64,7 @@ public class AuthenticationService : IAuthenticationService
                 return false;
             }
 
-            _logger.LogInformation("Login successful!");
-            _logger.LogInformation("Access token received: {HasAccessToken}", !string.IsNullOrEmpty(_loginResult.AccessToken));
-            _logger.LogInformation("Refresh token received: {HasRefreshToken}", !string.IsNullOrEmpty(_loginResult.RefreshToken));
-            _logger.LogInformation("ID token received: {HasIdToken}", !string.IsNullOrEmpty(_loginResult.IdentityToken));
-            _logger.LogInformation("Token expiration: {Expiration}", _loginResult.AccessTokenExpiration);
+            _logger.LogTrace("Login successful!");
 
             // Store current token info
             _currentAccessToken = _loginResult.AccessToken;
@@ -87,7 +75,7 @@ public class AuthenticationService : IAuthenticationService
             await SecureStorage.SetAsync("refresh_token", _loginResult.RefreshToken ?? string.Empty);
             await SecureStorage.SetAsync("id_token", _loginResult.IdentityToken);
 
-            _logger.LogInformation("Tokens stored securely");
+            _logger.LogTrace("Tokens stored securely");
 
             return true;
         }
@@ -119,7 +107,7 @@ SecureStorage.Remove("id_token");
      _currentAccessToken = null;
    _tokenExpiration = DateTimeOffset.MinValue;
 
-            _logger.LogInformation("User logged out successfully (local tokens cleared)");
+            _logger.LogTrace("User logged out successfully (local tokens cleared)");
         }
         catch (Exception ex)
         {
@@ -144,18 +132,18 @@ SecureStorage.Remove("id_token");
                     return _currentAccessToken;
                 }
 
-                _logger.LogInformation("Access token expired or expiring soon, attempting refresh...");
+                _logger.LogTrace("Access token expired or expiring soon, attempting refresh...");
             }
 
             // Try to refresh token if expired or not in memory
             var refreshToken = _loginResult?.RefreshToken ?? await SecureStorage.GetAsync("refresh_token");
             if (!string.IsNullOrEmpty(refreshToken))
             {
-                _logger.LogInformation("Attempting to refresh access token...");
+                _logger.LogTrace("Attempting to refresh access token...");
                 var refreshResult = await _oidcClient.RefreshTokenAsync(refreshToken);
                 if (!refreshResult.IsError)
                 {
-                    _logger.LogInformation("Successfully refreshed access token");
+                    _logger.LogTrace("Successfully refreshed access token");
 
                     // Update current token and expiration
                     _currentAccessToken = refreshResult.AccessToken;

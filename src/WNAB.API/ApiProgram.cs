@@ -45,19 +45,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             OnTokenValidated = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
+                logger.LogTrace("Token validated successfully for user: {User}", context.Principal?.Identity?.Name);
                 return Task.CompletedTask;
             },
             OnMessageReceived = context =>
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                 var hasAuth = context.Request.Headers.ContainsKey("Authorization");
-                logger.LogInformation("Message received. Has Authorization header: {HasAuth}", hasAuth);
+                logger.LogTrace("Message received. Has Authorization header: {HasAuth}", hasAuth);
                 if (hasAuth)
                 {
                     var authHeader = context.Request.Headers["Authorization"].ToString();
                     var headerLength = authHeader?.Length ?? 0;
-                    logger.LogInformation("Authorization header present: {Header}", authHeader?.Substring(0, Math.Min(50, headerLength)));
+                    logger.LogTrace("Authorization header present: {Header}", authHeader?.Substring(0, Math.Min(50, headerLength)));
                 }
                 return Task.CompletedTask;
             }
