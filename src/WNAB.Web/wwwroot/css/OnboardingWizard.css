@@ -13,22 +13,19 @@
     padding: 2rem;
     z-index: 1;
 }
-.wizard-modal-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(40, 44, 52, 0.18);
+.wizard-modal-sidebar {
+    position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    pointer-events: auto;
-}
-.wizard-modal {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 400px;
     min-width: 320px;
     max-width: 400px;
+    margin-left: 2rem;
+    z-index: 2;
+}
+.wizard-modal {
     background: #f8f9fa;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.12);
@@ -36,6 +33,9 @@
     text-align: center;
     pointer-events: auto;
     animation: fadeIn 0.3s;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
 }
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px);}
