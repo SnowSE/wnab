@@ -616,8 +616,69 @@ app.MapGet("/user/earliestactivity", async (HttpContext context, WnabContext db,
     return Results.Ok(earliestDate);
 }).RequireAuthorization();
 
-// Map budget endpoints
-app.MapBudgetEndpoints();
+app.MapGet("/user/id", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    return Results.Ok(user.Id);
+}).RequireAuthorization();
+
+// Budget endpoints (moved inline from Extensions/BudgetEndpoints.cs)
+app.MapGet("/budget/snapshot/{month:int}/{year:int}", async (HttpContext context, int month, int year, IBudgetSnapshotDbService snapshotService, UserProvisioningService provisioningService) =>
+{
+    if (month < 1 || month > 12 || year < 2000 || year > 2100)
+    {
+        return Results.BadRequest("Invalid month or year");
+    }
+
+    var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    var snapshot = await snapshotService.GetSnapshotAsync(month, year, user.Id);
+
+    if (snapshot == null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(snapshot);
+}).RequireAuthorization();
+
+app.MapPost("/budget/snapshot", async (HttpContext context, BudgetSnapshot snapshot, IBudgetSnapshotDbService snapshotService, UserProvisioningService provisioningService) =>
+{
+    if (snapshot == null)
+    {
+        return Results.BadRequest("Snapshot is required");
+    }
+
+    if (snapshot.Month < 1 || snapshot.Month > 12 || snapshot.Year < 2000 || snapshot.Year > 2100)
+    {
+        return Results.BadRequest("Invalid month or year");
+    }
+
+    var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    await snapshotService.SaveSnapshotAsync(snapshot, user.Id);
+
+    return Results.Ok(new { snapshot.Id, snapshot.Month, snapshot.Year });
+}).RequireAuthorization();
+
+app.MapPost("/budget/snapshot/invalidate", async (HttpContext context, int month, int year, IBudgetSnapshotDbService snapshotService, UserProvisioningService provisioningService) =>
+{
+    if (month < 1 || month > 12 || year < 2000 || year > 2100)
+    {
+        return Results.BadRequest("Invalid month or year");
+    }
+
+    var user = await context.GetCurrentUserAsync(snapshotService.DbContext, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    await snapshotService.InvalidateSnapshotsFromMonthAsync(month, year, user.Id);
+
+    return Results.Ok(new { Message = $"Invalidated snapshots from {month}/{year} onwards" });
+}).RequireAuthorization();
 
 
 // Apply EF Core migrations at startup so the database schema is up to date.

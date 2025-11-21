@@ -83,12 +83,15 @@ public class BudgetService : IBudgetService
         var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
         var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
 
+        var userId = await userService.GetUserId();
+
         return new BudgetSnapshot
         {
             Month = currentMonth,
             Year = currentYear,
             SnapshotReadyToAssign = income - allocations,
-            Categories = categoryData
+            Categories = categoryData,
+            UserId = userId
         };
     }
 
