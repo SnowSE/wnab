@@ -7,9 +7,12 @@ namespace WNAB.Data;
 public class BudgetSnapshot
 {
     public int Id { get; set; }
+    public int UserId { get; set; }
+    public User? User { get; set; }
     public int Month { get; set; }
     public int Year { get; set; }
     public decimal SnapshotReadyToAssign { get; set; }
+    public bool IsValid { get; set; } = true;
     public List<CategorySnapshotData> Categories { get; set; } = new();
 }
 

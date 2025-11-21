@@ -222,7 +222,7 @@
                                                          Desktop="18" />
                                             </Label.FontSize>
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=DeleteAccountCommand}"
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:AccountsViewModel}}, Path=DeactivateAccountCommand}"
                                                                       CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
@@ -390,11 +390,11 @@
                             <Label Text="📭"
                                    HorizontalOptions="Center"
                                    FontSize="48" />
-                            <Label Text="No inactive or deleted accounts to show"
+                            <Label Text="No inactive accounts to show"
                                    HorizontalOptions="Center"
                                    FontSize="16"
                                    FontAttributes="Bold" />
-                            <Label Text="Deleted accounts will appear here"
+                            <Label Text="Deactivated accounts will appear here"
                                    HorizontalOptions="Center"
                                    FontSize="14"
                                    TextColor="Gray" />

@@ -42,7 +42,7 @@ public class TransactionSplitDBService
                 ts.CategoryAllocationId,
                 ts.TransactionId,
                 ts.Transaction.TransactionDate,
-                ts.CategoryAllocation.Category.Name,
+                ts.CategoryAllocation != null ? ts.CategoryAllocation.Category.Name : "Income",
                 ts.Amount,
                 ts.Description
             ))
@@ -66,7 +66,7 @@ public class TransactionSplitDBService
                 ts.CategoryAllocationId,
                 ts.TransactionId,
                 ts.Transaction.TransactionDate,
-                ts.CategoryAllocation.Category.Name,
+                ts.CategoryAllocation != null ? ts.CategoryAllocation.Category.Name : "Income",
                 ts.Amount,
                 ts.Description
             ))
@@ -167,7 +167,8 @@ public class TransactionSplitDBService
             throw new InvalidOperationException("Transaction split not found or does not belong to user");
 
         // Validate new allocation belongs to user's categories if allocation is being changed
-        if (split.CategoryAllocationId != categoryAllocationId)
+        // Skip validation if new categoryAllocationId is null (Income)
+        if (split.CategoryAllocationId != categoryAllocationId && categoryAllocationId.HasValue)
         {
             var newAllocationBelongsToUser = await _db.Allocations
                 .AnyAsync(a => a.Id == categoryAllocationId && a.Category.UserId == userId, cancellationToken);
@@ -269,7 +270,7 @@ public class TransactionSplitDBService
                 ts.CategoryAllocationId,
                 ts.TransactionId,
                 ts.Transaction.TransactionDate,
-                ts.CategoryAllocation.Category.Name,
+                ts.CategoryAllocation != null ? ts.CategoryAllocation.Category.Name : "Income",
                 ts.Amount,
                 ts.Description
             ))

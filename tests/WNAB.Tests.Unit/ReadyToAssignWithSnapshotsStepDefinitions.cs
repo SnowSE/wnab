@@ -138,9 +138,9 @@ public partial class StepDefinitions
         };
         
         // Ensure the snapshot store exists by getting/creating the service first
-        GetOrCreateBudgetSnapshotDbService();
+        GetOrCreateBudgetSnapshotService();
         
-        // Store in snapshot store for the mock database
+        // Store in snapshot store for the mock
         var snapshotStore = context.Get<Dictionary<(int month, int year), BudgetSnapshot>>("SnapshotStore");
         snapshotStore[(month, year)] = previousSnapshot;
     }
@@ -149,7 +149,7 @@ public partial class StepDefinitions
     public void GivenThePreviousSnapshotHasTheFollowingCategories(DataTable dataTable)
     {
         // Ensure the snapshot store exists
-        GetOrCreateBudgetSnapshotDbService();
+        GetOrCreateBudgetSnapshotService();
         
         // Get the snapshot from the store
         var snapshotStore = context.Get<Dictionary<(int month, int year), BudgetSnapshot>>("SnapshotStore");
@@ -308,23 +308,23 @@ public partial class StepDefinitions
             var categoryAllocationService = GetOrCreateCategoryAllocationService();
             var transactionService = GetOrCreateTransactionManagementService();
             var userService = GetOrCreateUserService();
-            var budgetSnapshotDbService = GetOrCreateBudgetSnapshotDbService();
+            var budgetSnapshotService = GetOrCreateBudgetSnapshotService();
             
-            var service = new BudgetService(categoryAllocationService, transactionService, userService, budgetSnapshotDbService);
+            var service = new BudgetService(categoryAllocationService, transactionService, userService, budgetSnapshotService);
             context["BudgetService"] = service;
         }
         return context.Get<BudgetService>("BudgetService");
     }
 
-    private IBudgetSnapshotDbService GetOrCreateBudgetSnapshotDbService()
+    private IBudgetSnapshotService GetOrCreateBudgetSnapshotService()
     {
-        if (!context.ContainsKey("BudgetSnapshotDbService"))
+        if (!context.ContainsKey("BudgetSnapshotService"))
         {
-            var service = Substitute.For<IBudgetSnapshotDbService>();
+            var service = Substitute.For<IBudgetSnapshotService>();
             var snapshotStore = new Dictionary<(int month, int year), BudgetSnapshot>();
             
             // Setup GetSnapshotAsync to return snapshots from our store
-            service.GetSnapshotAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            service.GetSnapshotAsync(Arg.Any<int>(), Arg.Any<int>())
                 .Returns(callInfo =>
                 {
                     var month = callInfo.ArgAt<int>(0);
@@ -334,18 +334,18 @@ public partial class StepDefinitions
                 });
             
             // Setup SaveSnapshotAsync to store snapshots
-            service.SaveSnapshotAsync(Arg.Any<BudgetSnapshot>(), Arg.Any<CancellationToken>())
+            service.SaveSnapshotAsync(Arg.Any<BudgetSnapshot>())
                 .Returns(callInfo =>
                 {
                     var snapshot = callInfo.ArgAt<BudgetSnapshot>(0);
                     snapshotStore[(snapshot.Month, snapshot.Year)] = snapshot;
-                    return Task.FromResult(snapshot);
+                    return Task.CompletedTask;
                 });
             
-            context["BudgetSnapshotDbService"] = service;
+            context["BudgetSnapshotService"] = service;
             context["SnapshotStore"] = snapshotStore;
         }
-        return context.Get<IBudgetSnapshotDbService>("BudgetSnapshotDbService");
+        return context.Get<IBudgetSnapshotService>("BudgetSnapshotService");
     }
 
     private void SetupAllocationMocks(List<CategoryAllocation> allocations, ICategoryAllocationManagementService service)

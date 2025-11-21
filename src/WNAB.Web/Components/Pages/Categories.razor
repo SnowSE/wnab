@@ -30,11 +30,6 @@
         </div>
     </div>
 
-@if (!string.IsNullOrWhiteSpace(ViewModel.Model.StatusMessage))
-{
-    <div class="alert alert-info">@ViewModel.Model.StatusMessage</div>
-}
-
 @if (!ViewModel.Model.IsLoggedIn)
 {
     <div class="alert alert-warning">
@@ -43,7 +38,6 @@
     </div>
 }
 
-<div class="responsive-panel">
     @if (ViewModel.Model.Items == null)
     {
         <div class="text-center p-4">
@@ -89,7 +83,6 @@
             }
         </div>
     }
-</div>
 
 <!-- Include the Create Category Modal -->
 <CreateCategoryModal OnCategoryCreated="OnCategoryCreated" />

@@ -118,7 +118,7 @@ public class AccountDBService
         return account;
     }
 
-    public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId, int userId, CancellationToken cancellationToken = default)
+    public async Task<(bool Success, string? ErrorMessage)> DeactivateAccountAsync(int accountId, int userId, CancellationToken cancellationToken = default)
     {
         // Validate account ID
         if (accountId <= 0)

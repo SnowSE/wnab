@@ -124,10 +124,10 @@ public partial class AccountsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Delete an account - prompts for confirmation then removes it.
+    /// Deactivate an account - prompts for confirmation then deactivates it (soft delete).
     /// </summary>
     [RelayCommand]
-    private async Task DeleteAccount(AccountItemViewModel accountItem)
+    private async Task DeactivateAccount(AccountItemViewModel accountItem)
     {
         // Show confirmation dialog
         var mainPage = Application.Current?.MainPage;
@@ -135,22 +135,22 @@ public partial class AccountsViewModel : ObservableObject
             return;
 
         bool confirm = await mainPage.DisplayAlert(
-            "Delete Account",
-            $"Are you sure you want to delete '{accountItem.AccountName}'?",
-            "Delete",
+            "Deactivate Account",
+            $"Are you sure you want to deactivate '{accountItem.AccountName}'?",
+            "Deactivate",
             "Cancel");
 
         if (!confirm)
             return;
 
-        var (success, errorMessage) = await Model.DeleteAccountAsync(accountItem.Id);
+        var (success, errorMessage) = await Model.DeactivateAccountAsync(accountItem.Id);
 
         if (!success)
         {
             // Show specific error message from the API
             await mainPage.DisplayAlert(
                 "Error",
-                errorMessage ?? "Failed to delete account. Please try again.",
+                errorMessage ?? "Failed to deactivate account. Please try again.",
                 "OK");
         }
     }

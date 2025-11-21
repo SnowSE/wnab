@@ -78,6 +78,8 @@ builder.Services.AddScoped<AllocationDBService>();
 builder.Services.AddScoped<TransactionDBService>();
 // Register transaction splits DB service
 builder.Services.AddScoped<TransactionSplitDBService>();
+// Register budget snapshot DB service
+builder.Services.AddScoped<IBudgetSnapshotDbService, BudgetSnapshotDbService>();
 
 // Get connection string from Aspire (AppHost). If running API alone, allow env var fallback.
 var connectionString = builder.Configuration.GetConnectionString("wnabdb")
@@ -526,7 +528,7 @@ app.MapDelete("/accounts/{id}", async (HttpContext context, int id, WnabContext 
 
     try
     {
-        var (success, errorMessage) = await accountsService.DeleteAccountAsync(id, user.Id);
+        var (success, errorMessage) = await accountsService.DeactivateAccountAsync(id, user.Id);
 
         if (!success)
         {
@@ -595,6 +597,27 @@ app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id,
     return Results.NoContent();
 }).RequireAuthorization();
 
+// User endpoints
+app.MapGet("/user/earliestactivity", async (HttpContext context, WnabContext db, UserProvisioningService provisioningService) =>
+{
+    var user = await context.GetCurrentUserAsync(db, provisioningService);
+    if (user is null) return Results.Unauthorized();
+
+    // Get the earliest transaction date for this user
+    var earliestTransaction = await db.Transactions
+        .Where(t => t.Account.UserId == user.Id)
+        .OrderBy(t => t.TransactionDate)
+        .Select(t => t.TransactionDate)
+        .FirstOrDefaultAsync();
+
+    // If no transactions exist, return current month
+    var earliestDate = earliestTransaction == default ? DateTime.UtcNow : earliestTransaction;
+    
+    return Results.Ok(earliestDate);
+}).RequireAuthorization();
+
+// Map budget endpoints
+app.MapBudgetEndpoints();
 
 
 // Apply EF Core migrations at startup so the database schema is up to date.

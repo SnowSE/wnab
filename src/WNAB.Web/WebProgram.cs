@@ -97,11 +97,14 @@ builder.Services.AddTransient<TransactionManagementService>(sp =>
     new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 // Register WNAB.MVM services for shared business logic
+builder.Services.AddScoped<WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 
 // Register Budget logic services
 builder.Services.AddScoped<IBudgetService, BudgetService>();
+builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
 builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
 

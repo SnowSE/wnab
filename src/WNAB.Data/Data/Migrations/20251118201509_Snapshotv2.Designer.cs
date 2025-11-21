@@ -2,18 +2,21 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WNAB.Data;
 
 #nullable disable
 
-namespace WNAB.Data.Migrations
+namespace WNAB.Data.Data.Migrations
 {
     [DbContext(typeof(WnabContext))]
-    partial class WnabContextModelSnapshot : ModelSnapshot
+    [Migration("20251118201509_Snapshotv2")]
+    partial class Snapshotv2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,24 +82,16 @@ namespace WNAB.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("Month")
                         .HasColumnType("integer");
 
                     b.Property<decimal>("SnapshotReadyToAssign")
                         .HasColumnType("numeric");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("BudgetSnapshots");
                 });
@@ -381,17 +376,6 @@ namespace WNAB.Data.Migrations
                 {
                     b.HasOne("WNAB.Data.User", "User")
                         .WithMany("Accounts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("WNAB.Data.BudgetSnapshot", b =>
-                {
-                    b.HasOne("WNAB.Data.User", "User")
-                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

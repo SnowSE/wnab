@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using WNAB.Web.Services;
 
 namespace WNAB.Web;
 
@@ -6,11 +7,16 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<AuthenticationDelegatingHandler> _logger;
+    private readonly WebAuthenticationService _authService;
 
-    public AuthenticationDelegatingHandler(IHttpContextAccessor httpContextAccessor, ILogger<AuthenticationDelegatingHandler> logger)
+    public AuthenticationDelegatingHandler(
+        IHttpContextAccessor httpContextAccessor,
+        ILogger<AuthenticationDelegatingHandler> logger,
+        WebAuthenticationService authService)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _authService = authService;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -19,7 +25,10 @@ public class AuthenticationDelegatingHandler : DelegatingHandler
 
         if (httpContext != null)
         {
-            // Get the access token from the authenticated user
+            // Use the authentication service to refresh token if needed
+            await _authService.RefreshTokenIfNeededAsync();
+
+            // Get the (possibly refreshed) access token
             var accessToken = await httpContext.GetTokenAsync("access_token");
 
             if (!string.IsNullOrEmpty(accessToken))

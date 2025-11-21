@@ -15,6 +15,7 @@ public partial class PlanBudgetModel : ObservableObject
     private readonly CategoryAllocationManagementService _allocationService;
     private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
+    private readonly IBudgetSnapshotService _budgetSnapshotService;
     private readonly IBudgetService _budgetService;
 
     // Available categories - categories not yet allocated
@@ -23,8 +24,8 @@ public partial class PlanBudgetModel : ObservableObject
     // Budget allocations - allocated categories with budget amounts (active only)
     public ObservableCollection<CategoryAllocation> BudgetAllocations { get; } = new();
     
-    // Hidden allocations - allocated categories that are hidden (IsActive = false)
-    public ObservableCollection<CategoryAllocation> HiddenAllocations { get; } = new();
+    // Inactive allocations - allocated categories that are inactive (IsActive = false)
+    public ObservableCollection<CategoryAllocation> InactiveAllocations { get; } = new();
     
     // Changed allocations - changed allocated categories with budget amounts
     public ObservableCollection<CategoryAllocation> ChangedAllocations { get; } = new();
@@ -52,9 +53,6 @@ public partial class PlanBudgetModel : ObservableObject
 
     [ObservableProperty]
     private int currentYear;
-    
-    [ObservableProperty]
-    private decimal monthlyLimit = 0m;
 
     [ObservableProperty]
     private decimal readyToAssign = 0m;
@@ -62,8 +60,11 @@ public partial class PlanBudgetModel : ObservableObject
     [ObservableProperty]
     private bool isEditMode = false;
     
+    // Current budget snapshot for the displayed month/year
+    [ObservableProperty]
+    private BudgetSnapshot? currentSnapshot;
+    
     // Backup state for undo functionality
-    private decimal _backupMonthlyLimit;
     private List<(int CategoryId, decimal BudgetedAmount)> _backupAllocations = new();
 
     public PlanBudgetModel(
@@ -71,12 +72,14 @@ public partial class PlanBudgetModel : ObservableObject
         CategoryAllocationManagementService allocationService,
         TransactionManagementService transactionService,
         IAuthenticationService authService,
+        IBudgetSnapshotService budgetSnapshotService,
         IBudgetService budgetService)
     {
         _categoryService = categoryService;
         _allocationService = allocationService;
         _transactionService = transactionService;
         _authService = authService;
+        _budgetSnapshotService = budgetSnapshotService;
         _budgetService = budgetService;
 
         // Default to current month/year
@@ -116,9 +119,9 @@ public partial class PlanBudgetModel : ObservableObject
                 StatusMessage = "Error checking login status";
                 AvailableCategories.Clear();
                 BudgetAllocations.Clear();
-                HiddenAllocations.Clear();
+                InactiveAllocations.Clear();
                 OnPropertyChanged(nameof(BudgetAllocations));
-                OnPropertyChanged(nameof(HiddenAllocations));
+                OnPropertyChanged(nameof(InactiveAllocations));
             }
         }
         catch
@@ -127,9 +130,9 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = "Error checking login status";
             AvailableCategories.Clear();
             BudgetAllocations.Clear();
-            HiddenAllocations.Clear();
+            InactiveAllocations.Clear();
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
     }
 
@@ -144,10 +147,12 @@ public partial class PlanBudgetModel : ObservableObject
         {
             IsBusy = true;
             StatusMessage = "Loading categories and allocations...";
-            
+
             // Load existing allocations first to know which categories are already allocated
             await LoadExistingAllocationsAsync(CurrentMonth, CurrentYear);
-            
+
+            await CalculateReadyToAssignAsync(CurrentMonth, CurrentYear);
+
             // Then load available categories (excluding already allocated ones)
             await LoadCategoriesAsync();
 
@@ -185,17 +190,21 @@ public partial class PlanBudgetModel : ObservableObject
     /// <summary>
     /// Load existing allocations for the specified month/year.
     /// Creates allocations for ALL categories - both those with existing data and new ones.
-    /// New categories (Id=0) are automatically hidden until user shows them.
+    /// New categories (Id=0) are automatically inactive until user activates them.
     /// </summary>
     private async Task LoadExistingAllocationsAsync(int month, int year)
     {
         BudgetAllocations.Clear();
-        HiddenAllocations.Clear();
+        InactiveAllocations.Clear();
         _allocatedCategoryIds.Clear();
         _spentAmounts.Clear();
 
         // Get all categories first
         var categories = await _categoryService.GetCategoriesForUserAsync();
+        
+        // Get the budget snapshot for this month and store it
+        var snapshot = await _budgetSnapshotService.GetSnapshotAsync(month, year);
+        CurrentSnapshot = snapshot;
         
         // Determine prior month/year
         var priorMonth = month - 1;
@@ -237,10 +246,10 @@ public partial class PlanBudgetModel : ObservableObject
                 };
 
 
-                // New allocations always go to hidden
+                // New allocations always go to inactive if not active
                 if (!allocation.IsActive)
                 {
-                    HiddenAllocations.Add(allocation);
+                    InactiveAllocations.Add(allocation);
                 }
                 else
                 {
@@ -259,12 +268,15 @@ public partial class PlanBudgetModel : ObservableObject
                 }
                 else
                 {
-                    HiddenAllocations.Add(allocation);
+                    InactiveAllocations.Add(allocation);
                 }
                 
                 // Load spent amount for existing allocations
                 await LoadSpentAmountAsync(allocation.Id);
             }
+            
+            // TODO: Map snapshot data to allocation for display
+            // Snapshot data will be accessed separately for UI display
             
             _allocatedCategoryIds.Add(category.Id);
         }
@@ -274,29 +286,28 @@ public partial class PlanBudgetModel : ObservableObject
 
         // Notify UI that collections have changed
         OnPropertyChanged(nameof(BudgetAllocations));
-        OnPropertyChanged(nameof(HiddenAllocations));
+        OnPropertyChanged(nameof(InactiveAllocations));
     }
 
     /// <summary>
     /// Calculate the Ready To Assign value for the specified month/year.
     /// </summary>
-    private async Task CalculateReadyToAssignAsync(int month, int year)
+    public async Task CalculateReadyToAssignAsync(int month, int year)
     {
         try
         {
-            // Use a default account creation date of Jan 1, 2020 if not available
-            // In the future, this could be stored in user settings
-            var accountCreationDate = new DateTime(2020, 1, 1);
-
             // Calculate RTA using the budget service
             ReadyToAssign = await _budgetService.CalculateReadyToAssign(month, year);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // If calculation fails, default to 0
-            ReadyToAssign = 0m;
+            // Log the actual error for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to calculate RTA: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            throw new InvalidOperationException($"Failed to calculate Ready To Assign: {ex.Message}", ex);
         }
     }
+
     
     /// <summary>
     /// Load the spent amount for a specific allocation from transaction splits.
@@ -353,20 +364,11 @@ public partial class PlanBudgetModel : ObservableObject
     }
     
     /// <summary>
-    /// Calculate unallocated amount (monthly limit minus allocated).
-    /// </summary>
-    public decimal GetUnallocated()
-    {
-        return MonthlyLimit - GetTotalAllocated();
-    }
-    
-    /// <summary>
     /// Enter edit mode and backup current state for undo.
     /// </summary>
     public void EnterEditMode()
     {
         IsEditMode = true;
-        _backupMonthlyLimit = MonthlyLimit;
         _backupAllocations = BudgetAllocations
             .Select(a => (a.CategoryId, a.BudgetedAmount))
             .ToList();
@@ -377,8 +379,6 @@ public partial class PlanBudgetModel : ObservableObject
     /// </summary>
     public void UndoChanges()
     {
-        MonthlyLimit = _backupMonthlyLimit;
-        
         foreach (var backup in _backupAllocations)
         {
             var allocation = BudgetAllocations.FirstOrDefault(a => a.CategoryId == backup.CategoryId);
@@ -565,6 +565,12 @@ public partial class PlanBudgetModel : ObservableObject
             StatusMessage = message.Count > 0 
                 ? string.Join(", ", message)
                 : "No changes to save";
+            
+            // Invalidate snapshots from current month forward since allocations changed
+            if (savedCount > 0 || updatedCount > 0)
+            {
+                await _budgetSnapshotService.InvalidateSnapshotsFromMonthAsync(CurrentMonth, CurrentYear);
+            }
                 
             // Exit edit mode after successful save
             IsEditMode = false;
@@ -598,11 +604,11 @@ public partial class PlanBudgetModel : ObservableObject
     }
 
     /// <summary>
-    /// Hide a category allocation (set IsActive to false).
-    /// Moves allocation from BudgetAllocations to HiddenAllocations.
+    /// Deactivate a category allocation (set IsActive to false).
+    /// Moves allocation from BudgetAllocations to InactiveAllocations.
     /// For new allocations (Id=0), just updates in memory without API call.
     /// </summary>
-    public async Task HideAllocationAsync(CategoryAllocation allocation)
+    public async Task DeactivateAllocationAsync(CategoryAllocation allocation)
     {
         if (allocation == null)
             return;
@@ -623,25 +629,25 @@ public partial class PlanBudgetModel : ObservableObject
             // Update local state (for both new and existing allocations)
             allocation.IsActive = false;
             BudgetAllocations.Remove(allocation);
-            HiddenAllocations.Add(allocation);
+            InactiveAllocations.Add(allocation);
             
             // Notify UI that collections have changed
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error hiding category: {ex.Message}";
+            StatusMessage = $"Error deactivating category: {ex.Message}";
             throw;
         }
     }
 
     /// <summary>
-    /// Unhide a category allocation (set IsActive to true).
-    /// Moves allocation from HiddenAllocations to BudgetAllocations.
+    /// Activate a category allocation (set IsActive to true).
+    /// Moves allocation from InactiveAllocations to BudgetAllocations.
     /// For new allocations (Id=0), just updates in memory without API call.
     /// </summary>
-    public async Task UnhideAllocationAsync(CategoryAllocation allocation)
+    public async Task ActivateAllocationAsync(CategoryAllocation allocation)
     {
         if (allocation == null)
             return;
@@ -661,16 +667,16 @@ public partial class PlanBudgetModel : ObservableObject
             
             // Update local state (for both new and existing allocations)
             allocation.IsActive = true;
-            HiddenAllocations.Remove(allocation);
+            InactiveAllocations.Remove(allocation);
             BudgetAllocations.Add(allocation);
             
             // Notify UI that collections have changed
             OnPropertyChanged(nameof(BudgetAllocations));
-            OnPropertyChanged(nameof(HiddenAllocations));
+            OnPropertyChanged(nameof(InactiveAllocations));
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error unhiding category: {ex.Message}";
+            StatusMessage = $"Error activating category: {ex.Message}";
             throw;
         }
     }

@@ -197,11 +197,9 @@ public partial class PlanBudgetViewModel : ObservableObject
         // Subscribe to model changes to update computed properties
         Model.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(Model.MonthlyLimit) ||
-                e.PropertyName == nameof(Model.BudgetAllocations))
+            if (e.PropertyName == nameof(Model.BudgetAllocations))
             {
                 OnPropertyChanged(nameof(TotalAllocatedFormatted));
-                OnPropertyChanged(nameof(UnallocatedFormatted));
                 OnPropertyChanged(nameof(HasNoBudgetAllocations));
             }
 
@@ -210,9 +208,9 @@ public partial class PlanBudgetViewModel : ObservableObject
                 OnPropertyChanged(nameof(ReadyToAssignFormatted));
             }
 
-            if (e.PropertyName == nameof(Model.HiddenAllocations))
+            if (e.PropertyName == nameof(Model.InactiveAllocations))
             {
-                OnPropertyChanged(nameof(HasHiddenAllocations));
+                OnPropertyChanged(nameof(HasInactiveAllocations));
             }
         };
     }
@@ -221,11 +219,6 @@ public partial class PlanBudgetViewModel : ObservableObject
     /// Formatted total allocated amount for MAUI binding.
     /// </summary>
     public string TotalAllocatedFormatted => Model.GetTotalAllocated().ToString("C");
-    
-    /// <summary>
-    /// Formatted unallocated amount for MAUI binding.
-    /// </summary>
-    public string UnallocatedFormatted => Model.GetUnallocated().ToString("C");
 
     /// <summary>
     /// Formatted Ready To Assign amount for MAUI binding.
@@ -238,15 +231,15 @@ public partial class PlanBudgetViewModel : ObservableObject
     public bool HasNoBudgetAllocations => Model.BudgetAllocations == null || Model.BudgetAllocations.Count == 0;
     
     /// <summary>
-    /// Check if there are hidden allocations to show the dropdown.
+    /// Check if there are inactive allocations to show the dropdown.
     /// </summary>
-    public bool HasHiddenAllocations => Model.HiddenAllocations != null && Model.HiddenAllocations.Count > 0;
+    public bool HasInactiveAllocations => Model.InactiveAllocations != null && Model.InactiveAllocations.Count > 0;
     
     /// <summary>
-    /// Gets or sets whether the hidden categories section is expanded.
+    /// Gets or sets whether the inactive categories section is expanded.
     /// </summary>
     [ObservableProperty]
-    private bool _isHiddenCategoriesExpanded;
+    private bool _isInactiveCategoriesExpanded;
 
     /// <summary>
     /// Initialize the ViewModel by delegating to the Model.
@@ -254,6 +247,7 @@ public partial class PlanBudgetViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await Model.InitializeAsync();
+        
     }
 
     /// <summary>
@@ -426,49 +420,126 @@ public partial class PlanBudgetViewModel : ObservableObject
     }
     
     /// <summary>
-    /// Hide allocation command - delegates to Model.
-    /// Moves allocation from active to hidden section.
+    /// Deactivate allocation command - delegates to Model.
+    /// Moves allocation from active to inactive section.
     /// </summary>
     [RelayCommand]
-    private async Task HideAllocation(CategoryAllocation allocation)
+    private async Task DeactivateAllocation(CategoryAllocation allocation)
     {
         try
         {
-            await Model.HideAllocationAsync(allocation);
+            await Model.DeactivateAllocationAsync(allocation);
             OnPropertyChanged(nameof(HasNoBudgetAllocations));
-            OnPropertyChanged(nameof(HasHiddenAllocations));
+            OnPropertyChanged(nameof(HasInactiveAllocations));
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to hide category: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}", "OK");
         }
     }
     
     /// <summary>
-    /// Unhide allocation command - delegates to Model.
-    /// Moves allocation from hidden to active section.
+    /// Activate allocation command - delegates to Model.
+    /// Moves allocation from inactive to active section.
     /// </summary>
     [RelayCommand]
-    private async Task UnhideAllocation(CategoryAllocation allocation)
+    private async Task ActivateAllocation(CategoryAllocation allocation)
     {
         try
         {
-            await Model.UnhideAllocationAsync(allocation);
+            await Model.ActivateAllocationAsync(allocation);
             OnPropertyChanged(nameof(HasNoBudgetAllocations));
-            OnPropertyChanged(nameof(HasHiddenAllocations));
+            OnPropertyChanged(nameof(HasInactiveAllocations));
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to unhide category: {ex.Message}", "OK");
+            await Shell.Current.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}", "OK");
         }
     }
     
     /// <summary>
-    /// Toggle the hidden categories section visibility.
+    /// Toggle the inactive categories section visibility.
     /// </summary>
     [RelayCommand]
-    private void ToggleHiddenCategories()
+    private void ToggleInactiveCategories()
     {
-        IsHiddenCategoriesExpanded = !IsHiddenCategoriesExpanded;
+        IsInactiveCategoriesExpanded = !IsInactiveCategoriesExpanded;
+    }
+    
+    /// <summary>
+    /// Get formatted activity (spent) amount for an allocation from snapshot data.
+    /// </summary>
+    public string GetActivityFormatted(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return "$0.00";
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Activity.ToString("C") ?? "$0.00";
+    }
+    
+    /// <summary>
+    /// Get formatted available (remaining) amount for an allocation from snapshot data.
+    /// </summary>
+    public string GetAvailableFormatted(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return "$0.00";
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Available.ToString("C") ?? "$0.00";
+    }
+    
+    /// <summary>
+    /// Get progress percentage (0-1) for an allocation from snapshot data.
+    /// </summary>
+    public double GetProgressPercentage(CategoryAllocation allocation)
+    {
+        if (allocation.BudgetedAmount <= 0 || Model.CurrentSnapshot == null)
+            return 0;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        if (categorySnapshot == null)
+            return 0;
+            
+        var percentage = (double)Math.Abs(categorySnapshot.Activity) / (double)allocation.BudgetedAmount;
+        return Math.Min(percentage, 1.0); // Cap at 100%
+    }
+    
+    /// <summary>
+    /// Check if allocation is overspent using snapshot data.
+    /// </summary>
+    public bool IsOverspent(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return false;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        return categorySnapshot?.Available < 0;
+    }
+    
+    /// <summary>
+    /// Get color for available amount (green if positive, red if negative) from snapshot data.
+    /// </summary>
+    public Color GetAvailableColor(CategoryAllocation allocation)
+    {
+        if (Model.CurrentSnapshot == null)
+            return Colors.Gray;
+            
+        var categorySnapshot = Model.CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+            
+        if (categorySnapshot == null)
+            return Colors.Gray;
+            
+        return categorySnapshot.Available >= 0 ? Colors.Green : Colors.Red;
     }
 }

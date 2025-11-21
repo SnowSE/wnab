@@ -18,9 +18,11 @@ public static class MauiProgram
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+				fonts.AddFont("fa-solid-900.ttf", "FontAwesomeSolid");
 			});
 
-		builder.AddServiceDefaults();
+		// TODO: Fix service defaults conflict between WNAB.ServiceDefaults and WNAB.Maui.ServiceDefaults
+		// Microsoft.Extensions.Hosting.Extensions.AddServiceDefaults(builder);
 
 		// Add configuration from appsettings.json
 		var assembly = Assembly.GetExecutingAssembly();
@@ -35,6 +37,8 @@ public static class MauiProgram
 
 		// Register Budget logic services
 		builder.Services.AddScoped<IBudgetService, BudgetService>();
+		builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
         builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
 		builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
 

@@ -10,6 +10,7 @@ public partial class EditTransactionModel : ObservableObject
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
     private readonly IAuthenticationService _authService;
+    private readonly IBudgetSnapshotService _budgetSnapshotService;
 
     [ObservableProperty]
     private int transactionId;
@@ -49,11 +50,13 @@ public partial class EditTransactionModel : ObservableObject
     public EditTransactionModel(
         TransactionManagementService transactions,
         AccountManagementService accounts,
-        IAuthenticationService authService)
+        IAuthenticationService authService,
+        IBudgetSnapshotService budgetSnapshotService)
     {
         _transactions = transactions;
         _accounts = accounts;
         _authService = authService;
+        _budgetSnapshotService = budgetSnapshotService;
     }
 
     public async Task InitializeAsync()
@@ -175,8 +178,12 @@ public partial class EditTransactionModel : ObservableObject
       IsReconciled
             );
 
-  await _transactions.UpdateTransactionAsync(request);
-     StatusMessage = "Transaction updated successfully!";
+            await _transactions.UpdateTransactionAsync(request);
+            
+            // Invalidate snapshots from this transaction's month forward
+            await _budgetSnapshotService.InvalidateSnapshotsFromMonthAsync(TransactionDate.Month, TransactionDate.Year);
+            
+            StatusMessage = "Transaction updated successfully!";
 
             return (true, "Transaction updated successfully!");
         }

@@ -141,11 +141,11 @@ public partial class AccountsModel : ObservableObject
     /// Delete an account by ID.
     /// Returns a tuple with success status and error message (if any).
     /// </summary>
-    public async Task<(bool Success, string? ErrorMessage)> DeleteAccountAsync(int accountId)
+    public async Task<(bool Success, string? ErrorMessage)> DeactivateAccountAsync(int accountId)
     {
         try
         {
-            var (success, errorMessage) = await _accounts.DeleteAccountAsync(accountId);
+            var (success, errorMessage) = await _accounts.DeactivateAccountAsync(accountId);
             if (success)
             {
                 // Remove from local collection
@@ -154,16 +154,16 @@ public partial class AccountsModel : ObservableObject
                 {
                     Items.Remove(item);
                 }
-                StatusMessage = $"Account deleted successfully";
+                StatusMessage = $"Account deactivated successfully";
                 return (true, null);
             }
 
-            StatusMessage = $"Failed to delete account: {errorMessage}";
+            StatusMessage = $"Failed to deactivate account: {errorMessage}";
             return (false, errorMessage);
         }
         catch (Exception ex)
         {
-            var errorMsg = $"Error deleting account: {ex.Message}";
+            var errorMsg = $"Error deactivating account: {ex.Message}";
             StatusMessage = errorMsg;
             return (false, errorMsg);
         }

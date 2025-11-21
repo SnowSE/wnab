@@ -1,52 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="WNAB.Maui.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:WNAB.Maui"
-    Shell.FlyoutBehavior="Flyout"
-    Title="WNAB">
+<Shell x:Class="WNAB.Maui.AppShell"
+       xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:WNAB.Maui"
+       Shell.FlyoutBehavior="Flyout"
+       Title="WNAB">
 
-    <!-- LLM-Dev: Landing page as initial route (hidden from flyout) -->
-    <ShellContent
-        Title="Landing"
-        ContentTemplate="{DataTemplate local:LandingPage}"
-   Route="Landing"
-     Shell.FlyoutItemIsVisible="False" />
-
-    <FlyoutItem Title="Budget" Icon="home.png">
-        <ShellContent
-            Title="Monthly Budget"
-            ContentTemplate="{DataTemplate local:MainPage}"
-            Route="MainPage" />
-        
+    <FlyoutItem Title="Budget"
+                Icon="home.png">
+        <ShellContent Title="Monthly Budget"
+                      ContentTemplate="{DataTemplate local:MainPage}"
+                      Route="MainPage" />
     </FlyoutItem>
-    <FlyoutItem Title="Accounts" Icon="accounts.png">
-        <ShellContent
-            Title="Accounts"
-            ContentTemplate="{DataTemplate local:AccountsPage}"
-            Route="AccountsPage" />
+    <ShellContent Title="Landing"
+                  ContentTemplate="{DataTemplate local:LandingPage}"
+                  Route="Landing"
+                  Shell.FlyoutItemIsVisible="False" />
+    <FlyoutItem Title="Accounts"
+                Icon="accounts.png">
+        <ShellContent Title="Accounts"
+                      ContentTemplate="{DataTemplate local:AccountsPage}"
+                      Route="AccountsPage" />
     </FlyoutItem>
     <FlyoutItem Title="Categories">
-        <ShellContent
-            Title="Categories"
-            ContentTemplate="{DataTemplate local:CategoriesPage}"
-            Route="CategoriesPage" />
+        <ShellContent Title="Categories"
+                      ContentTemplate="{DataTemplate local:CategoriesPage}"
+                      Route="CategoriesPage" />
     </FlyoutItem>
-    <FlyoutItem Title ="Transactions">
-        <ShellContent
-            Title="Transactions"
-            ContentTemplate="{DataTemplate local:TransactionsPage}"
-            Route="TransactionsPage" />
+    <FlyoutItem Title="Transactions">
+        <ShellContent Title="Transactions"
+                      ContentTemplate="{DataTemplate local:TransactionsPage}"
+                      Route="TransactionsPage" />
     </FlyoutItem>
     <!-- Logout MenuItem -->
-    <MenuItem Text="Logout" Clicked="OnLogoutClicked">
+    <MenuItem Text="Logout"
+              Clicked="OnLogoutClicked">
         <MenuItem.IconImageSource>
-            <FontImageSource 
- Glyph="🚪"
-         FontFamily="OpenSansRegular"
-      Size="20" />
+            <FontImageSource Glyph="🚪"
+                             FontFamily="OpenSansRegular"
+                             Size="20" />
         </MenuItem.IconImageSource>
-  </MenuItem>
+    </MenuItem>
 
 </Shell>

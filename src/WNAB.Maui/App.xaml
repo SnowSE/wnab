@@ -25,6 +25,11 @@
             <converters:GreaterThanOneConverter x:Key="GreaterThanOneConverter" />
             <converters:AddFormButtonTextConverter x:Key="AddFormButtonTextConverter" />
             <converters:BoolToExpandIconConverter x:Key="BoolToExpandIconConverter" />
+            <converters:ProgressPercentageConverter x:Key="ProgressPercentageConverter" />
+            <converters:AvailableAmountColorConverter x:Key="AvailableAmountColorConverter" />
+            <converters:IsOverspentConverter x:Key="IsOverspentConverter" />
+            <converters:AllocationProgressWidthConverter x:Key="AllocationProgressWidthConverter" />
+            <converters:AllocationProgressConverter x:Key="AllocationProgressConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
