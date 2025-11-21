@@ -165,191 +165,6 @@
 	</div>
 }
 
-<!-- Inline Edit Transaction Form -->
-@if (ViewModel.IsEditFormVisible && ViewModel.Model.IsLoggedIn)
-{
-	<div class="card mb-4 shadow-sm border-warning">
-		<div class="card-header bg-warning text-dark">
-			<h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Transaction</h5>
-		</div>
-		<div class="card-body">
-			@if (!string.IsNullOrWhiteSpace(ViewModel.EditTransactionViewModel.Model.StatusMessage))
-			{
-				<div class="alert @GetAlertClass(ViewModel.EditTransactionViewModel.Model.StatusMessage) mb-3">
-					@ViewModel.EditTransactionViewModel.Model.StatusMessage
-				</div>
-			}
-
-			<EditForm Model="ViewModel.EditTransactionViewModel.Model" OnValidSubmit="OnEditTransactionSubmit">
-				<div class="row g-3">
-					<div class="col-md-3">
-						<label class="form-label">Account</label>
-						<select class="form-select" @bind="ViewModel.EditTransactionViewModel.Model.AccountId" required>
-							<option value="0">Select account...</option>
-							@foreach (var account in ViewModel.EditTransactionViewModel.Model.AvailableAccounts)
-							{
-								<option value="@account.Id">@account.AccountName</option>
-							}
-						</select>
-					</div>
-					<div class="col-md-3">
-						<label class="form-label">Date</label>
-						<input type="date" class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.TransactionDate" required />
-					</div>
-					<div class="col-md-3">
-						<label class="form-label">Payee</label>
-						<input class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.Payee" required />
-					</div>
-					<div class="col-md-3">
-						<label class="form-label">Amount</label>
-						<input type="number" step="0.01" class="form-control" @bind="ViewModel.EditTransactionViewModel.Model.Amount" required />
-					</div>
-				</div>
-
-				<div class="row g-3 mt-2">
-					<div class="col-md-9">
-						<label class="form-label">Description (Optional)</label>
-						<textarea class="form-control" rows="2" @bind="ViewModel.EditTransactionViewModel.Model.Description"></textarea>
-					</div>
-					<div class="col-md-3">
-						<div class="form-check mt-4">
-							<input class="form-check-input" type="checkbox" @bind="ViewModel.EditTransactionViewModel.Model.IsReconciled" id="isReconciled" />
-							<label class="form-check-label" for="isReconciled">
-								Reconciled
-							</label>
-						</div>
-					</div>
-				</div>
-
-				<div class="d-flex justify-content-end gap-2 mt-3">
-					<button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelEditTransactionCommand.Execute(null)">Cancel</button>
-					<button class="btn btn-warning" type="submit" disabled="@ViewModel.EditTransactionViewModel.Model.IsBusy">
-						@if (ViewModel.EditTransactionViewModel.Model.IsBusy)
-						{
-							<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-						}
-						Update Transaction
-					</button>
-				</div>
-			</EditForm>
-		</div>
-	</div>
-}
-
-<!-- Inline Add Split to Transaction Form -->
-@if (ViewModel.IsAddSplitFormVisible && ViewModel.Model.IsLoggedIn)
-{
-	<div class="card mb-4 shadow-sm border-success">
-		<div class="card-header bg-success text-white">
-			<h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Add Split to Transaction</h5>
-		</div>
-		<div class="card-body">
-			@if (!string.IsNullOrWhiteSpace(ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage))
-			{
-				<div class="alert @GetAlertClass(ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage) mb-3">
-					@ViewModel.AddSplitToTransactionViewModel.Model.StatusMessage
-				</div>
-			}
-
-			<EditForm Model="ViewModel.AddSplitToTransactionViewModel.Model" OnValidSubmit="OnAddSplitToTransactionSubmit">
-				<div class="row g-3">
-					<div class="col-md-6">
-						<label class="form-label">Category</label>
-						<select class="form-select"
-								value="@(ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory?.Id ?? 0)"
-								@onchange="OnAddSplitCategoryChanged"
-								required>
-							<option value="0">Select category...</option>
-							@foreach (var category in ViewModel.AddSplitToTransactionViewModel.Model.AvailableCategories)
-							{
-								<option value="@category.Id">@category.Name</option>
-							}
-						</select>
-					</div>
-					<div class="col-md-3">
-						<label class="form-label">Amount</label>
-						<input type="number" step="0.01" class="form-control" @bind="ViewModel.AddSplitToTransactionViewModel.Model.Amount" required />
-					</div>					
-				</div>
-
-				<div class="row g-3 mt-2">
-					<div class="col-md-12">
-						<label class="form-label">Notes (Optional)</label>
-						<textarea class="form-control" rows="2" @bind="ViewModel.AddSplitToTransactionViewModel.Model.Notes"></textarea>
-					</div>
-				</div>
-
-				<div class="d-flex justify-content-end gap-2 mt-3">
-					<button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelAddSplitToTransactionCommand.Execute(null)">Cancel</button>
-					<button class="btn btn-success" type="submit" disabled="@ViewModel.AddSplitToTransactionViewModel.Model.IsBusy">
-						@if (ViewModel.AddSplitToTransactionViewModel.Model.IsBusy)
-						{
-							<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-						}
-						Add Split
-					</button>
-				</div>
-			</EditForm>
-		</div>
-	</div>
-}
-
-<!-- Inline Edit Split Form -->
-@if (ViewModel.IsEditSplitFormVisible && ViewModel.Model.IsLoggedIn)
-{
-	<div class="card mb-4 shadow-sm border-info">
-		<div class="card-header bg-info text-white">
-			<h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Transaction Split</h5>
-		</div>
-		<div class="card-body">
-			@if (!string.IsNullOrWhiteSpace(ViewModel.EditTransactionSplitViewModel.Model.StatusMessage))
-			{
-				<div class="alert @GetAlertClass(ViewModel.EditTransactionSplitViewModel.Model.StatusMessage) mb-3">
-					@ViewModel.EditTransactionSplitViewModel.Model.StatusMessage
-				</div>
-			}
-
-			<EditForm Model="ViewModel.EditTransactionSplitViewModel.Model" OnValidSubmit="OnEditTransactionSplitSubmit">
-				<div class="row g-3">
-					<div class="col-md-6">
-						<label class="form-label">Category</label>
-						<select class="form-select" @bind="ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId">
-							<option value="-1">Income</option>
-							<option value="0">No Category</option>
-							@foreach (var category in ViewModel.EditTransactionSplitViewModel.Model.AvailableCategories)
-							{
-								<option value="@category.Id">@category.Name</option>
-							}
-						</select>
-					</div>
-					<div class="col-md-3">
-						<label class="form-label">Amount</label>
-						<input type="number" step="0.01" class="form-control" @bind="ViewModel.EditTransactionSplitViewModel.Model.Amount" required />
-					</div>
-				</div>
-
-				<div class="row g-3 mt-2">
-					<div class="col-md-12">
-						<label class="form-label">Description (Optional)</label>
-						<textarea class="form-control" rows="2" @bind="ViewModel.EditTransactionSplitViewModel.Model.Description"></textarea>
-					</div>
-				</div>
-
-				<div class="d-flex justify-content-end gap-2 mt-3">
-					<button type="button" class="btn btn-secondary" @onclick="() => ViewModel.CancelEditTransactionSplitCommand.Execute(null)">Cancel</button>
-					<button class="btn btn-info text-white" type="submit" disabled="@ViewModel.EditTransactionSplitViewModel.Model.IsBusy">
-						@if (ViewModel.EditTransactionSplitViewModel.Model.IsBusy)
-						{
-							<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-						}
-						Update Split
-					</button>
-				</div>
-			</EditForm>
-		</div>
-	</div>
-}
-
 <!-- Transactions with Splits Section -->
 <div class="responsive-panel mb-4">
 	<h2 class="h4 mb-3">Transactions</h2>
@@ -379,62 +194,153 @@
 						<th>Payee</th>
 						<th>Account</th>
 						<th class="text-end">Amount</th>
-						<th width="180">Actions</th>
+						<th width="140">Actions</th>
 					</tr>
 				</thead>
 				<tbody>
 					@foreach (var transaction in ViewModel.Model.Items)
 					{
-						<!-- Transaction Row -->
-						<tr class="table-primary" @key="@($"tx-{transaction.Id}")">
-							<td>@transaction.Date.ToString("MM/dd/yyyy")</td>
-							<td><strong>@transaction.Payee</strong></td>
-							<td>@transaction.AccountName</td>
-							<td class="text-end">
-								<span class="@(transaction.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
-									@transaction.Amount.ToString("C")
-								</span>
-							</td>
-							<td>
-								<button class="btn btn-sm btn-outline-primary" @onclick="() => ModifyTransaction(transaction.Id)" title="Edit Transaction">
-									<i class="bi bi-pencil"></i>
-								</button>
-								<button class="btn btn-sm btn-outline-success ms-1" @onclick="() => AddSplitToTransaction(transaction.Id)" title="Add Split">
-									<i class="bi bi-plus-circle"></i>
-								</button>
-								<button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(transaction.Id)" title="Delete Transaction">
-									<i class="bi bi-trash"></i>
-								</button>
-							</td>
-						</tr>
-
-						<!-- Split Rows (indented under transaction) -->
-						@foreach (var split in ViewModel.Model.GetSplitsForTransaction(transaction.Id))
+						var isEditing = _editingTransactionId == transaction.Id;
+						
+						@if (!isEditing)
 						{
-							<tr class="table-light" @key="@($"split-{split.Id}")">
-								<td class="ps-5">
-									<i class="bi bi-arrow-return-right me-2 text-muted"></i>
-									<small class="text-muted">Split #@split.Id</small>
-								</td>
-								<td>
-									<span class="badge bg-primary">@split.CategoryName</span>
-									@if (!string.IsNullOrWhiteSpace(split.Description))
-									{
-										<small class="text-muted ms-2">@split.Description</small>
-									}
-								</td>
+							<!-- Read-Only Transaction Row -->
+							<tr class="table-primary" @key="@($"tx-{transaction.Id}")">
+								<td>@transaction.Date.ToString("MM/dd/yyyy")</td>
+								<td><strong>@transaction.Payee</strong></td>
+								<td>@transaction.AccountName</td>
 								<td class="text-end">
-									<span class="@(split.Amount >= 0 ? "text-success" : "text-danger")">
-										@split.Amount.ToString("C")
+									<span class="@(transaction.Amount >= 0 ? "text-success" : "text-danger") fw-bold">
+										@transaction.Amount.ToString("C")
 									</span>
 								</td>
 								<td>
-									<button class="btn btn-sm btn-outline-primary" @onclick="() => ModifySplit(split.Id)" title="Edit Split">
+									<button class="btn btn-sm btn-outline-primary" @onclick="() => StartEditTransaction(transaction.Id)" title="Edit Transaction">
 										<i class="bi bi-pencil"></i>
 									</button>
-									<button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteSplit(split.Id)" title="Delete Split">
+									<button class="btn btn-sm btn-outline-danger ms-1" @onclick="() => DeleteTransaction(transaction.Id)" title="Delete Transaction">
 										<i class="bi bi-trash"></i>
 									</button>
+								</td>
+							</tr>
+
+							<!-- Read-Only Split Rows -->
+							@foreach (var split in transaction.Splits)
+							{
+								<tr class="table-light" @key="@($"split-{split.Id}")">
+									<td class="ps-5">
+										<i class="bi bi-arrow-return-right me-2 text-muted"></i>
+										<small class="text-muted">Split #@split.Id</small>
+									</td>
+									<td colspan="2">
+										@split.CategoryName
+										@if (!string.IsNullOrWhiteSpace(split.Description))
+										{
+											<small class="text-muted ms-2">@split.Description</small>
+										}
+									</td>
+									<td class="text-end">
+										<span class="@(split.Amount >= 0 ? "text-success" : "text-danger")">
+											@split.Amount.ToString("C")
+										</span>
+									</td>
+									<td></td>
+								</tr>
+							}
+						}
+						else
+						{
+							<!-- Inline Edit Transaction Row -->
+							<tr class="table-warning" style="border: 2px solid #ffc107;" @key="@($"tx-edit-{transaction.Id}")">
+								<td colspan="5" class="p-0">
+									<div class="p-3" style="background-color: #fff3cd;">
+										<div class="row g-2 mb-2">
+											<div class="col-md-3">
+												<label class="form-label small">Date</label>
+												<input type="date" class="form-control form-control-sm" @bind="_editDate" />
+											</div>
+											<div class="col-md-3">
+												<label class="form-label small">Payee</label>
+												<input class="form-control form-control-sm" @bind="_editPayee" />
+											</div>
+										<div class="col-md-3">
+											<label class="form-label small">Account</label>
+											<select class="form-select form-select-sm" @bind="_editAccountId">
+												<option value="0">Select account...</option>
+												@foreach (var account in _availableAccounts)
+												{
+													<option value="@account.Id">@account.AccountName</option>
+												}
+											</select>
+										</div>
+											<div class="col-md-3">
+												<label class="form-label small">Amount</label>
+												<input type="number" step="0.01" class="form-control form-control-sm" @bind="_editAmount" />
+											</div>
+										</div>
+										<div class="row g-2 mb-3">
+											<div class="col-md-12">
+												<label class="form-label small">Memo</label>
+												<input class="form-control form-control-sm" @bind="_editDescription" />
+											</div>
+										</div>
+
+										<!-- Editable Splits Section -->
+										<div class="mb-3">
+											<h6 class="mb-2">Splits</h6>
+											@for (int i = 0; i < _editingSplits.Count; i++)
+											{
+												var index = i;
+												var split = _editingSplits[index];
+												<div class="row g-2 mb-2 align-items-end" @key="@($"edit-split-{index}")">
+													<div class="col-md-4">
+														<label class="form-label small">Category</label>
+														<select class="form-select form-select-sm" @bind="split.CategoryAllocationId">
+															<option value="-1">Income</option>
+															<option value="">No Category</option>
+															@foreach (var category in _availableCategories)
+															{
+																<option value="@category.Id">@category.Name</option>
+															}
+														</select>
+													</div>
+													<div class="col-md-3">
+														<label class="form-label small">Amount</label>
+														<input type="number" step="0.01" class="form-control form-control-sm" @bind="split.Amount" />
+													</div>
+													<div class="col-md-4">
+														<label class="form-label small">Notes</label>
+														<input class="form-control form-control-sm" @bind="split.Description" />
+													</div>
+													<div class="col-md-1">
+														<button type="button" class="btn btn-sm btn-danger w-100" @onclick="() => RemoveEditingSplit(index)" title="Delete Split">
+															<i class="bi bi-trash"></i>
+														</button>
+													</div>
+												</div>
+											}
+											<button type="button" class="btn btn-sm btn-success mt-2" @onclick="AddEditingSplit">
+												<i class="bi bi-plus-circle me-1"></i> Add Split
+											</button>
+
+											@if (!AreSplitsBalanced)
+											{
+												<div class="alert alert-danger mt-2 mb-0 py-2">
+													<small><i class="bi bi-exclamation-triangle me-1"></i>Splits must sum to transaction amount. Current difference: @GetSplitDifference().ToString("C")</small>
+												</div>
+											}
+										</div>
+
+										<!-- Save/Cancel Buttons -->
+										<div class="d-flex justify-content-end gap-2 mt-3">
+											<button type="button" class="btn btn-sm btn-secondary" @onclick="CancelEditTransaction">
+												Cancel
+											</button>
+											<button type="button" class="btn btn-sm btn-primary" @onclick="SaveEditTransaction" disabled="@(!AreSplitsBalanced)">
+												Save Transaction
+											</button>
+										</div>
+									</div>
 								</td>
 							</tr>
 						}
@@ -448,6 +354,31 @@
 
 @code {
 	// LLM-Dev: Thin presentation layer - all logic delegated to ViewModel
+
+	// Local state for inline editing
+	private class EditingSplit
+	{
+		public int Id { get; set; }
+		public int? CategoryAllocationId { get; set; }
+		public string CategoryName { get; set; } = "";
+		public decimal Amount { get; set; }
+		public string? Description { get; set; }
+	}
+
+	private int? _editingTransactionId = null;
+	private List<EditingSplit> _editingSplits = new();
+	private DateTime _editDate;
+	private string _editPayee = "";
+	private int _editAccountId;
+	private string _editAccount = "";
+	private decimal _editAmount;
+	private string _editDescription = "";
+	private List<Account> _availableAccounts = new();
+	private List<Category> _availableCategories = new();
+
+	private bool AreSplitsBalanced => Math.Abs(GetSplitDifference()) < 0.01m;
+	
+	private decimal GetSplitDifference() => _editAmount - _editingSplits.Sum(s => s.Amount);
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -498,19 +429,185 @@
 		await ViewModel.SaveTransactionInlineCommand.ExecuteAsync(null);
 	}
 
-	private async Task OnEditTransactionSubmit()
+	// Inline editing methods
+	private void StartEditTransaction(int transactionId)
 	{
+		// Cancel any other editing
+		if (_editingTransactionId.HasValue && _editingTransactionId.Value != transactionId)
+		{
+			CancelEditTransaction();
+		}
+
+		_editingTransactionId = transactionId;
+		
+		// Load transaction data into local edit fields
+		var transaction = ViewModel.Model.Items.FirstOrDefault(t => t.Id == transactionId);
+		if (transaction != null)
+		{
+			_editDate = transaction.Date;
+			_editPayee = transaction.Payee;
+			_editAccount = transaction.AccountName;
+			_editAmount = transaction.Amount;
+			_editDescription = transaction.Description ?? "";
+			
+			// Load available accounts and categories from AddTransactionViewModel
+			_availableAccounts = ViewModel.AddTransactionViewModel.Model.AvailableAccounts.ToList();
+			_availableCategories = ViewModel.AddTransactionViewModel.Model.AvailableCategories.ToList();
+			
+			// Find the account ID by name (since TransactionItem doesn't expose AccountId)
+			var account = _availableAccounts.FirstOrDefault(a => a.AccountName == transaction.AccountName);
+			_editAccountId = account?.Id ?? 0;
+			
+			// Load splits for this transaction
+			_editingSplits = transaction.Splits.Select(s => new EditingSplit
+			{
+				Id = s.Id,
+				CategoryAllocationId = s.CategoryAllocationId,
+				CategoryName = s.CategoryName,
+				Amount = s.Amount,
+				Description = s.Description
+			}).ToList();
+			
+			// If no splits, add one empty split
+			if (_editingSplits.Count == 0)
+			{
+				_editingSplits.Add(new EditingSplit 
+				{ 
+					Id = 0, 
+					CategoryAllocationId = null, 
+					CategoryName = "No Category",
+					Amount = 0, 
+					Description = "" 
+				});
+			}
+		}
+		
+		StateHasChanged();
+	}
+
+	private void CancelEditTransaction()
+	{
+		_editingTransactionId = null;
+		_editingSplits.Clear();
+		StateHasChanged();
+	}
+
+	private async Task SaveEditTransaction()
+	{
+		if (!_editingTransactionId.HasValue) return;
+
+		var transactionId = _editingTransactionId.Value;
+		
+		// Capture the current split IDs BEFORE making any changes
+		var transaction = ViewModel.Model.Items.FirstOrDefault(t => t.Id == transactionId);
+		var existingSplitIds = transaction?.Splits.Select(s => s.Id).ToHashSet() ?? new HashSet<int>();
+		
+		// Load the transaction for editing using ViewModel
+		await ViewModel.ModifyTransactionCommand.ExecuteAsync(transactionId);
+		
+		// Update the EditTransactionViewModel with our local values
+		ViewModel.EditTransactionViewModel.Model.TransactionDate = _editDate;
+		ViewModel.EditTransactionViewModel.Model.Payee = _editPayee;
+		ViewModel.EditTransactionViewModel.Model.AccountId = _editAccountId;
+		ViewModel.EditTransactionViewModel.Model.Amount = _editAmount;
+		ViewModel.EditTransactionViewModel.Model.Description = _editDescription;
+		
+		// Save the transaction first
 		await ViewModel.SaveEditTransactionCommand.ExecuteAsync(null);
+
+		// Now handle splits - determine which to update, create, or delete
+		var editingSplitIds = _editingSplits.Where(s => s.Id > 0).Select(s => s.Id).ToHashSet();
+		
+		// Delete any splits that were removed (do this first to avoid conflicts)
+		foreach (var existingId in existingSplitIds)
+		{
+			if (!editingSplitIds.Contains(existingId))
+			{
+				await ViewModel.DeleteTransactionSplitCommand.ExecuteAsync(existingId);
+			}
+		}
+
+		// Update or create splits
+		foreach (var editingSplit in _editingSplits)
+		{
+			if (editingSplit.Id > 0 && existingSplitIds.Contains(editingSplit.Id))
+			{
+				// Existing split - update it
+				await JSRuntime.InvokeVoidAsync("console.log", $"Updating existing split {editingSplit.Id}");
+				await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
+				ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = editingSplit.CategoryAllocationId ?? 0;
+				ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
+				ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
+				await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+			}
+			else if (editingSplit.Id == 0)
+			{
+				// New split - create it
+				// Skip if no category is selected
+				if (!editingSplit.CategoryAllocationId.HasValue || editingSplit.CategoryAllocationId.Value == 0)
+				{
+					await JSRuntime.InvokeVoidAsync("console.warn", "Skipping split with no category");
+					continue;
+				}
+				
+				// First, load the transaction context
+				await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
+				
+				// Set the category by finding it in the available categories
+				var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryAllocationId);
+				if (category != null)
+				{
+					await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
+					
+					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
+					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
+					
+					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+					await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
+				}
+				else
+				{
+					await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryAllocationId}");
+				}
+			}
+		}
+
+		await JSRuntime.InvokeVoidAsync("console.log", "Refreshing transaction list...");
+		
+		// Refresh and close edit mode
+		await ViewModel.RefreshCommand.ExecuteAsync(null);
+		
+		await JSRuntime.InvokeVoidAsync("console.log", "Refresh complete");
+		CancelEditTransaction();
 	}
 
-	private async Task OnAddSplitToTransactionSubmit()
+	private void AddEditingSplit()
 	{
-		await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+		_editingSplits.Add(new EditingSplit 
+		{ 
+			Id = 0, 
+			CategoryAllocationId = null, 
+			CategoryName = "No Category",
+			Amount = 0, 
+			Description = "" 
+		});
+		StateHasChanged();
 	}
 
-	private async Task OnEditTransactionSplitSubmit()
+	private async Task RemoveEditingSplit(int index)
 	{
-		await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+		if (_editingSplits.Count <= 1)
+		{
+			await JSRuntime.InvokeVoidAsync("alert", "A transaction must have at least one split.");
+			return;
+		}
+
+		if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this split?"))
+		{
+			_editingSplits.RemoveAt(index);
+			StateHasChanged();
+		}
 	}
 
 	// Helper methods for split category selection
