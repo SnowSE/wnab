@@ -8,7 +8,7 @@
 <div class="page-container">
     <div class="accounts-header">
         <div class="header-text">
-            @* <h1 class="page-title">Transactions</h1> *@
+            <h1 class="page-title">Transactions</h1>
         </div>
         <div class="header-actions">
             <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
@@ -167,7 +167,6 @@
 
 <!-- Transactions with Splits Section -->
 <div class="responsive-panel mb-4">
-	<h2 class="h4 mb-3">Transactions</h2>
 	@if (ViewModel.Model.Items == null)
 	{
 		<div class="text-center p-4">
