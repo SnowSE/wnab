@@ -16,7 +16,7 @@ public class BudgetSnapshotService : IBudgetSnapshotService
     {
         try
         {
-            var response = await _httpClient.GetAsync($"budget/snapshot?month={month}&year={year}");
+            var response = await _httpClient.GetAsync($"budget/snapshot/{month}/{year}");
             
             if (!response.IsSuccessStatusCode)
             {
