@@ -9,5 +9,6 @@ public class UserService(HttpClient _http) : IUserService
 {
 
     public async Task<DateTime> GetEarliestActivityDate() => await _http.GetFromJsonAsync<DateTime>("user/earliestactivity");
+    public async Task<int> GetUserId() => await _http.GetFromJsonAsync<int>("user/id");
 
 }

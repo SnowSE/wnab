@@ -25,6 +25,9 @@ public partial class EditTransactionSplitModel : ObservableObject
     private string? description;
 
     [ObservableProperty]
+    private DateTime transactionDate;
+
+    [ObservableProperty]
     private string statusMessage = string.Empty;
 
     [ObservableProperty]
@@ -79,6 +82,7 @@ public partial class EditTransactionSplitModel : ObservableObject
             CategoryAllocationId = split.CategoryAllocationId;
             Amount = split.Amount;
             Description = split.Description;
+            TransactionDate = split.TransactionDate;
 
             SelectedCategory = AvailableCategories.FirstOrDefault(c => c.Name == split.CategoryName);
             StatusMessage = "Ready to edit split";
@@ -135,8 +139,8 @@ public partial class EditTransactionSplitModel : ObservableObject
         {
             var allocation = await _allocations.FindAllocationAsync(
             categoryId,
-                DateTime.Today.Month,
-                  DateTime.Today.Year);
+                TransactionDate.Month,
+                TransactionDate.Year);
 
             SelectedCategoryAllocation = allocation;
             CategoryAllocationId = allocation?.Id ?? 0;

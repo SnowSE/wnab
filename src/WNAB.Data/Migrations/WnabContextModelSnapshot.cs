@@ -17,7 +17,7 @@ namespace WNAB.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.0-rc.1.25451.107")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -96,7 +96,8 @@ namespace WNAB.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "Month", "Year")
+                        .IsUnique();
 
                     b.ToTable("BudgetSnapshots");
                 });
@@ -213,13 +214,13 @@ namespace WNAB.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Activity")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("AssignedValue")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Available")
-                        .HasColumnType("numeric");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("BudgetSnapshotId")
                         .HasColumnType("integer");
@@ -429,12 +430,13 @@ namespace WNAB.Data.Migrations
                 {
                     b.HasOne("WNAB.Data.BudgetSnapshot", null)
                         .WithMany("Categories")
-                        .HasForeignKey("BudgetSnapshotId");
+                        .HasForeignKey("BudgetSnapshotId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("WNAB.Data.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");

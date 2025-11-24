@@ -126,7 +126,7 @@ public class AccountDBService
 
         // Guard: prevent saving unrelated pending changes in this context
         if (_db.ChangeTracker.HasChanges())
-            throw new InvalidOperationException("Context has pending changes; aborting account deletion.");
+            throw new InvalidOperationException("Context has pending changes; aborting account deactivation.");
 
         // Verify the account exists and belongs to the user
         var account = await _db.Accounts

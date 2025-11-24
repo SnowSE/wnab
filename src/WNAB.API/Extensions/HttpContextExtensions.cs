@@ -14,14 +14,6 @@ public static class HttpContextExtensions
     {
         var logger = context.RequestServices.GetRequiredService<ILogger<Services.UserProvisioningService>>();
         
-        // Log all claims in the token for debugging
-        logger.LogInformation("=== JWT Token Claims ===");
-        foreach (var claim in context.User.Claims)
-        {
-            logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
-        }
-        logger.LogInformation("=== End Claims ===");
-        
         // Try "cid" claim first (Snow College), then fall back to standard "sub" claim
         var subjectId = context.User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
         if (string.IsNullOrEmpty(subjectId))
