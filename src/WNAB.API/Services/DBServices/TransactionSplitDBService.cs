@@ -191,16 +191,24 @@ public class TransactionSplitDBService
         if (affected != 1)
             throw new InvalidOperationException($"Expected to update exactly 1 entry, but updated {affected}.");
 
-        // Reload to get updated category name
-        await _db.Entry(split).Reference(s => s.CategoryAllocation).LoadAsync(cancellationToken);
-        await _db.Entry(split.CategoryAllocation).Reference(ca => ca.Category).LoadAsync(cancellationToken);
+        // Reload to get updated category name if CategoryAllocation exists
+        string categoryName = "Income"; // Default for null CategoryAllocation
+        if (split.CategoryAllocationId.HasValue)
+        {
+            await _db.Entry(split).Reference(s => s.CategoryAllocation).LoadAsync(cancellationToken);
+            if (split.CategoryAllocation != null)
+            {
+                await _db.Entry(split.CategoryAllocation).Reference(ca => ca.Category).LoadAsync(cancellationToken);
+                categoryName = split.CategoryAllocation.Category.Name;
+            }
+        }
 
         return new TransactionSplitResponse(
             split.Id,
             split.CategoryAllocationId,
             split.TransactionId,
             split.Transaction.TransactionDate,
-            split.CategoryAllocation.Category.Name,
+            categoryName,
             split.Amount,
             split.Description
         );
@@ -258,7 +266,7 @@ public class TransactionSplitDBService
 
     public async Task<List<TransactionSplitResponse>> GetTransactionSplitsForUserByMonthAsync(int id, int month, int year)
     {
-        logger.LogInformation("Getting transaction splits for user {UserId} for {Month}/{Year}", id, month, year);
+        logger.LogTrace("Getting transaction splits for user {UserId} for {Month}/{Year}", id, month, year);
         return await _db.TransactionSplits
             .Include(ts => ts.Transaction)
             .Where(ts => ts.Transaction.Account.UserId == id &&

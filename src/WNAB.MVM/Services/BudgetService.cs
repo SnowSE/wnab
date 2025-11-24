@@ -58,7 +58,8 @@ public class BudgetService : IBudgetService
             
             // Check if previous snapshot exists, if not rebuild it
             var previousSnapshot = await budgetSnapshotService.GetSnapshotAsync(prevMonth, prevYear);
-            if (previousSnapshot == null)
+            // If previous snapshot is missing OR marked invalid, rebuild it so we always build from a valid base
+            if (previousSnapshot == null || !previousSnapshot.IsValid)
             {
                 previousSnapshot = await RebuildSnapshots(prevMonth, prevYear);
             }
@@ -83,12 +84,15 @@ public class BudgetService : IBudgetService
         var allocations = await GetAllocationsForMonth(currentMonth, currentYear);
         var categoryData = await BuildCategorySnapshotData(currentMonth, currentYear);
 
+        var userId = await userService.GetUserId();
+
         return new BudgetSnapshot
         {
             Month = currentMonth,
             Year = currentYear,
             SnapshotReadyToAssign = income - allocations,
-            Categories = categoryData
+            Categories = categoryData,
+            UserId = userId
         };
     }
 

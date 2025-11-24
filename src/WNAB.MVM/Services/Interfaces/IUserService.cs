@@ -7,5 +7,6 @@ namespace WNAB.MVM;
 public interface IUserService
 {
     public Task<DateTime> GetEarliestActivityDate();
+    public Task<int> GetUserId();
 
 }

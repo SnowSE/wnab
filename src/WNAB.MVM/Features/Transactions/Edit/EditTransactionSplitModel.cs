@@ -25,6 +25,9 @@ public partial class EditTransactionSplitModel : ObservableObject
     private string? description;
 
     [ObservableProperty]
+    private DateTime transactionDate;
+
+    [ObservableProperty]
     private string statusMessage = string.Empty;
 
     [ObservableProperty]
@@ -79,6 +82,7 @@ public partial class EditTransactionSplitModel : ObservableObject
             CategoryAllocationId = split.CategoryAllocationId;
             Amount = split.Amount;
             Description = split.Description;
+            TransactionDate = split.TransactionDate;
 
             SelectedCategory = AvailableCategories.FirstOrDefault(c => c.Name == split.CategoryName);
             StatusMessage = "Ready to edit split";
@@ -135,8 +139,8 @@ public partial class EditTransactionSplitModel : ObservableObject
         {
             var allocation = await _allocations.FindAllocationAsync(
             categoryId,
-                DateTime.Today.Month,
-                  DateTime.Today.Year);
+                TransactionDate.Month,
+                TransactionDate.Year);
 
             SelectedCategoryAllocation = allocation;
             CategoryAllocationId = allocation?.Id ?? 0;
@@ -161,8 +165,8 @@ public partial class EditTransactionSplitModel : ObservableObject
         if (!IsLoggedIn)
             return "Please log in first";
 
-        if (CategoryAllocationId <= 0)
-            return "Please select a category";
+        // Note: CategoryAllocationId can be null for "Income" or "No Category", which is valid
+        // Only validate that Amount is provided
 
         if (Amount == 0)
             return "Please enter an amount";

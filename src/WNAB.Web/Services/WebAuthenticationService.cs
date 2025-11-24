@@ -39,11 +39,10 @@ public class WebAuthenticationService : WNAB.MVM.IAuthenticationService
         
         if (isAuthenticated)
         {
-            _logger.LogInformation("User is already authenticated");
+            _logger.LogTrace("User is already authenticated");
             return true;
         }
-        
-        _logger.LogInformation("User is not authenticated. Login must be initiated via /login endpoint.");
+
         return false;
     }
 
@@ -180,7 +179,7 @@ public class WebAuthenticationService : WNAB.MVM.IAuthenticationService
 
             if (isExpired)
             {
-                _logger.LogInformation("Access token is still expired after refresh attempt. Expiration: {Expiration}, Current: {Current}",
+                _logger.LogTrace("Access token is still expired after refresh attempt. Expiration: {Expiration}, Current: {Current}",
                     expiration, DateTime.UtcNow);
             }
 

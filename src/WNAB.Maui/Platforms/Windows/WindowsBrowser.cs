@@ -19,7 +19,6 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
         _logger = logger;
         _port = port == 0 ? GetRandomUnusedPort() : port;
         RedirectUri = $"http://localhost:{_port}/";
-        _logger.LogInformation("WindowsBrowser initialized with RedirectUri: {RedirectUri}", RedirectUri);
     }
 
     public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
@@ -30,13 +29,7 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
         try
         {
             tcpListener.Start();
-            _logger.LogInformation("TCP listener started on {RedirectUri}", RedirectUri);
-
-            // Replace the redirect_uri in the StartUrl with our actual port
             var startUrl = options.StartUrl;
-            _logger.LogInformation("OAuth StartUrl (original): {StartUrl}", startUrl);
-            _logger.LogInformation("OAuth EndUrl: {EndUrl}", options.EndUrl);
-            _logger.LogInformation("Using RedirectUri: {RedirectUri}", RedirectUri);
 
             if (startUrl.Contains("redirect_uri="))
             {
@@ -57,17 +50,9 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
                 }
             }
 
-            _logger.LogInformation("Modified StartUrl: {StartUrl}", startUrl);
-
-            // Open the browser with the modified start URL
-            _logger.LogInformation("Opening system browser...");
             OpenBrowser(startUrl);
 
-            // Wait for the callback
-            _logger.LogInformation("Waiting for OAuth callback...");
             var client = await tcpListener.AcceptTcpClientAsync();
-            _logger.LogInformation("Callback received!");
-
             string callbackUrl = "";
 
             using (var stream = client.GetStream())
@@ -76,8 +61,7 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
             {
                 // Read the HTTP request line
                 var requestLine = await reader.ReadLineAsync();
-                _logger.LogInformation("Request line: {RequestLine}", requestLine);
-
+            
                 if (requestLine != null && requestLine.StartsWith("GET"))
                 {
                     // Extract the path and query string from the request line
@@ -86,7 +70,6 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
                     {
                         var pathAndQuery = parts[1];
                         callbackUrl = RedirectUri.TrimEnd('/') + pathAndQuery;
-                        _logger.LogInformation("Extracted callback URL: {CallbackUrl}", callbackUrl);
                     }
                 }
 
@@ -117,7 +100,6 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
                 };
             }
 
-            _logger.LogInformation("Returning success with Response URL: {Url}", callbackUrl);
             return new BrowserResult
             {
                 Response = callbackUrl,
@@ -144,7 +126,6 @@ public class WindowsBrowser : IdentityModel.OidcClient.Browser.IBrowser
         finally
         {
             tcpListener.Stop();
-            _logger.LogInformation("TCP listener stopped");
         }
     }
 
