@@ -30,6 +30,7 @@
             <converters:IsOverspentConverter x:Key="IsOverspentConverter" />
             <converters:AllocationProgressWidthConverter x:Key="AllocationProgressWidthConverter" />
             <converters:AllocationProgressConverter x:Key="AllocationProgressConverter" />
+            <converters:IsEditingTransactionConverter x:Key="IsEditingTransactionConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

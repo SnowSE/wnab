@@ -29,6 +29,9 @@ public partial class TransactionsViewModel : ObservableObject
     [ObservableProperty]
     private bool isAddSplitFormVisible = false;
 
+    [ObservableProperty]
+    private int? editingTransactionId = null;
+
     public TransactionsViewModel(
         TransactionsModel model, 
         IMVMPopupService popupService,
@@ -113,14 +116,14 @@ public partial class TransactionsViewModel : ObservableObject
     [RelayCommand]
     private async Task ModifyTransaction(int transactionId)
     {
-        IsEditFormVisible = true;
+        EditingTransactionId = transactionId;
         await _editTransactionViewModel.LoadTransactionAsync(transactionId);
     }
 
     [RelayCommand]
     private void CancelEditTransaction()
     {
-        IsEditFormVisible = false;
+        EditingTransactionId = null;
         _editTransactionViewModel.Model.Clear();
     }
 
@@ -131,8 +134,8 @@ public partial class TransactionsViewModel : ObservableObject
 
         if (success)
         {
+            EditingTransactionId = null;
             _editTransactionViewModel.Model.Clear();
-            IsEditFormVisible = false;
             await Model.RefreshAsync();
         }
     }
