@@ -133,7 +133,7 @@ public partial class EditTransactionSplitModel : ObservableObject
         }
     }
 
-    private async Task FindAndSetAllocationAsync(int categoryId)
+    public async Task FindAndSetAllocationAsync(int categoryId)
     {
         try
         {
