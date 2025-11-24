@@ -541,16 +541,21 @@
 				// Existing split - update it
 				await JSRuntime.InvokeVoidAsync("console.log", $"Updating existing split {editingSplit.Id} with category ID {editingSplit.CategoryId}");
 				
-				// Find the category by ID and look up its allocation
+				// Load the split into the edit view model
+				await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
+				
+				// Update the split based on category selection
 				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
 				{
+					// Regular category - find it and let the allocation lookup happen
 					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
 					if (category != null)
 					{
-						await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
-						
-						// Set the category so it can find the allocation
 						ViewModel.EditTransactionSplitViewModel.Model.SelectedCategory = category;
+						
+						// Give the async allocation lookup a moment to complete
+						await Task.Delay(100);
+						
 						ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
 						ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
 						
@@ -560,7 +565,14 @@
 				else if (editingSplit.CategoryId == -1)
 				{
 					// Income - set CategoryAllocationId to null
-					await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
+					ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = null;
+					ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
+					ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
+					await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
+				}
+				else
+				{
+					// No category (CategoryId == 0 or null) - set allocation to null
 					ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = null;
 					ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
 					ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;

@@ -165,8 +165,8 @@ public partial class EditTransactionSplitModel : ObservableObject
         if (!IsLoggedIn)
             return "Please log in first";
 
-        if (CategoryAllocationId <= 0)
-            return "Please select a category";
+        // Note: CategoryAllocationId can be null for "Income" or "No Category", which is valid
+        // Only validate that Amount is provided
 
         if (Amount == 0)
             return "Please enter an amount";
