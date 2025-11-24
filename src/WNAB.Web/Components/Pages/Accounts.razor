@@ -3,6 +3,7 @@
 @inject WNAB.MVM.IAuthenticationService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject WNAB.MVM.AddAccountModel AddAccountModel
 @implements IDisposable
 
 <div class="accounts-container">
@@ -59,25 +60,26 @@
                 {
                     <div class="alert alert-info mb-3">@AddAccountStatusMessage</div>
                 }
-                <EditForm OnValidSubmit="OnCreateAccountSubmit">
+                <EditForm Model="AddAccountModel" OnValidSubmit="OnCreateAccountSubmit">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Account Name</label>
-                            <InputText class="form-control" @bind-Value="NewAccountName" required />
+                            <InputText class="form-control" @bind-Value="AddAccountModel.Name" required />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Account Type</label>
-                            <InputSelect class="form-select" @bind-Value="NewAccountType">
-                                <option value="@WNAB.Data.AccountType.Checking">Checking</option>
-                                <option value="@WNAB.Data.AccountType.Savings">Savings</option>
-                                <option value="@WNAB.Data.AccountType.Misc">Misc</option>
+                            <InputSelect class="form-select" @bind-Value="AddAccountModel.AccountTypeString">
+                                @foreach (var type in WNAB.MVM.AddAccountModel.AccountTypeOptions)
+                                {
+                                    <option value="@type">@type</option>
+                                }
                             </InputSelect>
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <button type="button" class="btn btn-secondary" @onclick="ToggleAddAccountForm">Cancel</button>
-                        <button class="btn btn-primary" type="submit" disabled="@IsAddAccountBusy">
-                            @if (IsAddAccountBusy)
+                        <button class="btn btn-primary" type="submit" disabled="@AddAccountModel.IsBusy">
+                            @if (AddAccountModel.IsBusy)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                             }
@@ -293,23 +295,19 @@
     private async Task OnCreateAccountSubmit()
     {
         AddAccountStatusMessage = null;
-        IsAddAccountBusy = true;
         try
         {
-            // Replace with actual ViewModel logic
-            // If AddAccountCommand expects a DTO, map fields here
-            await ViewModel.AddAccountCommand.ExecuteAsync(new { Name = NewAccountName, AccountType = NewAccountType });
-            AddAccountStatusMessage = "Account created successfully!";
-            ViewModel.CanSeeAddPopup = false;
-            await ViewModel.Model.RefreshAsync();
+            var success = await AddAccountModel.CreateAccountAsync();
+            AddAccountStatusMessage = AddAccountModel.StatusMessage;
+            if (success)
+            {
+                ViewModel.CanSeeAddPopup = false;
+                await ViewModel.Model.RefreshAsync();
+            }
         }
         catch (Exception ex)
         {
             AddAccountStatusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            IsAddAccountBusy = false;
         }
     }
 
