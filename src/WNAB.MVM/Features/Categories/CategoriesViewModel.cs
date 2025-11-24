@@ -15,6 +15,13 @@ public partial class CategoriesViewModel : ObservableObject
 
     public CategoriesModel Model { get; }
 
+    // Popup visibility properties
+    [ObservableProperty]
+    private bool canSeeAddPopup;
+
+    [ObservableProperty]
+    private bool canSeeEditPopup;
+
     public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService, CategoryManagementService categoryService)
     {
         Model = model;

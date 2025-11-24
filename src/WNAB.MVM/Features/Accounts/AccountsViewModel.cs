@@ -13,10 +13,21 @@ public partial class AccountsViewModel : ObservableObject
 
     public AccountsModel Model { get; }
 
+    // Popup visibility is handled by [ObservableProperty] auto-generated properties below.
+
+    // Popup visibility properties
+    [ObservableProperty]
+    private bool canSeeAddPopup;
+
+    [ObservableProperty]
+    private bool canSeeEditPopup;
+
     public AccountsViewModel(AccountsModel model, IMVMPopupService popupService)
     {
         Model = model;
         _popupService = popupService;
+        CanSeeAddPopup = false;
+        CanSeeEditPopup = false;
     }
 
     /// <summary>
@@ -86,7 +97,7 @@ public partial class AccountsViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(accountItem.EditAccountName))
         {
-            await mainPage.DisplayAlert(
+            await mainPage.DisplayAlertAsync(
                 "Validation Error",
                 "Account name cannot be empty.",
                 "OK");
@@ -106,7 +117,7 @@ public partial class AccountsViewModel : ObservableObject
         else
         {
             // Show specific error message and keep user in edit mode so they can correct it
-            await mainPage.DisplayAlert(
+            await mainPage.DisplayAlertAsync(
                 "Error",
                 errorMessage ?? "Failed to update account. Please try again.",
                 "OK");
@@ -134,7 +145,7 @@ public partial class AccountsViewModel : ObservableObject
         if (mainPage == null)
             return;
 
-        bool confirm = await mainPage.DisplayAlert(
+        bool confirm = await mainPage.DisplayAlertAsync(
             "Deactivate Account",
             $"Are you sure you want to deactivate '{accountItem.AccountName}'?",
             "Deactivate",
@@ -148,7 +159,7 @@ public partial class AccountsViewModel : ObservableObject
         if (!success)
         {
             // Show specific error message from the API
-            await mainPage.DisplayAlert(
+            await mainPage.DisplayAlertAsync(
                 "Error",
                 errorMessage ?? "Failed to deactivate account. Please try again.",
                 "OK");
@@ -175,7 +186,7 @@ public partial class AccountsViewModel : ObservableObject
         if (mainPage == null)
             return;
 
-        bool confirm = await mainPage.DisplayAlert(
+        bool confirm = await mainPage.DisplayAlertAsync(
             "Reactivate Account",
             $"Are you sure you want to reactivate '{accountItem.AccountName}'?",
             "Reactivate",
@@ -194,7 +205,7 @@ public partial class AccountsViewModel : ObservableObject
         else
         {
             // Show specific error message from the API
-            await mainPage.DisplayAlert(
+            await mainPage.DisplayAlertAsync(
                 "Error",
                 errorMessage ?? "Failed to reactivate account. Please try again.",
                 "OK");

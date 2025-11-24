@@ -38,17 +38,56 @@
             
             @if (!ViewModel.Model.ShowInactive)
             {
-                <button class="btn btn-primary" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#createAccountModal" 
-                        @onclick="OnAddAccountClick"
+                <button class="btn btn-outline-secondary"
+                        @onclick="ToggleAddAccountForm"
                         disabled="@(!ViewModel.Model.IsLoggedIn)">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    Add Account
+                    <i class="bi bi-@(ViewModel.CanSeeAddPopup ? "x-circle" : "plus-circle") me-1"></i>
+                    @(ViewModel.CanSeeAddPopup ? "Cancel" : "Add Account")
                 </button>
             }
         </div>
     </div>
+
+    @if (ViewModel.CanSeeAddPopup)
+    {
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Account</h5>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrWhiteSpace(AddAccountStatusMessage))
+                {
+                    <div class="alert alert-info mb-3">@AddAccountStatusMessage</div>
+                }
+                <EditForm OnValidSubmit="OnCreateAccountSubmit">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Account Name</label>
+                            <InputText class="form-control" @bind-Value="NewAccountName" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Account Type</label>
+                            <InputSelect class="form-select" @bind-Value="NewAccountType">
+                                <option value="@WNAB.Data.AccountType.Checking">Checking</option>
+                                <option value="@WNAB.Data.AccountType.Savings">Savings</option>
+                                <option value="@WNAB.Data.AccountType.Misc">Misc</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-secondary" @onclick="ToggleAddAccountForm">Cancel</button>
+                        <button class="btn btn-primary" type="submit" disabled="@IsAddAccountBusy">
+                            @if (IsAddAccountBusy)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            }
+                            Create Account
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    }
 
     <!-- Login prompt when not logged in -->
     @if (!ViewModel.Model.IsLoggedIn)
@@ -196,13 +235,18 @@
     }
 </div>
 
-<!-- Include the Create Account Modal -->
-<CreateAccountModal OnAccountCreated="OnAccountCreated" />
+<!-- Remove modal reference -->
+<!-- (Removed CreateAccountModal reference) -->
 
 @code {
-    // LLM-Dev:v7 Refactored to match XAML AccountsPage with card layout, edit mode, and inactive accounts
-    // UI matches MAUI version with total balance, responsive grid, and full CRUD operations
-    
+    // Inline Add Account form state
+    // Remove IsAddAccountFormVisible, use ViewModel.canSeeAddPopup instead
+    // Simple variables for Add Account form
+    private string NewAccountName = "";
+    private WNAB.Data.AccountType NewAccountType = WNAB.Data.AccountType.Checking;
+    private string? AddAccountStatusMessage;
+    private bool IsAddAccountBusy = false;
+
     protected override async Task OnInitializedAsync()
     {
         // Check if user is authenticated and token is valid
@@ -220,13 +264,12 @@
 
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
-        
+
         await ViewModel.InitializeAsync();
     }
 
     private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // When Model properties change, update the UI
         InvokeAsync(StateHasChanged);
     }
 
@@ -239,20 +282,35 @@
         return ViewModel.Model.Items?.Sum(a => a.CachedBalance) ?? 0;
     }
 
-    private async Task OnAddAccountClick()
+    private void ToggleAddAccountForm()
     {
-        // Modal is shown via Bootstrap, but we call the ViewModel command for consistency
-        await ViewModel.AddAccountCommand.ExecuteAsync(null);
+        ViewModel.CanSeeAddPopup = !ViewModel.CanSeeAddPopup;
+        AddAccountStatusMessage = null;
+        NewAccountName = "";
+        NewAccountType = WNAB.Data.AccountType.Checking;
     }
 
-    private async Task OnAccountCreated()
+    private async Task OnCreateAccountSubmit()
     {
-        // Called by modal when account is created - refresh the list
-        await ViewModel.Model.RefreshAsync();
-        
-        // Close the modal using Bootstrap's API
-        await JS.InvokeVoidAsync("eval", 
-            "bootstrap.Modal.getInstance(document.getElementById('createAccountModal'))?.hide()");
+        AddAccountStatusMessage = null;
+        IsAddAccountBusy = true;
+        try
+        {
+            // Replace with actual ViewModel logic
+            // If AddAccountCommand expects a DTO, map fields here
+            await ViewModel.AddAccountCommand.ExecuteAsync(new { Name = NewAccountName, AccountType = NewAccountType });
+            AddAccountStatusMessage = "Account created successfully!";
+            ViewModel.CanSeeAddPopup = false;
+            await ViewModel.Model.RefreshAsync();
+        }
+        catch (Exception ex)
+        {
+            AddAccountStatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsAddAccountBusy = false;
+        }
     }
 
     private async Task OnToggleShowInactiveClick()
@@ -293,9 +351,9 @@
 
     private async Task OnDeactivateAccountClick(AccountItemViewModel account)
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm", 
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
             $"Are you sure you want to deactivate '{account.AccountName}'?");
-        
+
         if (!confirmed) return;
 
         var result = await ViewModel.Model.DeactivateAccountAsync(account.Id);
@@ -309,9 +367,9 @@
 
     private async Task OnReactivateAccountClick(AccountItemViewModel account)
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm", 
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
             $"Are you sure you want to reactivate '{account.AccountName}'?");
-        
+
         if (!confirmed) return;
 
         var result = await ViewModel.Model.ReactivateAccountAsync(account.Id);
@@ -335,4 +393,8 @@
             ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;
         }
     }
+
+    // Helper model for Add Account form
+    // Helper model for Add Account form
+    // (Removed duplicate AddAccountModel class)
 }
