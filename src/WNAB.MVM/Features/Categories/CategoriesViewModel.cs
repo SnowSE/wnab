@@ -12,6 +12,7 @@ public partial class CategoriesViewModel : ObservableObject
 {
     private readonly IMVMPopupService _popupService;
     private readonly CategoryManagementService _categoryService;
+    private readonly IAlertService _alertService;
 
     public CategoriesModel Model { get; }
 
@@ -22,11 +23,12 @@ public partial class CategoriesViewModel : ObservableObject
     [ObservableProperty]
     private bool canSeeEditPopup;
 
-    public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService, CategoryManagementService categoryService)
+    public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService, CategoryManagementService categoryService, IAlertService alertService)
     {
         Model = model;
         _popupService = popupService;
         _categoryService = categoryService;
+        _alertService = alertService;
     }
 
     /// <summary>
@@ -77,7 +79,7 @@ public partial class CategoriesViewModel : ObservableObject
     {
         if (category == null) return;
 
-        var confirmed = await _popupService.DisplayAlertAsync(
+        var confirmed = await _alertService.DisplayAlertAsync(
             "Delete Category",
             $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.",
             "Delete",
@@ -92,7 +94,7 @@ public partial class CategoriesViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await _popupService.DisplayAlertAsync("Error", $"Failed to delete category: {ex.Message}");
+            await _alertService.DisplayAlertAsync("Error", $"Failed to delete category: {ex.Message}");
         }
     }
 

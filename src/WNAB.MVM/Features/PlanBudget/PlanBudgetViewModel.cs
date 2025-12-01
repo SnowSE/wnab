@@ -12,6 +12,34 @@ public partial class PlanBudgetViewModel : ObservableObject
 {
     private readonly IMVMPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
+    private readonly IAlertService _alertService;
+    public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService, IAuthenticationService authenticationService, IAlertService alertService)
+    {
+        Model = model;
+        _popupService = popupService;
+        _authenticationService = authenticationService;
+        _alertService = alertService;
+        
+        // Subscribe to model changes to update computed properties
+        Model.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(Model.BudgetAllocations))
+            {
+                OnPropertyChanged(nameof(TotalAllocatedFormatted));
+                OnPropertyChanged(nameof(HasNoBudgetAllocations));
+            }
+
+            if (e.PropertyName == nameof(Model.ReadyToAssign))
+            {
+                OnPropertyChanged(nameof(ReadyToAssignFormatted));
+            }
+
+            if (e.PropertyName == nameof(Model.InactiveAllocations))
+            {
+                OnPropertyChanged(nameof(HasInactiveAllocations));
+            }
+        };
+    }
 
     public PlanBudgetModel Model { get; }
 
@@ -188,32 +216,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
     }
 
-    public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService, IAuthenticationService authenticationService)
-    {
-        Model = model;
-        _popupService = popupService;
-        _authenticationService = authenticationService;
-        
-        // Subscribe to model changes to update computed properties
-        Model.PropertyChanged += (s, e) =>
-        {
-            if (e.PropertyName == nameof(Model.BudgetAllocations))
-            {
-                OnPropertyChanged(nameof(TotalAllocatedFormatted));
-                OnPropertyChanged(nameof(HasNoBudgetAllocations));
-            }
-
-            if (e.PropertyName == nameof(Model.ReadyToAssign))
-            {
-                OnPropertyChanged(nameof(ReadyToAssignFormatted));
-            }
-
-            if (e.PropertyName == nameof(Model.InactiveAllocations))
-            {
-                OnPropertyChanged(nameof(HasInactiveAllocations));
-            }
-        };
-    }
+    
 
     /// <summary>
     /// Formatted total allocated amount for MAUI binding.
@@ -274,7 +277,7 @@ public partial class PlanBudgetViewModel : ObservableObject
     [RelayCommand]
     private async Task CancelAsync()
     {
-        bool confirmed = await _popupService.DisplayAlertAsync(
+        bool confirmed = await _alertService.DisplayAlertAsync(
             "Cancel Confirmation",
             "Are you sure you want to cancel? Any unsaved changes will be lost.",
             "Yes",
@@ -297,14 +300,14 @@ public partial class PlanBudgetViewModel : ObservableObject
             await Model.SaveAllocationsAsync();
             
             // Show success message
-            await _popupService.DisplayAlertAsync(
+            await _alertService.DisplayAlertAsync(
                 "Success",
                 Model.StatusMessage);
         }
         catch (Exception ex)
         {
             // Show error message
-            await _popupService.DisplayAlertAsync(
+            await _alertService.DisplayAlertAsync(
                 "Error",
                 $"Failed to save allocations: {ex.Message}");
         }
@@ -410,7 +413,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         else
         {
-            await _popupService.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.");
+            await _alertService.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.");
         }
     }
     
@@ -429,7 +432,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await _popupService.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}");
+            await _alertService.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}");
         }
     }
     
@@ -448,7 +451,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await _popupService.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}");
+            await _alertService.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}");
         }
     }
     

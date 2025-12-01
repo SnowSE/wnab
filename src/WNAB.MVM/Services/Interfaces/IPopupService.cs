@@ -6,6 +6,10 @@ public interface IMVMPopupService
     Task ShowAddCategoryAsync();
     Task ShowEditCategoryAsync(int categoryId, string name, string? color, bool isActive);
     Task ShowAddAccountAsync();
+}
+
+public interface IAlertService
+{
     Task DisplayAlertAsync(string title, string message);
     Task<bool> DisplayAlertAsync(string title, string message, string accept, string cancel);
 }
