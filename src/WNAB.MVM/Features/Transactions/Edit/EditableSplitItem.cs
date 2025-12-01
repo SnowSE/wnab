@@ -41,8 +41,7 @@ public partial class EditableSplitItem : ObservableObject
         IsNew = false;
     }
 
-    partial void OnSelectedCategoryChanged(Category? value)
-    {
-        CategoryAllocationId = value?.Id;
-    }
+    // Note: CategoryAllocationId should be looked up based on the selected category and transaction date,
+    // not set directly from the category ID. This is handled by the parent EditTransactionModel.
+    // Do not automatically set CategoryAllocationId when SelectedCategory changes.
 }

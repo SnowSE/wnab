@@ -582,32 +582,54 @@
 			else if (editingSplit.Id == 0)
 			{
 				// New split - create it
-				// Skip if no category is selected
-				if (!editingSplit.CategoryId.HasValue || editingSplit.CategoryId.Value == 0)
-				{
-					await JSRuntime.InvokeVoidAsync("console.warn", "Skipping split with no category");
-					continue;
-				}
-				
 				// First, load the transaction context (this sets the transaction date)
 				await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
 				
-				// Set the category by finding it in the available categories using CategoryId
-				var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
-				if (category != null)
+				// Handle different category scenarios
+				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
 				{
-					await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
+					// Regular category - find it and let the allocation lookup happen
+					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
+					if (category != null)
+					{
+						await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
+						
+						ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+						ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
+						ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
+						
+						await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+						await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
+					}
+					else
+					{
+						await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
+					}
+				}
+				else if (editingSplit.CategoryId == -1)
+				{
+					// Income - create split with null CategoryAllocationId
+					await JSRuntime.InvokeVoidAsync("console.log", $"Creating income split, amount {editingSplit.Amount}");
 					
-					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+					// Create a virtual "Income" category
+					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = new Category { Id = -1, Name = "Income", UserId = 0 };
 					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
 					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
 					
 					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
-					await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
+					await JSRuntime.InvokeVoidAsync("console.log", "Income split creation command executed");
 				}
 				else
 				{
-					await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
+					// No category (CategoryId == 0 or null) - create uncategorized split
+					await JSRuntime.InvokeVoidAsync("console.log", $"Creating uncategorized split, amount {editingSplit.Amount}");
+					
+					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = null;
+					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
+					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
+					
+					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+					await JSRuntime.InvokeVoidAsync("console.log", "Uncategorized split creation command executed");
 				}
 			}
 		}

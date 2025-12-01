@@ -10,6 +10,7 @@ public partial class EditTransactionModel : ObservableObject
     private readonly TransactionManagementService _transactions;
     private readonly AccountManagementService _accounts;
     private readonly CategoryManagementService _categories;
+    private readonly CategoryAllocationManagementService _allocations;
     private readonly IAuthenticationService _authService;
     private readonly IBudgetSnapshotService _budgetSnapshotService;
 
@@ -54,12 +55,14 @@ public partial class EditTransactionModel : ObservableObject
         TransactionManagementService transactions,
         AccountManagementService accounts,
         CategoryManagementService categories,
+        CategoryAllocationManagementService allocations,
         IAuthenticationService authService,
         IBudgetSnapshotService budgetSnapshotService)
     {
         _transactions = transactions;
         _accounts = accounts;
         _categories = categories;
+        _allocations = allocations;
         _authService = authService;
         _budgetSnapshotService = budgetSnapshotService;
     }
@@ -190,6 +193,49 @@ public partial class EditTransactionModel : ObservableObject
         Splits.Remove(split);
     }
 
+    /// <summary>
+    /// Finds and sets the CategoryAllocationId for a split based on its selected category.
+    /// Should be called when a split's category is changed.
+    /// Handles Income (CategoryId = -1), No Category (null), and regular categories.
+    /// </summary>
+    public async Task UpdateSplitCategoryAllocationAsync(EditableSplitItem split)
+    {
+        if (split.SelectedCategory == null)
+        {
+            // No category selected
+            split.CategoryAllocationId = null;
+            return;
+        }
+
+        if (split.SelectedCategory.Id == -1)
+        {
+            // Income - set to null
+            split.CategoryAllocationId = null;
+            return;
+        }
+
+        try
+        {
+            // Regular category - find the allocation for this category in the transaction's month/year
+            var allocation = await _allocations.FindAllocationAsync(
+                split.SelectedCategory.Id,
+                TransactionDate.Month,
+                TransactionDate.Year);
+
+            split.CategoryAllocationId = allocation?.Id;
+
+            if (allocation == null)
+            {
+                StatusMessage = $"No budget allocation found for {split.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
+            }
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Error finding allocation: {ex.Message}";
+            split.CategoryAllocationId = null;
+        }
+    }
+
     public async Task<bool> DeleteSplitAsync(EditableSplitItem split)
     {
         if (split.IsNew)
@@ -287,11 +333,19 @@ public partial class EditTransactionModel : ObservableObject
     {
         foreach (var split in Splits)
         {
+            // Ensure CategoryAllocationId is set correctly before saving
+            if (split.SelectedCategory != null)
+            {
+                await UpdateSplitCategoryAllocationAsync(split);
+            }
+
             if (split.IsNew && split.Amount != 0)
             {
-                // Create new split
+                // Create new split - handle Income and No Category cases
+                int? allocationId = split.CategoryAllocationId;
+                
                 var createRequest = new TransactionSplitRecord(
-                    split.CategoryAllocationId,
+                    allocationId,
                     TransactionId,
                     split.Amount,
                     split.Description);
@@ -299,10 +353,12 @@ public partial class EditTransactionModel : ObservableObject
             }
             else if (!split.IsNew)
             {
-                // Update existing split
+                // Update existing split - handle Income and No Category cases
+                int? allocationId = split.CategoryAllocationId;
+                
                 var updateRequest = new EditTransactionSplitRequest(
                     split.Id,
-                    split.CategoryAllocationId,
+                    allocationId,
                     split.Amount,
                     split.Description);
                 await _transactions.UpdateTransactionSplitAsync(updateRequest);
