@@ -91,7 +91,7 @@
 						{
 							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId">
 								<option value="-1">Income</option>
-								<option value="0">No Category</option>
+								@* <option value="0">No Category</option> *@
 								@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 								{
 									<option value="@category.Id">@category.Name</option>
@@ -109,7 +109,7 @@
 													value="@(split.Model.SelectedCategory?.Id ?? 0)"
 													@onchange="(e) => OnSplitCategoryChanged(split, e)">
 												<option value="-1">Income</option>
-												<option value="0">No Category</option>
+												@* <option value="0">No Category</option> *@
 												@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 												{
 													<option value="@category.Id">@category.Name</option>
@@ -296,7 +296,7 @@
 														<label class="form-label small">Category</label>
 														<select class="form-select form-select-sm" @bind="split.CategoryId">
 															<option value="-1">Income</option>
-															<option value="0">No Category</option>
+															@* <option value="0">No Category</option> *@
 															@foreach (var category in _availableCategories)
 															{
 																<option value="@category.Id">@category.Name</option>
