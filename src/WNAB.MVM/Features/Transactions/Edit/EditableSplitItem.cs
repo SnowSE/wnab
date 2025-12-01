@@ -24,6 +24,9 @@ public partial class EditableSplitItem : ObservableObject
     private string description = string.Empty;
 
     [ObservableProperty]
+    private string categoryName = string.Empty;
+
+    [ObservableProperty]
     private bool isNew;
 
     public EditableSplitItem()
@@ -31,17 +34,21 @@ public partial class EditableSplitItem : ObservableObject
         IsNew = true;
     }
 
-    public EditableSplitItem(int id, int? categoryAllocationId, Category? category, decimal amount, string? description)
+    public EditableSplitItem(int id, int? categoryAllocationId, Category? category, decimal amount, string? description, string? initialCategoryName = null)
     {
+        IsNew = false;
         Id = id;
         CategoryAllocationId = categoryAllocationId;
-        SelectedCategory = category;
         Amount = amount;
         Description = description ?? string.Empty;
-        IsNew = false;
+        CategoryName = initialCategoryName ?? category?.Name ?? string.Empty;
+
+        // Set SelectedCategory last so that bindings update after other fields are ready
+        SelectedCategory = category;
     }
 
-    // Note: CategoryAllocationId should be looked up based on the selected category and transaction date,
-    // not set directly from the category ID. This is handled by the parent EditTransactionModel.
-    // Do not automatically set CategoryAllocationId when SelectedCategory changes.
+    partial void OnSelectedCategoryChanged(Category? value)
+    {
+        CategoryName = value?.Name ?? string.Empty;
+    }
 }
