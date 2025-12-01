@@ -46,4 +46,5 @@ public class PopupService(TransactionPopup transactionPopup, AddCategoryPopup ad
         // For now, this is a placeholder to satisfy the interface
         return Task.CompletedTask;
     }
+
 }

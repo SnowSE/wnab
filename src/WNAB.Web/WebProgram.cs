@@ -100,6 +100,7 @@ builder.Services.AddTransient<TransactionManagementService>(sp =>
 builder.Services.AddScoped<WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
+builder.Services.AddScoped<WNAB.MVM.IAlertService, BlazorAlertService>();
 
 // Register Budget logic services
 builder.Services.AddScoped<IBudgetService, BudgetService>();

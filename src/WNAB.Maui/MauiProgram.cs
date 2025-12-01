@@ -48,7 +48,8 @@ public static class MauiProgram
 
 		// DI registrations for MVVM
 		builder.Services.AddSingleton<IMVMPopupService, PopupService>();
-		builder.Services.AddSingleton<MainPageModel>();
+		builder.Services.AddSingleton<IAlertService, MauiAlertService>();
+        builder.Services.AddSingleton<MainPageModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 

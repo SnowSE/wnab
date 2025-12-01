@@ -6,7 +6,7 @@ namespace WNAB.Web.Services;
 /// so this service is a lightweight stub that doesn't do anything.
 /// The actual modal triggering is done via data-bs-toggle or JavaScript in the Razor pages.
 /// </summary>
-public class BlazorPopupService :   WNAB.MVM.IMVMPopupService
+public class BlazorPopupService : WNAB.MVM.IMVMPopupService
 {
     private readonly ILogger<BlazorPopupService> _logger;
 
@@ -64,4 +64,6 @@ public class BlazorPopupService :   WNAB.MVM.IMVMPopupService
         _logger.LogDebug("ShowAddAccountAsync called - Blazor handles modals declaratively");
         return Task.CompletedTask;
     }
+
+   
 }
