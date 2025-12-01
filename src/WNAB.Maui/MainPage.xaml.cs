@@ -23,7 +23,7 @@ public partial class MainPage : ContentPage
         var isAuthenticated = await _authService.IsAuthenticatedAsync();
         if (!isAuthenticated)
         {
-            await Shell.Current.GoToAsync("//Landing");
+            // Don't navigate here - let AppShell handle it
             return;
         }
 
