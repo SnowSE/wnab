@@ -92,9 +92,15 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
         BudgetSnapshot snapshot;
 
         var earliestDate = await GetEarliestActivityDateAsync(userId, cancellationToken);
-        if (targetMonth == earliestDate.Month && targetYear == earliestDate.Year)
+        
+        // Check if requesting a month before any activity - if so, treat as first month
+        var requestedDate = new DateTime(targetYear, targetMonth, 1);
+        var firstActivityDate = new DateTime(earliestDate.Year, earliestDate.Month, 1);
+        
+        if (requestedDate <= firstActivityDate)
         {
-            snapshot = await CreateFirstSnapshotAsync(userId, cancellationToken);
+            // This is the first month or before - create first snapshot for the requested month
+            snapshot = await CreateFirstSnapshotAsync(targetMonth, targetYear, userId, cancellationToken);
         }
         else
         {
@@ -128,17 +134,19 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
     private async Task<BudgetSnapshot> CreateFirstSnapshotAsync(int currentUserId, CancellationToken cancellationToken = default)
     {
         var accountCreationDate = await GetEarliestActivityDateAsync(currentUserId, cancellationToken);
-        var currentMonth = accountCreationDate.Month;
-        var currentYear = accountCreationDate.Year;
+        return await CreateFirstSnapshotAsync(accountCreationDate.Month, accountCreationDate.Year, currentUserId, cancellationToken);
+    }
 
-        var income = await GetIncomeForMonthAsync(currentMonth, currentYear, currentUserId, cancellationToken);
-        var allocations = await GetAllocationsForMonthAsync(currentMonth, currentYear, currentUserId, cancellationToken);
-        var categoryData = await BuildCategorySnapshotDataAsync(currentMonth, currentYear, currentUserId, cancellationToken);
+    private async Task<BudgetSnapshot> CreateFirstSnapshotAsync(int month, int year, int currentUserId, CancellationToken cancellationToken = default)
+    {
+        var income = await GetIncomeForMonthAsync(month, year, currentUserId, cancellationToken);
+        var allocations = await GetAllocationsForMonthAsync(month, year, currentUserId, cancellationToken);
+        var categoryData = await BuildCategorySnapshotDataAsync(month, year, currentUserId, cancellationToken);
 
         return new BudgetSnapshot
         {
-            Month = currentMonth,
-            Year = currentYear,
+            Month = month,
+            Year = year,
             SnapshotReadyToAssign = income - allocations,
             Categories = categoryData,
             UserId = currentUserId,

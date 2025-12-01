@@ -301,7 +301,7 @@ app.MapPost("/accounts", async (HttpContext context, AccountRecord rec, WnabCont
 }).RequireAuthorization();
 
 // create allocation
-app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord rec, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord rec, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -324,6 +324,9 @@ app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord
             rec.EditedMemo
         );
 
+        // Invalidate snapshots from the allocation month forward
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(rec.Month, rec.Year, user.Id);
+
         return Results.Created($"/categories/{rec.CategoryId}/allocation/{allocation.Id}", new { allocation.Id });
     }
     catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
@@ -333,7 +336,7 @@ app.MapPost("/allocations", async (HttpContext context, CategoryAllocationRecord
 }).RequireAuthorization();
 
 // create transaction
-app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -350,6 +353,9 @@ app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, 
             rec.Splits
         );
 
+        // Invalidate snapshots from the transaction month forward
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(rec.TransactionDate.Month, rec.TransactionDate.Year, user.Id);
+
         return Results.Created($"/transactions/{result.Id}", result);
     }
     catch (InvalidOperationException ex)
@@ -359,7 +365,7 @@ app.MapPost("/transactions", async (HttpContext context, TransactionRecord rec, 
 }).RequireAuthorization();
 
 // Create transaction split (add split to existing transaction)
-app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRecord rec, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -373,6 +379,13 @@ app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRe
             rec.Amount,
             rec.Notes
         );
+
+        // Invalidate snapshots from the transaction date
+        var transaction = await db.Transactions.FindAsync(rec.TransactionId);
+        if (transaction != null)
+        {
+            await snapshotService.InvalidateSnapshotsFromMonthAsync(transaction.TransactionDate.Month, transaction.TransactionDate.Year, user.Id);
+        }
 
         return Results.Created($"/transactionsplits/{response.Id}", response);
     }
@@ -429,7 +442,7 @@ app.MapPut("/accounts/{id}", async (HttpContext context, int id, EditAccountRequ
 }).RequireAuthorization();
 
 // Update transaction by id (must belong to current user)
-app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransactionRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransactionRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -450,6 +463,9 @@ app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransac
             req.IsReconciled
         );
 
+        // Invalidate snapshots from the transaction date
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(req.TransactionDate.Month, req.TransactionDate.Year, user.Id);
+
         return Results.Created($"/transactions/{result.Id}", result);
     }
     catch (InvalidOperationException ex)
@@ -459,7 +475,7 @@ app.MapPut("/transactions/{id}", async (HttpContext context, int id, EditTransac
 }).RequireAuthorization();
 
 // Update transaction split by id (must belong to current user via transaction->account)
-app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTransactionSplitRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTransactionSplitRequest req, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -477,6 +493,16 @@ app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTr
             req.Description
         );
 
+        // Invalidate snapshots from the transaction date
+        var transaction = await db.TransactionSplits
+            .Where(ts => ts.Id == id)
+            .Select(ts => ts.Transaction)
+            .FirstOrDefaultAsync();
+        if (transaction != null)
+        {
+            await snapshotService.InvalidateSnapshotsFromMonthAsync(transaction.TransactionDate.Month, transaction.TransactionDate.Year, user.Id);
+        }
+
         return Results.Created($"/transactionsplits/{result.Id}", result);
     }
     catch (InvalidOperationException ex)
@@ -486,7 +512,7 @@ app.MapPut("/transactionsplits/{id}", async (HttpContext context, int id, EditTr
 }).RequireAuthorization();
 
 // update allocation
-app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCategoryAllocationRequest req, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService) =>
+app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCategoryAllocationRequest req, WnabContext db, UserProvisioningService provisioningService, AllocationDBService allocationService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
@@ -505,6 +531,9 @@ app.MapPut("/allocations/{id}", async (HttpContext context, int id, UpdateCatego
             req.EditorName,
             req.EditedMemo
         );
+
+        // Invalidate snapshots from the allocation month forward
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(allocation.Month, allocation.Year, user.Id);
 
         return Results.Ok(new { allocation.Id, allocation.BudgetedAmount, allocation.IsActive });
     }
@@ -566,10 +595,16 @@ app.MapDelete("/categories/{id}", async (HttpContext context, int id, CategoryDB
 }).RequireAuthorization();
 
 // delete transaction by id (must belong to current user)
-app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService) =>
+app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionDBService transactionService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
+
+    // Get transaction date before deleting for snapshot invalidation
+    var transaction = await db.Transactions
+        .Where(t => t.Id == id && t.Account.UserId == user.Id)
+        .Select(t => new { t.TransactionDate })
+        .FirstOrDefaultAsync();
 
     var deleted = await transactionService.DeleteTransactionAsync(id, user.Id);
 
@@ -578,20 +613,38 @@ app.MapDelete("/transactions/{id:int}", async (HttpContext context, int id, Wnab
         return Results.NotFound("Transaction not found or does not belong to user");
     }
 
+    // Invalidate snapshots if transaction was found and deleted
+    if (transaction != null)
+    {
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(transaction.TransactionDate.Month, transaction.TransactionDate.Year, user.Id);
+    }
+
     return Results.NoContent();
 }).RequireAuthorization();
 
 // delete transaction split by id (must belong to current user via transaction->account)
-app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService) =>
+app.MapDelete("/transactionsplits/{id:int}", async (HttpContext context, int id, WnabContext db, UserProvisioningService provisioningService, TransactionSplitDBService transactionSplitService, IBudgetSnapshotDbService snapshotService) =>
 {
     var user = await context.GetCurrentUserAsync(db, provisioningService);
     if (user is null) return Results.Unauthorized();
+
+    // Get transaction date before deleting for snapshot invalidation
+    var transactionDate = await db.TransactionSplits
+        .Where(ts => ts.Id == id)
+        .Select(ts => ts.Transaction.TransactionDate)
+        .FirstOrDefaultAsync();
 
     var deleted = await transactionSplitService.DeleteTransactionSplitAsync(id, user.Id);
 
     if (!deleted)
     {
         return Results.NotFound("Transaction split not found or does not belong to user");
+    }
+
+    // Invalidate snapshots if transaction split was found and deleted
+    if (transactionDate != default)
+    {
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(transactionDate.Month, transactionDate.Year, user.Id);
     }
 
     return Results.NoContent();

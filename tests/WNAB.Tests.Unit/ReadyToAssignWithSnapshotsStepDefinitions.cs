@@ -172,15 +172,6 @@ public partial class StepDefinitions
         }
     }
 
-    [Then("the income for {DateTime} should be {float}")]
-    public async Task ThenTheIncomeForOctoberShouldBe(DateTime date, Decimal expectedIncome)
-    {
-        var budgetService = GetOrCreateBudgetService();
-        var actualIncome = await budgetService.GetIncomeForMonth(date.Month, date.Year);
-        actualIncome.ShouldBe(expectedIncome);
-    }
-
-
     [When(@"I rebuild snapshots to (.*) (.*)")]
     public async Task WhenIRebuildSnapshotsTo(string monthName, int year)
     {
@@ -323,14 +314,26 @@ public partial class StepDefinitions
             var service = Substitute.For<IBudgetSnapshotService>();
             var snapshotStore = new Dictionary<(int month, int year), BudgetSnapshot>();
             
-            // Setup GetSnapshotAsync to return snapshots from our store
+            // Setup GetSnapshotAsync to build and return snapshots (simulating server behavior)
             service.GetSnapshotAsync(Arg.Any<int>(), Arg.Any<int>())
                 .Returns(callInfo =>
                 {
                     var month = callInfo.ArgAt<int>(0);
                     var year = callInfo.ArgAt<int>(1);
-                    snapshotStore.TryGetValue((month, year), out var snapshot);
-                    return Task.FromResult(snapshot);
+                    
+                    // Check if we already have this snapshot
+                    if (snapshotStore.TryGetValue((month, year), out var existingSnapshot))
+                    {
+                        return Task.FromResult<BudgetSnapshot?>(existingSnapshot);
+                    }
+                    
+                    // Build the snapshot using the same logic as the real service would
+                    var builtSnapshot = BuildSnapshotForTest(month, year, snapshotStore).Result;
+                    if (builtSnapshot != null)
+                    {
+                        snapshotStore[(month, year)] = builtSnapshot;
+                    }
+                    return Task.FromResult<BudgetSnapshot?>(builtSnapshot);
                 });
             
             // Setup SaveSnapshotAsync to store snapshots
@@ -346,6 +349,138 @@ public partial class StepDefinitions
             context["SnapshotStore"] = snapshotStore;
         }
         return context.Get<IBudgetSnapshotService>("BudgetSnapshotService");
+    }
+    
+    private async Task<BudgetSnapshot?> BuildSnapshotForTest(int targetMonth, int targetYear, Dictionary<(int month, int year), BudgetSnapshot> snapshotStore)
+    {
+        var userService = GetOrCreateUserService();
+        var categoryAllocationService = GetOrCreateCategoryAllocationService();
+        var transactionService = GetOrCreateTransactionManagementService();
+        
+        var earliestDate = await userService.GetEarliestActivityDate();
+        
+        // If this is the first month, build first snapshot
+        if (targetMonth == earliestDate.Month && targetYear == earliestDate.Year)
+        {
+            return await CreateFirstSnapshotForTest(targetMonth, targetYear, categoryAllocationService, transactionService);
+        }
+        
+        // Otherwise, get or build previous snapshot and create next
+        var (prevMonth, prevYear) = CalculatePreviousMonth(targetMonth, targetYear);
+        
+        if (!snapshotStore.TryGetValue((prevMonth, prevYear), out var previousSnapshot))
+        {
+            previousSnapshot = await BuildSnapshotForTest(prevMonth, prevYear, snapshotStore);
+            if (previousSnapshot != null)
+            {
+                snapshotStore[(prevMonth, prevYear)] = previousSnapshot;
+            }
+        }
+        
+        if (previousSnapshot == null)
+        {
+            return null;
+        }
+        
+        return await CreateNextSnapshotForTest(previousSnapshot, targetMonth, targetYear, categoryAllocationService, transactionService);
+    }
+    
+    private async Task<BudgetSnapshot> CreateFirstSnapshotForTest(int month, int year, ICategoryAllocationManagementService allocationService, ITransactionManagementService transactionService)
+    {
+        var income = await GetIncomeForMonthForTest(month, year, transactionService);
+        var allocations = await GetAllocationsForMonthForTest(month, year, allocationService);
+        var categoryData = await BuildCategorySnapshotDataForTest(month, year, allocationService, transactionService);
+        
+        return new BudgetSnapshot
+        {
+            Month = month,
+            Year = year,
+            SnapshotReadyToAssign = income - allocations,
+            Categories = categoryData
+        };
+    }
+    
+    private async Task<BudgetSnapshot> CreateNextSnapshotForTest(BudgetSnapshot previousSnapshot, int month, int year, ICategoryAllocationManagementService allocationService, ITransactionManagementService transactionService)
+    {
+        var income = await GetIncomeForMonthForTest(month, year, transactionService);
+        var allocations = await GetAllocationsForMonthForTest(month, year, allocationService);
+        var overspend = previousSnapshot.Categories.Where(c => c.Available < 0).Sum(c => Math.Abs(c.Available));
+        var categoryData = await BuildCategorySnapshotDataForTest(month, year, allocationService, transactionService);
+        
+        return new BudgetSnapshot
+        {
+            Month = month,
+            Year = year,
+            SnapshotReadyToAssign = previousSnapshot.SnapshotReadyToAssign + income - allocations - overspend,
+            Categories = categoryData
+        };
+    }
+    
+    private (int month, int year) CalculatePreviousMonth(int currentMonth, int currentYear)
+    {
+        var prevMonth = currentMonth - 1;
+        var prevYear = currentYear;
+        if (prevMonth < 1)
+        {
+            prevMonth = 12;
+            prevYear--;
+        }
+        return (prevMonth, prevYear);
+    }
+    
+    private async Task<decimal> GetIncomeForMonthForTest(int month, int year, ITransactionManagementService transactionService)
+    {
+        var date = new DateTime(year, month, 1);
+        var splits = await transactionService.GetTransactionSplitsByMonthAsync(date);
+        return splits.Where(ts => !ts.CategoryAllocationId.HasValue).Sum(ts => ts.Amount);
+    }
+    
+    private async Task<decimal> GetAllocationsForMonthForTest(int month, int year, ICategoryAllocationManagementService allocationService)
+    {
+        var allAllocations = await allocationService.GetAllAllocationsAsync();
+        return allAllocations.Where(a => a.Month == month && a.Year == year).Sum(a => a.BudgetedAmount);
+    }
+    
+    private async Task<List<CategorySnapshotData>> BuildCategorySnapshotDataForTest(int month, int year, ICategoryAllocationManagementService allocationService, ITransactionManagementService transactionService)
+    {
+        var allAllocations = await allocationService.GetAllAllocationsAsync();
+        var categoryData = new List<CategorySnapshotData>();
+        
+        var uniqueCategories = allAllocations
+            .Where(a => a.Year < year || (a.Year == year && a.Month <= month))
+            .Select(a => a.CategoryId)
+            .Distinct();
+        
+        foreach (var categoryId in uniqueCategories)
+        {
+            var categoryAllocations = allAllocations
+                .Where(a => a.CategoryId == categoryId && (a.Year < year || (a.Year == year && a.Month <= month)))
+                .ToList();
+            
+            var assignedValue = categoryAllocations
+                .Where(a => a.Month == month && a.Year == year)
+                .Sum(a => a.BudgetedAmount);
+            
+            decimal activity = 0m;
+            foreach (var allocation in categoryAllocations)
+            {
+                var splits = await transactionService.GetTransactionSplitsForAllocationAsync(allocation.Id);
+                activity += splits.Sum(s => s.Amount);
+            }
+            
+            var totalAllocated = categoryAllocations.Sum(a => a.BudgetedAmount);
+            var available = totalAllocated - activity;
+            
+            categoryData.Add(new CategorySnapshotData
+            {
+                CategoryId = categoryId,
+                AssignedValue = assignedValue,
+                Activity = activity,
+                Available = available
+            });
+        }
+        
+        return categoryData;
     }
 
     private void SetupAllocationMocks(List<CategoryAllocation> allocations, ICategoryAllocationManagementService service)
