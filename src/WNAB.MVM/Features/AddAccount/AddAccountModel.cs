@@ -94,6 +94,8 @@ public partial class AddAccountModel : ObservableObject
     /// <returns>True if successful, false otherwise.</returns>
     public async Task<bool> CreateAccountAsync()
     {
+        await CheckUserSessionAsync();
+
         if (!ValidateInput())
         {
             return false;
