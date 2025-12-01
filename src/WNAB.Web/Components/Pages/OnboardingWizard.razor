@@ -19,6 +19,21 @@
         Goodbye
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await CategoriesVM.InitializeAsync();
+        await AccountsVM.InitializeAsync();
+
+        // Subscribe to property changes so wizard updates when accounts/categories change
+        CategoriesVM.Model.PropertyChanged += OnModelChanged;
+        AccountsVM.Model.PropertyChanged += OnModelChanged;
+    }
+
+    private void OnModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     private void NextStep()
     {
         if (CurrentStep < WizardStep.Goodbye)
@@ -33,7 +48,13 @@
 
     private void ExitWizard()
     {
-        Navigation.NavigateTo("/landing");
+        Navigation.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        CategoriesVM.Model.PropertyChanged -= OnModelChanged;
+        AccountsVM.Model.PropertyChanged -= OnModelChanged;
     }
 }
 

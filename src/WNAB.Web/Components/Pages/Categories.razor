@@ -12,11 +12,11 @@
             <h1 class="page-title">Categories</h1>
         </div>
         <div class="header-actions">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCategoryModal" @onclick="OnAddCategoryClick">
-                <i class="bi bi-plus-circle me-1"></i>
-                Create Category
+            <button class="btn btn-outline-secondary" @onclick="ToggleAddForm">
+                <i class="bi bi-@(IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
+                @(IsAddFormVisible ? "Cancel" : "Create Category")
             </button>
-            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+            <button class="btn btn-outline-secondary ms-2" @onclick="RefreshCategories" disabled="@ViewModel.Model.IsBusy">
                 @if (ViewModel.Model.IsBusy)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -84,18 +84,89 @@
         </div>
     }
 
-<!-- Include the Create Category Modal -->
-<CreateCategoryModal OnCategoryCreated="OnCategoryCreated" />
+<!-- Inline Add Category Form -->
+@if (IsAddFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Category</h5>
+        </div>
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(AddCategoryStatusMessage))
+            {
+                <div class="alert alert-info mb-3">@AddCategoryStatusMessage</div>
+            }
+            <EditForm Model="AddCategoryModel" OnValidSubmit="@OnCreateCategorySubmit">
+                <div class="mb-3">
+                    <label class="form-label">Category Name</label>
+                    <input class="form-control" @bind="AddCategoryModel.Name" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Color</label>
+                    <input class="form-control" @bind="AddCategoryModel.Color" />
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleAddForm">Cancel</button>
+                    <button class="btn btn-primary" type="submit" disabled="@IsAddCategoryBusy">
+                        @if (IsAddCategoryBusy)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Create Category
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
 
-<!-- Include the Edit Category Modal -->
-<EditCategoryModal @ref="editCategoryModal" OnCategoryUpdated="OnCategoryUpdated" />
+<!-- Inline Edit Category Form -->
+@if (IsEditFormVisible && ViewModel.Model.IsLoggedIn)
+{
+    <div class="card mb-4 shadow-sm border-warning">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Category</h5>
+        </div>
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(EditCategoryStatusMessage))
+            {
+                <div class="alert alert-info mb-3">@EditCategoryStatusMessage</div>
+            }
+            <EditForm Model="EditCategoryModel" OnValidSubmit="@OnEditCategorySubmit">
+                <div class="mb-3">
+                    <label class="form-label">Category Name</label>
+                    <input class="form-control" @bind="EditCategoryModel.Name" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Color</label>
+                    <input class="form-control" @bind="EditCategoryModel.Color" />
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <button type="button" class="btn btn-secondary" @onclick="ToggleEditForm">Cancel</button>
+                    <button class="btn btn-warning" type="submit" disabled="@IsEditCategoryBusy">
+                        @if (IsEditCategoryBusy)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        }
+                        Update Category
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
 
 @code {
-    // LLM-Dev:v6 Refactored to use WNAB.MVM ViewModels and Models for shared business logic
-    // UI is now a thin presentation layer, all logic delegated to ViewModel/Model
-    
-    private EditCategoryModal? editCategoryModal;
-    
+    // Inline form state
+    private bool IsAddFormVisible = false;
+    private bool IsEditFormVisible = false;
+    private Category AddCategoryModel = new Category();
+    private Category EditCategoryModel = new Category();
+    private string? AddCategoryStatusMessage;
+    private string? EditCategoryStatusMessage;
+    private bool IsAddCategoryBusy = false;
+    private bool IsEditCategoryBusy = false;
+
     protected override async Task OnInitializedAsync()
     {
         // Check if user is authenticated and token is valid
@@ -113,46 +184,92 @@
 
         // Subscribe to property changes to trigger UI updates
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
-        
+
         await ViewModel.InitializeAsync();
     }
 
     private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // When Model properties change, update the UI
         InvokeAsync(StateHasChanged);
     }
 
-    private async Task OnRefreshClick()
+    private void ToggleAddForm()
+    {
+        IsAddFormVisible = !IsAddFormVisible;
+        AddCategoryStatusMessage = null;
+        AddCategoryModel = new Category();
+    }
+
+    private void ToggleEditForm()
+    {
+        IsEditFormVisible = false;
+        EditCategoryStatusMessage = null;
+        EditCategoryModel = new Category();
+    }
+
+    private async Task RefreshCategories()
     {
         await ViewModel.RefreshCommand.ExecuteAsync(null);
     }
 
-    private async Task OnAddCategoryClick()
+    private async Task OnCreateCategorySubmit()
     {
-        // Modal is shown via Bootstrap, but we call the ViewModel command for consistency
-        await ViewModel.AddCategoryCommand.ExecuteAsync(null);
+        AddCategoryStatusMessage = null;
+        IsAddCategoryBusy = true;
+        try
+        {
+            // Replace with actual ViewModel logic
+            var request = new WNAB.SharedDTOs.CreateCategoryRequest(AddCategoryModel.Name, AddCategoryModel.Color);
+            await CategoryService.CreateCategoryAsync(request);
+            AddCategoryStatusMessage = "Category created successfully!";
+            IsAddFormVisible = false;
+            await ViewModel.RefreshCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            AddCategoryStatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsAddCategoryBusy = false;
+        }
     }
 
-    private async Task OnCategoryCreated()
+    private async Task OnEditCategorySubmit()
     {
-        // Called by modal when category is created - refresh the list
-        await ViewModel.Model.RefreshAsync();
+        EditCategoryStatusMessage = null;
+        IsEditCategoryBusy = true;
+        try
+        {
+            // Replace with actual ViewModel logic
+            var request = new WNAB.SharedDTOs.EditCategoryRequest(EditCategoryModel.Id, EditCategoryModel.Name, EditCategoryModel.Color, EditCategoryModel.IsActive);
+            await CategoryService.UpdateCategoryAsync(EditCategoryModel.Id, request, default);
+            EditCategoryStatusMessage = "Category updated successfully!";
+            IsEditFormVisible = false;
+            await ViewModel.RefreshCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            EditCategoryStatusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsEditCategoryBusy = false;
+        }
     }
 
-    private async Task OnCategoryUpdated()
-    {
-        // Called by modal when category is updated - refresh the list and close modal
-        await ViewModel.Model.RefreshAsync();
-        await JS.InvokeVoidAsync("eval", "bootstrap.Modal.getInstance(document.getElementById('editCategoryModal'))?.hide()");
-    }
-
-    private async Task EditCategory(Category category)
+    private void EditCategory(Category category)
     {
         if (category == null) return;
-
-        editCategoryModal?.Initialize(category.Id, category.Name, category.Color, category.IsActive);
-        await JS.InvokeVoidAsync("eval", "new bootstrap.Modal(document.getElementById('editCategoryModal')).show()");
+        EditCategoryModel = new Category
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Color = category.Color,
+            IsActive = category.IsActive
+        };
+        IsEditFormVisible = true;
+        EditCategoryStatusMessage = null;
     }
 
     private async Task DeleteCategory(Category category)
