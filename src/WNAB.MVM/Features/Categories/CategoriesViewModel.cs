@@ -77,7 +77,7 @@ public partial class CategoriesViewModel : ObservableObject
     {
         if (category == null) return;
 
-        var confirmed = await Shell.Current.DisplayAlertAsync(
+        var confirmed = await _popupService.DisplayAlertAsync(
             "Delete Category",
             $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.",
             "Delete",
@@ -92,7 +92,7 @@ public partial class CategoriesViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to delete category: {ex.Message}", "OK");
+            await _popupService.DisplayAlertAsync("Error", $"Failed to delete category: {ex.Message}");
         }
     }
 

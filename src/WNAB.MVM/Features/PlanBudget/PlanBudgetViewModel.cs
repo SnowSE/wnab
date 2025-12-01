@@ -274,7 +274,7 @@ public partial class PlanBudgetViewModel : ObservableObject
     [RelayCommand]
     private async Task CancelAsync()
     {
-        bool confirmed = await Shell.Current.DisplayAlertAsync(
+        bool confirmed = await _popupService.DisplayAlertAsync(
             "Cancel Confirmation",
             "Are you sure you want to cancel? Any unsaved changes will be lost.",
             "Yes",
@@ -297,18 +297,16 @@ public partial class PlanBudgetViewModel : ObservableObject
             await Model.SaveAllocationsAsync();
             
             // Show success message
-            await Shell.Current.DisplayAlertAsync(
+            await _popupService.DisplayAlertAsync(
                 "Success",
-                Model.StatusMessage,
-                "OK");
+                Model.StatusMessage);
         }
         catch (Exception ex)
         {
             // Show error message
-            await Shell.Current.DisplayAlertAsync(
+            await _popupService.DisplayAlertAsync(
                 "Error",
-                $"Failed to save allocations: {ex.Message}",
-                "OK");
+                $"Failed to save allocations: {ex.Message}");
         }
     }
 
@@ -412,10 +410,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         else
         {
-            if (Shell.Current is not null)
-            {
-                await Shell.Current.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.", "OK");
-            }
+            await _popupService.DisplayAlertAsync("Login Failed", "Unable to authenticate. Please try again.");
         }
     }
     
@@ -434,7 +429,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}", "OK");
+            await _popupService.DisplayAlertAsync("Error", $"Failed to deactivate category: {ex.Message}");
         }
     }
     
@@ -453,7 +448,7 @@ public partial class PlanBudgetViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            await Shell.Current.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}", "OK");
+            await _popupService.DisplayAlertAsync("Error", $"Failed to activate category: {ex.Message}");
         }
     }
     

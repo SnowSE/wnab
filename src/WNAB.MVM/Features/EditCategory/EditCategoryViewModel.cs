@@ -9,13 +9,16 @@ namespace WNAB.MVM;
 /// </summary>
 public partial class EditCategoryViewModel : ObservableObject
 {
+    private readonly IMVMPopupService _popupService;
+
     public event EventHandler? RequestClose;
 
     public EditCategoryModel Model { get; }
 
-    public EditCategoryViewModel(EditCategoryModel model)
+    public EditCategoryViewModel(EditCategoryModel model, IMVMPopupService popupService)
     {
         Model = model;
+        _popupService = popupService;
     }
 
     /// <summary>
@@ -53,7 +56,7 @@ public partial class EditCategoryViewModel : ObservableObject
         var success = await Model.UpdateCategoryAsync();
         if (!success)
         {
-            await Shell.Current.DisplayAlertAsync("Error", Model.ErrorMessage ?? "Something went wrong and we were unable to update the category.", "OK");
+            await _popupService.DisplayAlertAsync("Error", Model.ErrorMessage ?? "Something went wrong and we were unable to update the category.");
             return;
         }
 

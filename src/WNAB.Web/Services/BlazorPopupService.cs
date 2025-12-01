@@ -64,4 +64,14 @@ public class BlazorPopupService :   WNAB.MVM.IMVMPopupService
         _logger.LogDebug("ShowAddAccountAsync called - Blazor handles modals declaratively");
         return Task.CompletedTask;
     }
+
+    public Task DisplayAlertAsync(string title, string message)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> DisplayAlertAsync(string title, string message, string accept, string cancel)
+    {
+        throw new NotImplementedException();
+    }
 }

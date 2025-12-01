@@ -9,13 +9,16 @@ namespace WNAB.MVM;
 /// </summary>
 public partial class AddCategoryViewModel : ObservableObject
 {
+    private readonly IMVMPopupService popupService;
+
     public event EventHandler? RequestClose;
 
     public AddCategoryModel Model { get; }
 
-    public AddCategoryViewModel(AddCategoryModel model)
+    public AddCategoryViewModel(AddCategoryModel model, IMVMPopupService _popupService)
     {
         Model = model;
+        popupService = _popupService;
     }
 
     /// <summary>
@@ -45,7 +48,7 @@ public partial class AddCategoryViewModel : ObservableObject
         var success = await Model.CreateCategoryAsync();
         if (!success)
         {
-            await Shell.Current.DisplayAlertAsync("Error", "Something went wrong and we were unable to create the category.", "OK");
+            await popupService.DisplayAlertAsync("Error", "Something went wrong and we were unable to create the category.");
             return; // Keep the modal open so user can fix the error
         }
 
