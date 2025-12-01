@@ -14,9 +14,6 @@ public partial class EditTransactionModel : ObservableObject
     private readonly IAuthenticationService _authService;
     private readonly IBudgetSnapshotService _budgetSnapshotService;
 
-    // Virtual category IDs are negative to avoid colliding with real database IDs.
-    private int _virtualCategoryIdSeed = -1000;
-
     [ObservableProperty]
     private int transactionId;
 
@@ -103,12 +100,6 @@ public partial class EditTransactionModel : ObservableObject
 
       SelectedAccount = AvailableAccounts.FirstOrDefault(a => a.Id == AccountId);
       
-            // Ensure categories are loaded before loading splits
-            if (AvailableCategories.Count == 0)
-            {
-                await LoadCategoriesAsync();
-            }
-            
             // Load splits for this transaction
             await LoadSplitsAsync(id);
       
@@ -158,16 +149,8 @@ public partial class EditTransactionModel : ObservableObject
         {
             var categories = await _categories.GetCategoriesForUserAsync();
             AvailableCategories.Clear();
-            
-            // Add virtual "Income" category at the top
-            AvailableCategories.Add(new Category { Id = -1, Name = "Income", UserId = 0 });
-            
-            // Add regular categories
             foreach (var category in categories)
                 AvailableCategories.Add(category);
-
-            // Existing splits may already be loaded; ensure they reference the refreshed category instances
-            SyncSplitCategoryReferences();
         }
         catch (Exception ex)
         {
@@ -185,92 +168,18 @@ public partial class EditTransactionModel : ObservableObject
             Splits.Clear();
             foreach (var split in transactionSplits)
             {
-                var category = ResolveSplitCategory(split.CategoryName, split.CategoryAllocationId);
-                
+                var category = AvailableCategories.FirstOrDefault(c => c.Name == split.CategoryName);
                 Splits.Add(new EditableSplitItem(
                     split.Id,
                     split.CategoryAllocationId,
                     category,
                     split.Amount,
-                    split.Description,
-                    split.CategoryName));
+                    split.Description));
             }
-
-            SyncSplitCategoryReferences();
         }
         catch (Exception ex)
         {
             StatusMessage = $"Error loading splits: {ex.Message}";
-        }
-    }
-
-    private Category? ResolveSplitCategory(string? categoryName, int? categoryAllocationId)
-    {
-        // Income or uncategorized splits share the same virtual Income category so the picker can display a value.
-        if (categoryAllocationId == null || string.Equals(categoryName, "Income", StringComparison.OrdinalIgnoreCase))
-        {
-            return EnsureIncomeCategory();
-        }
-
-        var splitName = categoryName?.Trim();
-        if (string.IsNullOrWhiteSpace(splitName))
-        {
-            return null;
-        }
-
-        var category = AvailableCategories.FirstOrDefault(
-            c => string.Equals(c.Name?.Trim(), splitName, StringComparison.OrdinalIgnoreCase));
-
-        if (category != null)
-        {
-            return category;
-        }
-
-        // If the split references a category that is no longer in the active list (e.g., archived),
-        // create a virtual entry so the picker still has something to display. This avoids showing
-        // an empty selection when editing historical transactions.
-        category = new Category
-        {
-            Id = _virtualCategoryIdSeed--,
-            Name = splitName,
-            UserId = 0,
-            IsActive = false
-        };
-
-        AvailableCategories.Add(category);
-        return category;
-    }
-
-    private Category EnsureIncomeCategory()
-    {
-        var income = AvailableCategories.FirstOrDefault(c => c.Id == -1);
-        if (income != null)
-        {
-            return income;
-        }
-
-        income = new Category { Id = -1, Name = "Income", UserId = 0 };
-        AvailableCategories.Insert(0, income);
-        return income;
-    }
-
-    private void SyncSplitCategoryReferences()
-    {
-        if (Splits.Count == 0 || AvailableCategories.Count == 0)
-        {
-            return;
-        }
-
-        foreach (var split in Splits)
-        {
-            var category = ResolveSplitCategory(split.CategoryName, split.CategoryAllocationId);
-            if (ReferenceEquals(split.SelectedCategory, category))
-            {
-                // Force the binding system to refresh the Picker's SelectedItem even if the reference is the same
-                split.SelectedCategory = null;
-            }
-
-            split.SelectedCategory = category;
         }
     }
 
