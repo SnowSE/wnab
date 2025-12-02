@@ -103,7 +103,16 @@
             <div class="monthly-limit-card">
                 <div class="rta-display">
                     <h5 class="text-muted mb-2 fw-normal">Ready to Assign</h5>
-                    <h2 class="fw-bold mb-0 text-success">@ViewModel.Model.ReadyToAssign.ToString("C")</h2>
+                    <h2 class="fw-bold mb-0 @(ViewModel.Model.ReadyToAssign < 0 ? "text-danger" : "text-success")">
+                        @if (ViewModel.Model.ReadyToAssign < 0)
+                        {
+                            <text>-@((-ViewModel.Model.ReadyToAssign).ToString("C"))</text>
+                        }
+                        else
+                        {
+                            <text>@ViewModel.Model.ReadyToAssign.ToString("C")</text>
+                        }
+                    </h2>
                 </div>
             </div>
         </div>

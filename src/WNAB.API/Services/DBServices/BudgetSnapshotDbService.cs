@@ -21,7 +21,7 @@ public class BudgetSnapshotDbService : IBudgetSnapshotDbService
     {
         var snapshot = await _db.BudgetSnapshots
             .Include(s => s.Categories)
-            .ThenInclude(c => c.Category)
+            .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Month == month && s.Year == year && s.UserId == userId, cancellationToken);
 
         // If snapshot exists and is valid, return it

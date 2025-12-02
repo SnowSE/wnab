@@ -24,15 +24,25 @@ public class BudgetService : IBudgetService
 
     public async Task<decimal> CalculateReadyToAssign(int month, int year)
     {
+        System.Diagnostics.Debug.WriteLine($"[BudgetService] CalculateReadyToAssign called for {month}/{year}");
+        
         // Request the snapshot from the API; server will create/rebuild if needed.
         var snapshot = await budgetSnapshotService.GetSnapshotAsync(month, year);
+        
+        System.Diagnostics.Debug.WriteLine($"[BudgetService] Snapshot received: {(snapshot == null ? "NULL" : $"RTA={snapshot.SnapshotReadyToAssign}")} ");
+        
         if (snapshot is null)
             throw new InvalidOperationException($"Failed to obtain snapshot for {month}/{year} from server");
 
         // Calculate from snapshot
         var futureAllocations = await categoryAllocationManagementService.GetAllFutureAllocationsAsync(month, year);
+        
+        var futureTotal = futureAllocations.Sum(f => f.BudgetedAmount);
+        var result = snapshot.SnapshotReadyToAssign - futureTotal;
+        
+        System.Diagnostics.Debug.WriteLine($"[BudgetService] Snapshot RTA: {snapshot.SnapshotReadyToAssign}, Future Allocations: {futureTotal}, Final RTA: {result}");
 
-        return snapshot.SnapshotReadyToAssign - futureAllocations.Sum(f => f.BudgetedAmount);
+        return result;
     }
 
     public async Task<BudgetSnapshot> RebuildSnapshots(int targetMonth, int targetYear)

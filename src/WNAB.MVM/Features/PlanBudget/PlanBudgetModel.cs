@@ -12,8 +12,8 @@ namespace WNAB.MVM;
 public partial class PlanBudgetModel : ObservableObject
 {
     private readonly CategoryManagementService _categoryService;
-    private readonly CategoryAllocationManagementService _allocationService;
-    private readonly TransactionManagementService _transactionService;
+    private readonly ICategoryAllocationManagementService _allocationService;
+    private readonly ITransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
     private readonly IBudgetSnapshotService _budgetSnapshotService;
     private readonly IBudgetService _budgetService;
@@ -69,8 +69,8 @@ public partial class PlanBudgetModel : ObservableObject
 
     public PlanBudgetModel(
         CategoryManagementService categoryService,
-        CategoryAllocationManagementService allocationService,
-        TransactionManagementService transactionService,
+        ICategoryAllocationManagementService allocationService,
+        ITransactionManagementService transactionService,
         IAuthenticationService authService,
         IBudgetSnapshotService budgetSnapshotService,
         IBudgetService budgetService)
