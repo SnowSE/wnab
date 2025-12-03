@@ -12,8 +12,8 @@ namespace WNAB.MVM;
 public partial class PlanBudgetModel : ObservableObject
 {
     private readonly CategoryManagementService _categoryService;
-    private readonly ICategoryAllocationManagementService _allocationService;
-    private readonly ITransactionManagementService _transactionService;
+    private readonly CategoryAllocationManagementService _allocationService;
+    private readonly TransactionManagementService _transactionService;
     private readonly IAuthenticationService _authService;
     private readonly IBudgetSnapshotService _budgetSnapshotService;
     private readonly IBudgetService _budgetService;
@@ -69,8 +69,8 @@ public partial class PlanBudgetModel : ObservableObject
 
     public PlanBudgetModel(
         CategoryManagementService categoryService,
-        ICategoryAllocationManagementService allocationService,
-        ITransactionManagementService transactionService,
+        CategoryAllocationManagementService allocationService,
+        TransactionManagementService transactionService,
         IAuthenticationService authService,
         IBudgetSnapshotService budgetSnapshotService,
         IBudgetService budgetService)
@@ -301,6 +301,9 @@ public partial class PlanBudgetModel : ObservableObject
         }
         catch (Exception ex)
         {
+            // Log the actual error for debugging
+            System.Diagnostics.Debug.WriteLine($"Failed to calculate RTA: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             throw new InvalidOperationException($"Failed to calculate Ready To Assign: {ex.Message}", ex);
         }
     }
@@ -350,6 +353,20 @@ public partial class PlanBudgetModel : ObservableObject
     {
         var spent = GetSpentAmount(allocation.Id);
         return allocation.BudgetedAmount - spent;
+    }
+    
+    /// <summary>
+    /// Get the available amount for a category from the current snapshot.
+    /// This represents all-time allocations minus all-time spending for this category.
+    /// </summary>
+    public decimal GetAvailableFromSnapshot(CategoryAllocation allocation)
+    {
+        if (CurrentSnapshot?.Categories == null) return 0m;
+        
+        var categorySnapshot = CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+        
+        return categorySnapshot?.Available ?? 0m;
     }
     
     /// <summary>

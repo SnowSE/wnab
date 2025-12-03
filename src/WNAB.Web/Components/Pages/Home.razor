@@ -103,15 +103,8 @@
             <div class="monthly-limit-card">
                 <div class="rta-display">
                     <h5 class="text-muted mb-2 fw-normal">Ready to Assign</h5>
-                    <h2 class="fw-bold mb-0 @(ViewModel.Model.ReadyToAssign < 0 ? "text-danger" : "text-success")">
-                        @if (ViewModel.Model.ReadyToAssign < 0)
-                        {
-                            <text>-@((-ViewModel.Model.ReadyToAssign).ToString("C"))</text>
-                        }
-                        else
-                        {
-                            <text>@ViewModel.Model.ReadyToAssign.ToString("C")</text>
-                        }
+                    <h2 class="fw-bold mb-0 @(ViewModel.Model.ReadyToAssign >= 0 ? "text-success" : "text-danger")">
+                        @ViewModel.Model.ReadyToAssign.ToString("C")
                     </h2>
                 </div>
             </div>
@@ -174,6 +167,11 @@
 
                         <div class="category-card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-muted">Assigned:</span>
+                                <span class="small">@allocation.BudgetedAmount.ToString("C")</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="small text-muted">Spent:</span>
                                 <span class="small">@spent.ToString("C")</span>
                             </div>
@@ -183,9 +181,14 @@
                                 <div class="category-progress-fill" style="width: @Math.Min(progress, 100)%"></div>
                             </div>
                             
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="small text-muted">Remaining:</span>
                                 <span class="small fw-bold text-success">@remaining.ToString("C")</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small text-muted">Available (All Time):</span>
+                                <span class="small fw-bold text-primary">@ViewModel.Model.GetAvailableFromSnapshot(allocation).ToString("C")</span>
                             </div>
                         </div>
 
