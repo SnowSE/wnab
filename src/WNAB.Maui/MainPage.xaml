@@ -15,13 +15,19 @@
         <VerticalStackLayout Padding="20" Spacing="20">
             
             <!-- Toolbar buttons at top of page -->
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="End">
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="End">
                 <Button Text="Edit Budget"
                         IsVisible="{Binding Model.IsEditMode, Converter={StaticResource InvertedBoolConverter}}"
                         Command="{Binding ToggleEditModeCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                        TextColor="White"
-                        WidthRequest="120" />
+                        CornerRadius="8"
+                        VerticalOptions="Center">
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness"
+                                 Phone="12,8"
+                                 Tablet="14,10"
+                                 Desktop="16,12" />
+                    </Button.Padding>
+                </Button>
                 <Button Text="Cancel"
                         IsVisible="{Binding Model.IsEditMode}"
                         Command="{Binding UndoChangesCommand}"
