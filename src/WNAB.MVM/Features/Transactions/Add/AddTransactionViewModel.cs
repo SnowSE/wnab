@@ -24,15 +24,8 @@ public partial class AddTransactionViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await Model.InitializeAsync();
-    }
-
-    /// <summary>
-    /// Toggle split transaction mode - delegates to Model.
-    /// </summary>
-    [RelayCommand]
-    private void ToggleSplitTransaction()
-    {
-        Model.ToggleSplitTransaction();
+        // Always ensure at least one split exists
+        Model.EnsureOneSplit();
     }
 
     /// <summary>

@@ -54,65 +54,47 @@
 					</div>
 
 					<div class="mb-3">
-						<div class="d-flex align-items-center gap-2 mb-2">
-							<label class="form-label mb-0">Category</label>
-							<button type="button" class="btn btn-sm btn-outline-primary" @onclick="ViewModel.ToggleSplitTransactionCommand.Execute">
-								@(ViewModel.Model.IsSplitTransaction ? "Single Category" : "Split Transaction")
-							</button>
-						</div>
+						<label class="form-label mb-2">Category</label>
 
-						@if (!ViewModel.Model.IsSplitTransaction)
-						{
-							<select class="form-select" @bind="ViewModel.Model.CategoryId" required>
-								<option value="0">Select a category...</option>
-								@foreach (var category in ViewModel.Model.AvailableCategories)
-								{
-									<option value="@category.Id">@category.Name</option>
-								}
-							</select>
-						}
-						else
-						{
-							<div class="border rounded p-3 bg-light">
-								@foreach (var split in ViewModel.Model.Splits)
-								{
-									<div class="row g-2 mb-2 align-items-center">
-										<div class="col-md-6">
-											<InputSelect class="form-select form-select-sm" @bind-Value="split.Model.SelectedCategory">
-												<option value="">Select category...</option>
-												@foreach (var category in ViewModel.Model.AvailableCategories)
-												{
-													<option value="@category">@category.Name</option>
-												}
-											</InputSelect>
-										</div>
-										<div class="col-md-4">
-											<input type="number" step="0.01" class="form-control form-control-sm"
-												   @bind="split.Model.Amount" placeholder="0.00" />
-										</div>
-										<div class="col-md-2">
-											<button type="button" class="btn btn-sm btn-danger w-100"
-													@onclick="() => ViewModel.RemoveSplitCommand.Execute(split)"
-													disabled="@(ViewModel.Model.Splits.Count <= 1)">
-												✕
-											</button>
-										</div>
+						<div class="border rounded p-3 bg-light">
+							@foreach (var split in ViewModel.Model.Splits)
+							{
+								<div class="row g-2 mb-2 align-items-center">
+									<div class="col-md-6">
+										<InputSelect class="form-select form-select-sm" @bind-Value="split.Model.SelectedCategory">
+											<option value="">Select category...</option>
+											@foreach (var category in ViewModel.Model.AvailableCategories)
+											{
+												<option value="@category">@category.Name</option>
+											}
+										</InputSelect>
 									</div>
-								}
-
-								<button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddSplitCommand.Execute">
-									+ Add Split
-								</button>
-
-								<div class="d-flex align-items-center gap-2 mt-2">
-									<small class="text-muted">Balance:</small>
-									<small class="fw-bold @(ViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
-										@ViewModel.Model.RemainingAmount.ToString("C")
-									</small>
-									<small class="text-muted">remaining</small>
+									<div class="col-md-4">
+										<input type="number" step="0.01" class="form-control form-control-sm"
+											   @bind="split.Model.Amount" placeholder="0.00" />
+									</div>
+									<div class="col-md-2">
+										<button type="button" class="btn btn-sm btn-danger w-100"
+												@onclick="() => ViewModel.RemoveSplitCommand.Execute(split)"
+												disabled="@(ViewModel.Model.Splits.Count <= 1)">
+											✕
+										</button>
+									</div>
 								</div>
+							}
+
+							<button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddSplitCommand.Execute">
+								+ Add Split
+							</button>
+
+							<div class="d-flex align-items-center gap-2 mt-2">
+								<small class="text-muted">Balance:</small>
+								<small class="fw-bold @(ViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
+									@ViewModel.Model.RemainingAmount.ToString("C")
+								</small>
+								<small class="text-muted">remaining</small>
 							</div>
-						}
+						</div>
 					</div>
 
 					<div class="mb-3">

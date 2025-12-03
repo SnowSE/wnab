@@ -71,31 +71,12 @@
                        PlaceholderColor="Gray" />
             </StackLayout>
             
-            <!-- Category Picker -->
+            <!-- Category Section (always shows splits) -->
             <StackLayout Spacing="4">
-                <HorizontalStackLayout Spacing="8">
-                    <Label Text="Category" TextColor="Black" FontSize="14" VerticalOptions="Center" />
-                    <Button Text="{Binding Model.IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}" 
-                            Command="{Binding ToggleSplitTransactionCommand}"
-                            BackgroundColor="LightBlue"
-                            TextColor="Black"
-                            FontSize="12"
-                            Padding="8,4"
-                            HeightRequest="32" />
-                </HorizontalStackLayout>
+                <Label Text="Category" TextColor="Black" FontSize="14" VerticalOptions="Center" />
                 
-                <!-- LLM-Dev:v3 Single category picker - visible when NOT in split mode -->
-                <Picker ItemsSource="{Binding Model.AvailableCategories}"
-                        SelectedItem="{Binding Model.SelectedCategory}"
-                        ItemDisplayBinding="{Binding Name}"
-                        Title="Select Category"
-                        BackgroundColor="LightGray"
-                        TextColor="Black"
-                        IsVisible="{Binding Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}" />
-                
-                <!-- LLM-Dev:v3 Split mode UI - visible when in split mode -->
-                <StackLayout IsVisible="{Binding Model.IsSplitTransaction}" Spacing="8">
-                    <!-- Split items list -->
+                <!-- Split items list -->
+                <StackLayout Spacing="8">
                     <CollectionView ItemsSource="{Binding Model.Splits}"
                                     SelectionMode="None">
                         <CollectionView.ItemTemplate>

@@ -131,27 +131,9 @@
                         </VerticalStackLayout>
                     </Grid>
 
-                    <!-- Split Transaction Toggle -->
-                    <Button Text="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource SplitButtonTextConverter}}"
-                            Command="{Binding AddTransactionViewModel.ToggleSplitTransactionCommand}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                            TextColor="White" />
-
-                    <!-- Category Picker (Single) -->
-                    <VerticalStackLayout Spacing="4"
-                                         IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction, Converter={StaticResource InvertedBoolConverter}}">
-                        <Label Text="Category (Optional)"
-                               FontAttributes="Bold" />
-                        <Picker ItemsSource="{Binding AddTransactionViewModel.Model.AvailableCategories}"
-                                ItemDisplayBinding="{Binding Name}"
-                                SelectedItem="{Binding AddTransactionViewModel.Model.SelectedCategory}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
-                    </VerticalStackLayout>
-
-                    <!-- Splits Section -->
-                    <VerticalStackLayout IsVisible="{Binding AddTransactionViewModel.Model.IsSplitTransaction}"
-                                         Spacing="12">
-                        <Label Text="Transaction Splits"
+                    <!-- Splits Section (always visible) -->
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Category"
                                FontAttributes="Bold"
                                FontSize="16" />
 
