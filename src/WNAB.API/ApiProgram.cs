@@ -381,11 +381,7 @@ app.MapPost("/transactionsplits", async (HttpContext context, TransactionSplitRe
         );
 
         // Invalidate snapshots from the transaction date
-        var transaction = await db.Transactions.FindAsync(rec.TransactionId);
-        if (transaction != null)
-        {
-            await snapshotService.InvalidateSnapshotsFromMonthAsync(transaction.TransactionDate.Month, transaction.TransactionDate.Year, user.Id);
-        }
+        await snapshotService.InvalidateSnapshotsFromMonthAsync(response.TransactionDate.Month, response.TransactionDate.Year, user.Id);
 
         return Results.Created($"/transactionsplits/{response.Id}", response);
     }

@@ -92,11 +92,8 @@ public partial class TransactionsModel : ObservableObject
     /// </summary>
     public async Task LoadTransactionsAndSplitsAsync()
     {
-        System.Diagnostics.Debug.WriteLine($"[TransactionsModel] LoadTransactionsAndSplitsAsync called. IsBusy={IsBusy}, IsLoggedIn={IsLoggedIn}");
-
         if (IsBusy || !IsLoggedIn)
         {
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Skipping load - busy or not logged in");
             return;
         }
 
@@ -113,8 +110,6 @@ public partial class TransactionsModel : ObservableObject
 
             var transactionsList = transactionsTask.Result;
             var splitsList = splitsTask.Result;
-
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Loaded {transactionsList.Count} transactions and {splitsList.Count} splits from API");
 
             // Clear collections
             Items.Clear();
@@ -140,8 +135,6 @@ public partial class TransactionsModel : ObservableObject
                 Splits.Add(s);
             }
 
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Collections populated. Items.Count={Items.Count}, Splits.Count={Splits.Count}");
-
             StatusMessage = transactionsList.Count == 0
                 ? "No transactions found"
                 : $"Loaded {transactionsList.Count} transactions and {splitsList.Count} splits";
@@ -149,12 +142,9 @@ public partial class TransactionsModel : ObservableObject
             // Notify property changed to ensure UI updates
             OnPropertyChanged(nameof(Items));
             OnPropertyChanged(nameof(Splits));
-
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] PropertyChanged notifications sent");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] ERROR loading data: {ex.Message}");
             StatusMessage = $"Error loading data: {ex.Message}";
         }
         finally
@@ -304,11 +294,8 @@ public partial class TransactionsModel : ObservableObject
     /// </summary>
     public async Task<(bool success, string message)> DeleteTransactionSplitAsync(int splitId)
     {
-        System.Diagnostics.Debug.WriteLine($"[TransactionsModel] DeleteTransactionSplitAsync called for split ID: {splitId}");
-
         if (!IsLoggedIn)
         {
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] User not logged in, aborting delete");
             return (false, "Please log in first");
         }
 
@@ -317,16 +304,13 @@ public partial class TransactionsModel : ObservableObject
             IsBusy = true;
             StatusMessage = "Deleting transaction split...";
 
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Calling API to delete split {splitId}");
             await _transactions.DeleteTransactionSplitAsync(splitId);
 
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] API delete succeeded, now refreshing data");
             StatusMessage = "Transaction split deleted successfully";
         }
         catch (Exception ex)
         {
             var errorMsg = $"Error deleting transaction split: {ex.Message}";
-            System.Diagnostics.Debug.WriteLine($"[TransactionsModel] ERROR: {errorMsg}");
             StatusMessage = errorMsg;
             return (false, errorMsg);
         }
@@ -336,9 +320,7 @@ public partial class TransactionsModel : ObservableObject
         }
 
         // Refresh AFTER IsBusy is set to false
-        System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Now calling refresh with IsBusy=false");
         await LoadTransactionsAndSplitsAsync();
-        System.Diagnostics.Debug.WriteLine($"[TransactionsModel] Refresh complete");
 
         return (true, "Transaction split deleted successfully");
     }

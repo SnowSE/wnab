@@ -301,9 +301,6 @@ public partial class PlanBudgetModel : ObservableObject
         }
         catch (Exception ex)
         {
-            // Log the actual error for debugging
-            System.Diagnostics.Debug.WriteLine($"Failed to calculate RTA: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
             throw new InvalidOperationException($"Failed to calculate Ready To Assign: {ex.Message}", ex);
         }
     }

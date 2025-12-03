@@ -16,27 +16,18 @@ public class BudgetSnapshotService : IBudgetSnapshotService
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Requesting snapshot for {month}/{year}");
-            
             var response = await _httpClient.GetAsync($"budget/snapshot/{month}/{year}");
-            
-            System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Response status: {response.StatusCode}");
             
             if (!response.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Error response: {errorContent}");
                 return null;
             }
 
             var snapshot = await response.Content.ReadFromJsonAsync<BudgetSnapshot>();
-            System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Deserialized snapshot: {(snapshot == null ? "NULL" : $"RTA={snapshot.SnapshotReadyToAssign}, Categories={snapshot.Categories?.Count ?? 0}")} ");
             return snapshot;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Exception: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[BudgetSnapshotService] Stack: {ex.StackTrace}");
             return null;
         }
     }
