@@ -40,5 +40,17 @@ public partial class EditTransactionViewModel : ObservableObject
             Model.Clear();
  RequestClose?.Invoke(this, EventArgs.Empty);
   }
-  }
+    }
+
+    [RelayCommand]
+    private void AddSplit()
+    {
+        Model.AddNewSplit();
+    }
+
+    [RelayCommand]
+    private async Task DeleteSplit(EditableSplitItem split)
+    {
+        await Model.DeleteSplitAsync(split);
+    }
 }

@@ -133,7 +133,7 @@ public partial class EditTransactionSplitModel : ObservableObject
         }
     }
 
-    private async Task FindAndSetAllocationAsync(int categoryId)
+    public async Task FindAndSetAllocationAsync(int categoryId)
     {
         try
         {
@@ -165,8 +165,8 @@ public partial class EditTransactionSplitModel : ObservableObject
         if (!IsLoggedIn)
             return "Please log in first";
 
-        // Note: CategoryAllocationId can be null for "Income" or "No Category", which is valid
-        // Only validate that Amount is provided
+        if (CategoryAllocationId <= 0)
+            return "Please select a category";
 
         if (Amount == 0)
             return "Please enter an amount";

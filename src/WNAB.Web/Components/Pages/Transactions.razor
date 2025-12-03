@@ -11,11 +11,11 @@
             <h1 class="page-title">Transactions</h1>
         </div>
         <div class="header-actions">
-            <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
+            <button class="btn btn-primary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
                 <i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
                 @(ViewModel.IsAddFormVisible ? "Cancel" : "New Transaction")
             </button>
-            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+            <button class="btn btn-secondary" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
                 @if (ViewModel.Model.IsBusy)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
@@ -80,69 +80,50 @@
 
 				<div class="row g-3 mt-2">
 					<div class="col-md-9">
-						<div class="d-flex align-items-center gap-2 mb-2">
-							<label class="form-label mb-0">Category (Optional)</label>
-							<button type="button" class="btn btn-sm btn-outline-primary" @onclick="ViewModel.AddTransactionViewModel.ToggleSplitTransactionCommand.Execute">
-								@(ViewModel.AddTransactionViewModel.Model.IsSplitTransaction ? "Single Category" : "Split Transaction")
-							</button>
-						</div>
+						<label class="form-label mb-2">Category</label>
 
-						@if (!ViewModel.AddTransactionViewModel.Model.IsSplitTransaction)
-						{
-							<select class="form-select" @bind="ViewModel.AddTransactionViewModel.Model.CategoryId">
-								<option value="-1">Income</option>
-								<option value="0">No Category</option>
-								@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
-								{
-									<option value="@category.Id">@category.Name</option>
-								}
-							</select>
-						}
-						else
-						{
-							<div class="border rounded p-3 bg-light">
-								@foreach (var split in ViewModel.AddTransactionViewModel.Model.Splits)
-								{
-									<div class="row g-2 mb-2 align-items-center">
-										<div class="col-md-6">
-											<select class="form-select form-select-sm"
-													value="@(split.Model.SelectedCategory?.Id ?? 0)"
-													@onchange="(e) => OnSplitCategoryChanged(split, e)">
-												<option value="-1">Income</option>
-												<option value="0">No Category</option>
-												@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
-												{
-													<option value="@category.Id">@category.Name</option>
-												}
-											</select>
-										</div>
-										<div class="col-md-4">
-											<input type="number" step="0.01" class="form-control form-control-sm"
-												   @bind="split.Model.Amount" placeholder="0.00" />
-										</div>
-										<div class="col-md-2">
-											<button type="button" class="btn btn-sm btn-danger w-100"
-													@onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
-													disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
-												�
-											</button>
-										</div>
+						<div class="border rounded p-3 bg-light">
+							@foreach (var split in ViewModel.AddTransactionViewModel.Model.Splits)
+							{
+								<div class="row g-2 mb-2 align-items-center">
+									<div class="col-md-6">
+										<select class="form-select form-select-sm"
+												value="@(split.Model.SelectedCategory?.Id ?? 0)"
+												@onchange="(e) => OnSplitCategoryChanged(split, e)">
+											<option value="-1">Income</option>
+											@* <option value="0">No Category</option> *@
+											@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
+											{
+												<option value="@category.Id">@category.Name</option>
+											}
+										</select>
 									</div>
-								}
-
-								<button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddTransactionViewModel.AddSplitCommand.Execute">
-									+ Add Split
-								</button>
-
-								<div class="d-flex align-items-center gap-2 mt-2">
-									<small class="text-muted">Balance:</small>
-									<small class="fw-bold @(ViewModel.AddTransactionViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
-										@ViewModel.AddTransactionViewModel.Model.RemainingAmount.ToString("C")
-									</small>
-									<small class="text-muted">remaining</small>
+									<div class="col-md-4">
+										<input type="number" step="0.01" class="form-control form-control-sm"
+											   @bind="split.Model.Amount" placeholder="0.00" />
+									</div>
+									<div class="col-md-2">
+										<button type="button" class="btn btn-sm btn-danger w-100"
+												@onclick="() => ViewModel.AddTransactionViewModel.RemoveSplitCommand.Execute(split)"
+												disabled="@(ViewModel.AddTransactionViewModel.Model.Splits.Count <= 1)">
+											✕
+										</button>
+									</div>
 								</div>
+							}
+
+							<button type="button" class="btn btn-sm btn-success mb-2" @onclick="ViewModel.AddTransactionViewModel.AddSplitCommand.Execute">
+								+ Add Split
+							</button>
+
+							<div class="d-flex align-items-center gap-2 mt-2">
+								<small class="text-muted">Balance:</small>
+								<small class="fw-bold @(ViewModel.AddTransactionViewModel.Model.AreSplitsBalanced ? "text-success" : "text-danger")">
+									@ViewModel.AddTransactionViewModel.Model.RemainingAmount.ToString("C")
+								</small>
+								<small class="text-muted">remaining</small>
 							</div>
-						}
+						</div>
 					</div>
 					<div class="col-md-3">
 						<label class="form-label">Memo (Optional)</label>
@@ -296,7 +277,7 @@
 														<label class="form-label small">Category</label>
 														<select class="form-select form-select-sm" @bind="split.CategoryId">
 															<option value="-1">Income</option>
-															<option value="0">No Category</option>
+															@* <option value="0">No Category</option> *@
 															@foreach (var category in _availableCategories)
 															{
 																<option value="@category.Id">@category.Name</option>
@@ -553,8 +534,8 @@
 					{
 						ViewModel.EditTransactionSplitViewModel.Model.SelectedCategory = category;
 						
-						// Give the async allocation lookup a moment to complete
-						await Task.Delay(100);
+						// Wait for the allocation lookup to complete before saving
+						await ViewModel.EditTransactionSplitViewModel.Model.FindAndSetAllocationAsync(category.Id);
 						
 						ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
 						ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
@@ -582,32 +563,54 @@
 			else if (editingSplit.Id == 0)
 			{
 				// New split - create it
-				// Skip if no category is selected
-				if (!editingSplit.CategoryId.HasValue || editingSplit.CategoryId.Value == 0)
-				{
-					await JSRuntime.InvokeVoidAsync("console.warn", "Skipping split with no category");
-					continue;
-				}
-				
 				// First, load the transaction context (this sets the transaction date)
 				await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
 				
-				// Set the category by finding it in the available categories using CategoryId
-				var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
-				if (category != null)
+				// Handle different category scenarios
+				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
 				{
-					await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
+					// Regular category - find it and let the allocation lookup happen
+					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
+					if (category != null)
+					{
+						await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
+						
+						ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+						ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
+						ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
+						
+						await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+						await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
+					}
+					else
+					{
+						await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
+					}
+				}
+				else if (editingSplit.CategoryId == -1)
+				{
+					// Income - create split with null CategoryAllocationId
+					await JSRuntime.InvokeVoidAsync("console.log", $"Creating income split, amount {editingSplit.Amount}");
 					
-					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+					// Create a virtual "Income" category
+					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = new Category { Id = -1, Name = "Income", UserId = 0 };
 					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
 					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
 					
 					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
-					await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
+					await JSRuntime.InvokeVoidAsync("console.log", "Income split creation command executed");
 				}
 				else
 				{
-					await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
+					// No category (CategoryId == 0 or null) - create uncategorized split
+					await JSRuntime.InvokeVoidAsync("console.log", $"Creating uncategorized split, amount {editingSplit.Amount}");
+					
+					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = null;
+					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
+					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
+					
+					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
+					await JSRuntime.InvokeVoidAsync("console.log", "Uncategorized split creation command executed");
 				}
 			}
 		}

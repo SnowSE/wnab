@@ -18,16 +18,18 @@
         <VerticalStackLayout Padding="20" Spacing="16">
             <!-- Add Category Button -->
             <Button Text="+ Add Category"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    FontSize="14"
                     CornerRadius="8"
-                    HeightRequest="44"
                     HorizontalOptions="End"
                     Command="{Binding AddCategoryCommand}"
                     IsEnabled="{Binding Model.IsLoggedIn}"
-                    Margin="0,0,0,8" />
+                    VerticalOptions="Center">
+                <Button.Padding>
+                    <OnIdiom x:TypeArguments="Thickness"
+                             Phone="12,8"
+                             Tablet="14,10"
+                             Desktop="16,12" />
+                </Button.Padding>
+            </Button>
 
             <!-- Login prompt when not logged in -->
             <Label Text="Please use the Login page to sign in first." 

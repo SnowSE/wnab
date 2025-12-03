@@ -125,8 +125,9 @@ public partial class AddSplitToTransactionModel : ObservableObject
         if (TransactionId <= 0)
             return "Invalid transaction";
 
-        if (SelectedCategory == null)
-            return "Please select a category";
+        // Category is optional - splits can be uncategorized or income
+        // if (SelectedCategory == null)
+        //     return "Please select a category";
 
         if (Amount == 0)
             return "Please enter an amount";
@@ -148,21 +149,39 @@ public partial class AddSplitToTransactionModel : ObservableObject
             IsBusy = true;
             StatusMessage = "Adding split...";
 
-            // Find allocation at save time, not during category selection
-            var allocation = await _allocations.FindAllocationAsync(
-                SelectedCategory!.Id,
-                TransactionDate.Month,
-                TransactionDate.Year);
+            int? allocationId = null;
 
-            if (allocation == null)
+            // Handle different category scenarios
+            if (SelectedCategory != null && SelectedCategory.Id > 0)
             {
-                var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                StatusMessage = errorMsg;
-                return (false, errorMsg);
+                // Regular category - find allocation at save time
+                var allocation = await _allocations.FindAllocationAsync(
+                    SelectedCategory.Id,
+                    TransactionDate.Month,
+                    TransactionDate.Year);
+
+                if (allocation == null)
+                {
+                    var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                    StatusMessage = errorMsg;
+                    return (false, errorMsg);
+                }
+
+                allocationId = allocation.Id;
+            }
+            else if (SelectedCategory?.Id == -1)
+            {
+                // Income - null allocation
+                allocationId = null;
+            }
+            else
+            {
+                // No category selected (uncategorized) - null allocation
+                allocationId = null;
             }
 
             var record = new TransactionSplitRecord(
-                allocation.Id,
+                allocationId,
                 TransactionId,
                 Amount,
                 Notes);

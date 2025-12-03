@@ -46,9 +46,6 @@ public partial class AddTransactionModel : ObservableObject
     private Category? selectedCategory;
 
     [ObservableProperty]
-    private bool isSplitTransaction = false;
-
-    [ObservableProperty]
     private bool isLoggedIn;
 
     [ObservableProperty]
@@ -148,6 +145,8 @@ public partial class AddTransactionModel : ObservableObject
                 AvailableAccounts.Add(account);
 
             AvailableCategories.Clear();
+            // Add Income option at the top for income transactions
+            AvailableCategories.Add(new Category { Id = -1, Name = "Income", UserId = 0 });
             foreach (var category in categoriesTask.Result)
                 AvailableCategories.Add(category);
 
@@ -226,19 +225,13 @@ public partial class AddTransactionModel : ObservableObject
     }
 
     /// <summary>
-    /// Toggle split transaction mode.
+    /// Ensure at least one split exists. Called during initialization.
     /// </summary>
-    public void ToggleSplitTransaction()
+    public void EnsureOneSplit()
     {
-        IsSplitTransaction = !IsSplitTransaction;
-        
-        if (IsSplitTransaction)
+        if (Splits.Count == 0)
         {
-            // Initialize with one split containing the full amount
-            if (Splits.Count == 0)
-            {
-                AddSplit();
-            }
+            AddSplit();
         }
     }
 
@@ -298,21 +291,16 @@ public partial class AddTransactionModel : ObservableObject
         if (Amount == 0)
             return "Please enter an amount";
 
-        // Category is now optional for simple transactions
+        // Always validate splits (transactions always use splits now)
+        if (Splits.Count == 0)
+            return "Please add at least one split";
 
-        // Validate splits if in split mode
-        if (IsSplitTransaction)
-        {
-            if (Splits.Count == 0)
-                return "Please add at least one split";
+        if (!AreSplitsBalanced)
+            return $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
 
-            if (!AreSplitsBalanced)
-                return $"Splits must total transaction amount. Remaining: {RemainingAmount:C}";
-
-            // Validate each split has a category selected
-            if (Splits.Any(s => s.Model.SelectedCategory == null))
-                return "Please select a category for all splits";
-        }
+        // Validate each split has a category selected
+        if (Splits.Any(s => s.Model.SelectedCategory == null))
+            return "Please select a category for all splits";
 
         return null; // Valid
     }
@@ -339,90 +327,51 @@ public partial class AddTransactionModel : ObservableObject
             // Convert selected date to UTC for PostgreSQL compatibility
             var utcTransactionDate = DateTime.SpecifyKind(TransactionDate, DateTimeKind.Utc);
             
-            TransactionRecord record;
+            // Always use splits - look up allocations for each split at save time
+            var splitRecords = new List<TransactionSplitRecord>();
             
-            if (IsSplitTransaction)
+            foreach (var split in Splits)
             {
-                // Look up allocations for each split at save time
-                var splitRecords = new List<TransactionSplitRecord>();
-                
-                foreach (var split in Splits)
+                if (split.Model.SelectedCategory == null)
                 {
-                    if (split.Model.SelectedCategory == null)
-                    {
-                        StatusMessage = "Please select a category for all splits";
-                        return (false, "Please select a category for all splits");
-                    }
-                    
-                    // Check if this is an Income split (Id == -1)
-                    if (split.Model.SelectedCategory.Id == -1)
-                    {
-                        // Income: Create split with null CategoryAllocationId
-                        splitRecords.Add(new TransactionSplitRecord(
-                            null, 
-                            -1, 
-                            split.Model.Amount, 
-                            split.Model.Notes));
-                    }
-                    else
-                    {
-                        var allocation = await _allocations.FindAllocationAsync(
-                            split.Model.SelectedCategory.Id, 
-                            TransactionDate.Month, 
-                            TransactionDate.Year);
-                        
-                        if (allocation == null)
-                        {
-                            var errorMsg = $"No budget allocation found for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                            StatusMessage = errorMsg;
-                            return (false, errorMsg);
-                        }
-                        
-                        splitRecords.Add(new TransactionSplitRecord(
-                            allocation.Id, 
-                            -1, 
-                            split.Model.Amount, 
-                            split.Model.Notes));
-                    }
+                    StatusMessage = "Please select a category for all splits";
+                    return (false, "Please select a category for all splits");
                 }
-                    
-                record = new TransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
-            }
-            else
-            {
-                // For simple transactions:
-                // - If CategoryId == -1, create income split (null CategoryAllocationId)
-                // - If a category is selected, create a single split with the full transaction amount
-                // - If CategoryId == 0 (no category), create transaction without splits (uncategorized)
-                var splitRecords = new List<TransactionSplitRecord>();
                 
-                if (CategoryId == -1)
+                // Check if this is an Income split (Id == -1)
+                if (split.Model.SelectedCategory.Id == -1)
                 {
                     // Income: Create split with null CategoryAllocationId
-                    splitRecords.Add(new TransactionSplitRecord(null, -1, Amount, null));
+                    splitRecords.Add(new TransactionSplitRecord(
+                        null, 
+                        -1, 
+                        split.Model.Amount, 
+                        split.Model.Notes));
                 }
-                else if (SelectedCategory != null)
+                else
                 {
                     var allocation = await _allocations.FindAllocationAsync(
-                        SelectedCategory.Id, 
+                        split.Model.SelectedCategory.Id, 
                         TransactionDate.Month, 
                         TransactionDate.Year);
                     
                     if (allocation == null)
                     {
-                        var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
+                        var errorMsg = $"No budget allocation found for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
                         StatusMessage = errorMsg;
                         return (false, errorMsg);
                     }
                     
-                    splitRecords.Add(new TransactionSplitRecord(allocation.Id, -1, Amount, null));
+                    splitRecords.Add(new TransactionSplitRecord(
+                        allocation.Id, 
+                        -1, 
+                        split.Model.Amount, 
+                        split.Model.Notes));
                 }
-                // else: CategoryId == 0, no category selected, splitRecords remains empty (uncategorized transaction)
-                
-                record = new TransactionRecord(
-                    AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
             }
+                
+            var record = new TransactionRecord(
+                AccountId, Payee, Memo, Amount, utcTransactionDate, splitRecords);
             
             await _transactions.CreateTransactionAsync(record);
             
@@ -456,8 +405,9 @@ public partial class AddTransactionModel : ObservableObject
         SelectedAccount = null;
         SelectedCategory = null;
         TransactionDate = DateTime.Today;
-        IsSplitTransaction = false;
         Splits.Clear();
+        // Initialize with one empty split
+        EnsureOneSplit();
         StatusMessage = "Ready to create transaction";
     }
 }
