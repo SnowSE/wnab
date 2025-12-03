@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WNAB.MVM;assembly=WNAB.MVM"
+             xmlns:behaviors="clr-namespace:WNAB.Maui.Behaviors"
              xmlns:dto="clr-namespace:WNAB.SharedDTOs;assembly=WNAB.SharedDTOs"
              x:Class="WNAB.Maui.TransactionsPage"
              x:DataType="local:TransactionsViewModel"
@@ -386,10 +387,10 @@
                                                                     <Picker Grid.Column="0"
                                                                             ItemsSource="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=EditTransactionViewModel.Model.AvailableCategories}"
                                                                             ItemDisplayBinding="{Binding Name}"
-                                                                            SelectedItem="{Binding SelectedCategory}"
+                                                                            SelectedItem="{Binding SelectedCategory, Mode=TwoWay}"
                                                                             BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}"
                                                                             VerticalOptions="Center" />
-                                                                    
+
                                                                     <!-- Amount Entry -->
                                                                     <Entry Grid.Column="1"
                                                                            Text="{Binding Amount}"

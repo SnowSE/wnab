@@ -186,14 +186,30 @@ public partial class EditTransactionModel : ObservableObject
             foreach (var split in transactionSplits)
             {
                 var category = ResolveSplitCategory(split.CategoryName, split.CategoryAllocationId);
-                
-                Splits.Add(new EditableSplitItem(
+                // removed category, will use it later.
+                // Splits.Add(new EditableSplitItem(
+                //     split.Id,
+                //     split.CategoryAllocationId,
+                //     category,
+                //     split.Amount,
+                //     split.Description,
+                //     split.CategoryName));
+                var item = new EditableSplitItem(
                     split.Id,
                     split.CategoryAllocationId,
-                    category,
+                    null, // pass null first!
                     split.Amount,
                     split.Description,
-                    split.CategoryName));
+                    split.CategoryName);
+
+                Splits.Add(item);
+
+                // Defer setting the real category until UI is ready
+                MainThread.BeginInvokeOnMainThread(async () =>
+                {
+                    await Task.Delay(100); // let CollectionView create the Picker
+                    item.SelectedCategory = category;
+                });
             }
 
             SyncSplitCategoryReferences();
