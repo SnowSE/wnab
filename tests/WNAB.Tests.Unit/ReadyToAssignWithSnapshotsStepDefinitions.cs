@@ -316,7 +316,7 @@ public partial class StepDefinitions
             
             // Setup GetSnapshotAsync to build and return snapshots (simulating server behavior)
             service.GetSnapshotAsync(Arg.Any<int>(), Arg.Any<int>())
-                .Returns(callInfo =>
+                .Returns(async callInfo =>
                 {
                     var month = callInfo.ArgAt<int>(0);
                     var year = callInfo.ArgAt<int>(1);
@@ -324,16 +324,16 @@ public partial class StepDefinitions
                     // Check if we already have this snapshot
                     if (snapshotStore.TryGetValue((month, year), out var existingSnapshot))
                     {
-                        return Task.FromResult<BudgetSnapshot?>(existingSnapshot);
+                        return existingSnapshot;
                     }
                     
                     // Build the snapshot using the same logic as the real service would
-                    var builtSnapshot = BuildSnapshotForTest(month, year, snapshotStore).Result;
+                    var builtSnapshot = await BuildSnapshotForTest(month, year, snapshotStore);
                     if (builtSnapshot != null)
                     {
                         snapshotStore[(month, year)] = builtSnapshot;
                     }
-                    return Task.FromResult<BudgetSnapshot?>(builtSnapshot);
+                    return builtSnapshot;
                 });
             
             // Setup SaveSnapshotAsync to store snapshots
