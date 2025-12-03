@@ -11,11 +11,11 @@
             <h1 class="page-title">Transactions</h1>
         </div>
         <div class="header-actions">
-            <button class="btn btn-outline-secondary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
+            <button class="btn btn-primary" @onclick="() => ViewModel.ToggleAddFormCommand.Execute(null)">
                 <i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
                 @(ViewModel.IsAddFormVisible ? "Cancel" : "New Transaction")
             </button>
-            <button class="btn btn-outline-secondary ms-2" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
+            <button class="btn btn-secondary" @onclick="OnRefreshClick" disabled="@ViewModel.Model.IsBusy">
                 @if (ViewModel.Model.IsBusy)
                 {
                     <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>

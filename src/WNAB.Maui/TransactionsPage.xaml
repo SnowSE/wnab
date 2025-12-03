@@ -22,7 +22,7 @@
 
             <!-- Page Header -->
             <Grid ColumnDefinitions="*,Auto,Auto"
-                  ColumnSpacing="8"
+                  ColumnSpacing="12"
                   RowSpacing="8">
                 <Label Grid.Column="0"
                        Text="Transactions"
@@ -33,13 +33,27 @@
                         Text="{Binding IsAddFormVisible, Converter={StaticResource AddFormButtonTextConverter}}"
                         Command="{Binding ToggleAddFormCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                        TextColor="White" />
+                        CornerRadius="8"
+                        VerticalOptions="Center">
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness"
+                                 Phone="12,8"
+                                 Tablet="14,10"
+                                 Desktop="16,12" />
+                    </Button.Padding>
+                </Button>
                 <Button Grid.Column="2"
                         Text="Refresh"
                         Command="{Binding RefreshCommand}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
-                        TextColor="White" />
+                        CornerRadius="8"
+                        VerticalOptions="Center">
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness"
+                                 Phone="8,6"
+                                 Tablet="10,8"
+                                 Desktop="12,10" />
+                    </Button.Padding>
+                </Button>
             </Grid>
 
             <!-- Login prompt when not logged in -->

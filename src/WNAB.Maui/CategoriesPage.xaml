@@ -19,7 +19,7 @@
             <!-- Add Category Button -->
             <Button Text="+ Add Category"
                     BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
-                    TextColor="White"
+                    
                     FontAttributes="Bold"
                     FontSize="14"
                     CornerRadius="8"
