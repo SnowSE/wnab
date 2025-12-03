@@ -106,7 +106,7 @@ builder.Services.AddScoped<WNAB.MVM.IAlertService, BlazorAlertService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-// Use the existing Transient registrations from above (lines 94-97)
+// Use the existing Scoped registrations from above (lines 90-97)
 builder.Services.AddScoped<ICategoryAllocationManagementService>(sp => sp.GetRequiredService<CategoryAllocationManagementService>());
 builder.Services.AddScoped<ITransactionManagementService>(sp => sp.GetRequiredService<TransactionManagementService>());
 
