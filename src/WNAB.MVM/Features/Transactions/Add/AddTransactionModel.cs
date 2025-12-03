@@ -145,6 +145,8 @@ public partial class AddTransactionModel : ObservableObject
                 AvailableAccounts.Add(account);
 
             AvailableCategories.Clear();
+            // Add Income option at the top for income transactions
+            AvailableCategories.Add(new Category { Id = -1, Name = "Income", UserId = 0 });
             foreach (var category in categoriesTask.Result)
                 AvailableCategories.Add(category);
 
