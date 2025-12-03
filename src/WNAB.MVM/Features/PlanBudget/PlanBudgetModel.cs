@@ -205,6 +205,11 @@ public partial class PlanBudgetModel : ObservableObject
         // Get the budget snapshot for this month and store it
         var snapshot = await _budgetSnapshotService.GetSnapshotAsync(month, year);
         CurrentSnapshot = snapshot;
+        if (snapshot != null)
+        {
+            ReadyToAssign = snapshot.SnapshotReadyToAssign;
+        }
+        OnPropertyChanged(nameof(CurrentSnapshot));
         
         // Determine prior month/year
         var priorMonth = month - 1;
@@ -227,56 +232,49 @@ public partial class PlanBudgetModel : ObservableObject
                 a.Month == priorMonth &&
                 a.Year == priorYear);
 
-                
-            
-            // If no allocation exists for this category/month, create a temporary one
             if (allocation == null)
             {
                 allocation = new CategoryAllocation
                 {
-                    Id = 0, // Not yet persisted
+                    Id = 0,
                     CategoryId = category.Id,
                     Category = category,
                     BudgetedAmount = 0,
                     Month = month,
                     Year = year,
-                    IsActive = pastMonthAllocation?.IsActive ?? category.IsActive, // New allocations follow past month status
+                    IsActive = pastMonthAllocation?.IsActive ?? category.IsActive,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-
-
-                // New allocations always go to inactive if not active
-                if (!allocation.IsActive)
-                {
-                    InactiveAllocations.Add(allocation);
-                }
-                else
-                {
-                    BudgetAllocations.Add(allocation);
-                }
             }
             else
             {
-                // Ensure the Category navigation property is populated
                 allocation.Category = category;
-                
-                // Existing allocations go to appropriate collection based on IsActive
-                if (allocation.IsActive)
-                {
-                    BudgetAllocations.Add(allocation);
-                }
-                else
-                {
-                    InactiveAllocations.Add(allocation);
-                }
-                
-                // Load spent amount for existing allocations
-                await LoadSpentAmountAsync(allocation.Id);
             }
-            
-            // TODO: Map snapshot data to allocation for display
-            // Snapshot data will be accessed separately for UI display
+
+            if (allocation.Id > 0)
+            {
+                await LoadSpentAmountAsync(allocation);
+            }
+
+            var categorySnapshot = snapshot?.Categories
+                .FirstOrDefault(c => c.CategoryId == category.Id);
+
+            var spentAmount = GetSpentAmount(allocation.Id);
+            allocation.Activity = spentAmount;
+            allocation.Available = categorySnapshot?.Available ?? (allocation.BudgetedAmount - spentAmount);
+            allocation.Progress = allocation.BudgetedAmount <= 0
+                ? 0d
+                : Math.Min((double)(spentAmount / allocation.BudgetedAmount), 1d);
+
+            if (allocation.IsActive)
+            {
+                BudgetAllocations.Add(allocation);
+            }
+            else
+            {
+                InactiveAllocations.Add(allocation);
+            }
             
             _allocatedCategoryIds.Add(category.Id);
         }
@@ -312,29 +310,35 @@ public partial class PlanBudgetModel : ObservableObject
     /// <summary>
     /// Load the spent amount for a specific allocation from transaction splits.
     /// </summary>
-    private async Task LoadSpentAmountAsync(int allocationId)
+    private async Task LoadSpentAmountAsync(CategoryAllocation allocation)
     {
         try
         {
-            // Get the allocation to find its category
-            var allocation = BudgetAllocations.FirstOrDefault(a => a.Id == allocationId);
             if (allocation == null) return;
-            
+
+            if (allocation.Id <= 0)
+            {
+                return;
+            }
+
             // Get all transaction splits for this category
             var splits = await _transactionService.GetTransactionSplitsForAllocationAsync(allocation.CategoryId);
             
             // Filter splits that belong to this specific allocation (by matching the allocation ID)
-            var relevantSplits = splits.Where(s => s.CategoryAllocationId == allocationId);
+            var relevantSplits = splits.Where(s => s.CategoryAllocationId == allocation.Id);
             
             // Sum the amounts (expenses are positive, income would be negative if IsIncome = true)
             var spent = relevantSplits.Sum(s => s.Amount);
             
-            _spentAmounts[allocationId] = spent;
+            _spentAmounts[allocation.Id] = spent;
         }
         catch (Exception)
         {
             // If we can't load spent amount, default to 0
-            _spentAmounts[allocationId] = 0;
+            if (allocation?.Id > 0)
+            {
+                _spentAmounts[allocation.Id] = 0;
+            }
         }
     }
     
@@ -353,6 +357,20 @@ public partial class PlanBudgetModel : ObservableObject
     {
         var spent = GetSpentAmount(allocation.Id);
         return allocation.BudgetedAmount - spent;
+    }
+    
+    /// <summary>
+    /// Get the available amount for a category from the current snapshot.
+    /// This represents all-time allocations minus all-time spending for this category.
+    /// </summary>
+    public decimal GetAvailableFromSnapshot(CategoryAllocation allocation)
+    {
+        if (CurrentSnapshot?.Categories == null) return 0m;
+        
+        var categorySnapshot = CurrentSnapshot.Categories
+            .FirstOrDefault(c => c.CategoryId == allocation.CategoryId);
+        
+        return categorySnapshot?.Available ?? 0m;
     }
     
     /// <summary>

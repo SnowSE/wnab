@@ -87,13 +87,13 @@ builder.Services.AddTransient<WNAB.Web.AuthenticationDelegatingHandler>();
 builder.Services.AddHttpClient("wnab-api", client => client.BaseAddress = new Uri("https+http://wnab-api"))
     .AddHttpMessageHandler<WNAB.Web.AuthenticationDelegatingHandler>();
 
-builder.Services.AddTransient<CategoryManagementService>(sp =>
+builder.Services.AddScoped<CategoryManagementService>(sp =>
     new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-builder.Services.AddTransient<AccountManagementService>(sp =>
+builder.Services.AddScoped<AccountManagementService>(sp =>
     new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-builder.Services.AddTransient<CategoryAllocationManagementService>(sp =>
+builder.Services.AddScoped<CategoryAllocationManagementService>(sp =>
     new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-builder.Services.AddTransient<TransactionManagementService>(sp =>
+builder.Services.AddScoped<TransactionManagementService>(sp =>
     new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 
 // Register WNAB.MVM services for shared business logic
@@ -106,8 +106,9 @@ builder.Services.AddScoped<WNAB.MVM.IAlertService, BlazorAlertService>();
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
-builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
+// Use the existing Scoped registrations from above (lines 90-97)
+builder.Services.AddScoped<ICategoryAllocationManagementService>(sp => sp.GetRequiredService<CategoryAllocationManagementService>());
+builder.Services.AddScoped<ITransactionManagementService>(sp => sp.GetRequiredService<TransactionManagementService>());
 
 // Register all Models (business logic layer)
 builder.Services.AddScoped<AccountsModel>();

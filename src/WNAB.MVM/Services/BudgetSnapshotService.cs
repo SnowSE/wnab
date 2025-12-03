@@ -16,16 +16,17 @@ public class BudgetSnapshotService : IBudgetSnapshotService
     {
         try
         {
-            var response = await _httpClient.GetAsync($"budget/snapshot?month={month}&year={year}");
+            var response = await _httpClient.GetAsync($"budget/snapshot/{month}/{year}");
             
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            return await response.Content.ReadFromJsonAsync<BudgetSnapshot>();
+            var snapshot = await response.Content.ReadFromJsonAsync<BudgetSnapshot>();
+            return snapshot;
         }
-        catch
+        catch (Exception)
         {
             return null;
         }
