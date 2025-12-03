@@ -13,6 +13,7 @@ public partial class PlanBudgetViewModel : ObservableObject
     private readonly IMVMPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
     private readonly IAlertService _alertService;
+    
     public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService, IAuthenticationService authenticationService, IAlertService alertService)
     {
         Model = model;
@@ -539,5 +540,21 @@ public partial class PlanBudgetViewModel : ObservableObject
             return Colors.Gray;
             
         return categorySnapshot.Available >= 0 ? Colors.Green : Colors.Red;
+    }
+    
+    /// <summary>
+    /// Get the spent amount for an allocation - helper for XAML converters.
+    /// </summary>
+    public decimal GetSpentForAllocation(CategoryAllocation allocation)
+    {
+        return Model.GetSpentAmount(allocation.Id);
+    }
+    
+    /// <summary>
+    /// Get the available amount for an allocation - helper for XAML converters.
+    /// </summary>
+    public decimal GetAvailableForAllocation(CategoryAllocation allocation)
+    {
+        return Model.GetAvailableFromSnapshot(allocation);
     }
 }

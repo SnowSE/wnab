@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WNAB.Data;
 
@@ -33,6 +34,16 @@ public class CategoryAllocation
     // Navigation properties
     public Category Category { get; set; } = null!;
     public ICollection<TransactionSplit> TransactionSplits { get; set; } = new List<TransactionSplit>();
+
+    // These properties are computed client-side for UI display only
+    [NotMapped]
+    public decimal Activity { get; set; }
+
+    [NotMapped]
+    public decimal Available { get; set; }
+
+    [NotMapped]
+    public double Progress { get; set; }
 
     // Parameterless ctor for EF Core
     public CategoryAllocation() { }

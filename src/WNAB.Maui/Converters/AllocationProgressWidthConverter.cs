@@ -17,9 +17,7 @@ public class AllocationProgressWidthConverter : IValueConverter
         if (allocation.BudgetedAmount <= 0)
             return 0.0;
 
-        // TODO: Get activity from snapshot instead
-        // For now, return 0 until we wire up snapshot data
-        return 0.0;
+        return Math.Clamp(allocation.Progress, 0.0, 1.0);
         
         // var percentage = (double)Math.Abs(allocation.Activity) / (double)allocation.BudgetedAmount;
         // var cappedPercentage = Math.Min(percentage, 1.0); // Cap at 100%
