@@ -1,20 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet add:*)",
       "Bash(dotnet build)",
-      "Bash(dotnet build:*)",
-      "Bash(dotnet clean:*)",
-      "Bash(Select-String -Pattern \"App\\.razor|CS0246|Razor\" -Context 2)",
-      "Bash(dotnet msbuild:*)",
-      "Read(//d/MauiAspire/**)",
-      "Bash(dotnet new:*)",
-      "Bash(dotnet sln:*)",
-      "WebFetch(domain:devblogs.microsoft.com)",
-      "WebSearch",
-      "Bash(dotnet remove:*)",
-      "Bash(dir:*)",
-      "Bash(Get-ChildItem -Path obj -Recurse -Filter \"*scopedcss*\" -ErrorAction SilentlyContinue)"
+      "Bash(dotnet restore)",
+      "Bash(dotnet build:*)"
     ],
     "deny": [],
     "ask": []

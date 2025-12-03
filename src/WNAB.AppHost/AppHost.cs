@@ -2,6 +2,8 @@ using Scalar.Aspire;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+builder.AddAzureContainerAppEnvironment("wnabazure");
+
 var postgres = builder.AddPostgres("postgres")
     .WithDataVolume("wnab_aspire_data")
     .WithPgWeb()
@@ -18,19 +20,27 @@ var mailpit = builder.AddMailPit("mailpit")
     .WithLifetime(ContainerLifetime.Persistent);
 
 var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
+    .WithExternalHttpEndpoints()
     .WithReference(db)
     .WithReference(mailpit)
     .WaitFor(db);
 
 var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
+    .WithExternalHttpEndpoints()
     .WithReference(api);
 
-builder.AddProject<Projects.WNAB_Maui>("wnab-maui")
+var devTunnel = builder.AddDevTunnel("wnab-tunnel")
+    .WithAnonymousAccess()
+    .WithReference(api.GetEndpoint("https"));
+
+var mauiApp = builder.AddMauiProject("wnab-maui", "../WNAB.Maui/WNAB.Maui.csproj");
+
+mauiApp.AddWindowsDevice()
     .WithReference(api);
 
-builder.AddDevTunnel("wnab-tunnel")
-    .WithAnonymousAccess()    
-    .WithReference(web.GetEndpoint("http"));
+mauiApp.AddAndroidDevice()
+    .WithOtlpDevTunnel()
+    .WithReference(api, devTunnel);
 
 builder.AddScalarApiReference()
     .WithApiReference(api)
