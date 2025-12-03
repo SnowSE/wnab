@@ -23,6 +23,18 @@
         </div>
         
         <div class="header-actions">
+            @if (!ViewModel.Model.ShowInactive)
+            {
+                <button class="btn btn-primary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#createAccountModal" 
+                        @onclick="OnAddAccountClick"
+                        disabled="@(!ViewModel.Model.IsLoggedIn)">
+                    <i class="bi bi-plus-circle me-1"></i>
+                    Add Account
+                </button>
+            }
+            
             <button class="btn btn-secondary" 
                     @onclick="OnToggleShowInactiveClick" 
                     disabled="@(!ViewModel.Model.IsLoggedIn)">
@@ -35,18 +47,6 @@
                     <text>Show Inactive</text>
                 }
             </button>
-            
-            @if (!ViewModel.Model.ShowInactive)
-            {
-                <button class="btn btn-primary" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#createAccountModal" 
-                        @onclick="OnAddAccountClick"
-                        disabled="@(!ViewModel.Model.IsLoggedIn)">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    Add Account
-                </button>
-            }
         </div>
     </div>
 

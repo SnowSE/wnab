@@ -45,6 +45,26 @@
                 </VerticalStackLayout>
 
                 <Button Grid.Column="1"
+                        Command="{Binding AddAccountCommand}"
+                        IsEnabled="{Binding Model.IsLoggedIn}"
+                        IsVisible="{Binding Model.ShowInactive, Converter={StaticResource InvertedBoolConverter}}"
+                        CornerRadius="8"
+                        VerticalOptions="Center">
+                    <Button.Text>
+                        <OnIdiom x:TypeArguments="x:String"
+                                 Phone="+ Add"
+                                 Tablet="+ Add Account"
+                                 Desktop="+ Add Account" />
+                    </Button.Text>
+                    <Button.Padding>
+                        <OnIdiom x:TypeArguments="Thickness"
+                                 Phone="12,8"
+                                 Tablet="14,10"
+                                 Desktop="16,12" />
+                    </Button.Padding>
+                </Button>
+
+                <Button Grid.Column="2"
                         Command="{Binding ToggleShowInactiveCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}"
                         CornerRadius="8"
@@ -62,26 +82,6 @@
                                  Phone="8,6"
                                  Tablet="10,8"
                                  Desktop="12,10" />
-                    </Button.Padding>
-                </Button>
-
-                <Button Grid.Column="2"
-                        Command="{Binding AddAccountCommand}"
-                        IsEnabled="{Binding Model.IsLoggedIn}"
-                        IsVisible="{Binding Model.ShowInactive, Converter={StaticResource InvertedBoolConverter}}"
-                        CornerRadius="8"
-                        VerticalOptions="Center">
-                    <Button.Text>
-                        <OnIdiom x:TypeArguments="x:String"
-                                 Phone="+ Add"
-                                 Tablet="+ Add Account"
-                                 Desktop="+ Add Account" />
-                    </Button.Text>
-                    <Button.Padding>
-                        <OnIdiom x:TypeArguments="Thickness"
-                                 Phone="12,8"
-                                 Tablet="14,10"
-                                 Desktop="16,12" />
                     </Button.Padding>
                 </Button>
             </Grid>
