@@ -66,8 +66,9 @@
                                 </Border.StrokeShape>
                                 
                                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                                    <!-- Category Name Row -->
-                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                                    <!-- View Mode: Category Name Row -->
+                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12"
+                                          IsVisible="{Binding IsEditing, Converter={StaticResource InvertedBoolConverter}}">
                                         <!-- Color Dot -->
                                         <BoxView Color="{Binding Color}"
                                                  WidthRequest="12"
@@ -89,7 +90,7 @@
                                                VerticalOptions="Center"
                                                HorizontalOptions="Center">
                                             <Label.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=EditCategoryCommand}"
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=EditCategoryInlineCommand}"
                                                                     CommandParameter="{Binding .}" />
                                             </Label.GestureRecognizers>
                                         </Label>
@@ -106,8 +107,61 @@
                                             </Label.GestureRecognizers>
                                         </Label>
                                     </Grid>
+
+                                    <!-- Edit Mode: Category Name Entry with Save/Cancel -->
+                                    <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+                                          IsVisible="{Binding IsEditing}">
+                                        <Entry Text="{Binding EditName}"
+                                               VerticalOptions="Center"
+                                               Placeholder="Category Name"
+                                               FontSize="14"
+                                               HeightRequest="40" />
+                                        
+                                        <!-- Save Button -->
+                                        <Label Grid.Column="1"
+                                               Text="✅"
+                                               FontSize="20"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=SaveCategoryInlineCommand}"
+                                                                    CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                        
+                                        <!-- Cancel Button -->
+                                        <Label Grid.Column="2"
+                                               Text="❌"
+                                               FontSize="20"
+                                               VerticalOptions="Center">
+                                            <Label.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoriesViewModel}}, Path=CancelEditCategoryInlineCommand}"
+                                                                    CommandParameter="{Binding .}" />
+                                            </Label.GestureRecognizers>
+                                        </Label>
+                                    </Grid>
+
+                                    <!-- Edit Mode: Color Picker (colors from CategoryItemViewModel.AvailableColors) -->
+                                    <HorizontalStackLayout Grid.Row="1" Spacing="8" IsVisible="{Binding IsEditing}"
+                                                           BindableLayout.ItemsSource="{Binding AvailableColors}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Ellipse Fill="{Binding ., Converter={StaticResource StringToColorConverter}}" WidthRequest="28" HeightRequest="28" StrokeThickness="3">
+                                                    <Ellipse.Stroke>
+                                                        <MultiBinding Converter="{StaticResource ColorSelectionMultiConverter}">
+                                                            <Binding Path="." />
+                                                            <Binding Source="{RelativeSource AncestorType={x:Type local:CategoryItemViewModel}}" Path="EditColor" />
+                                                        </MultiBinding>
+                                                    </Ellipse.Stroke>
+                                                    <Ellipse.GestureRecognizers>
+                                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type local:CategoryItemViewModel}}, Path=SelectColorCommand}"
+                                                                              CommandParameter="{Binding .}" />
+                                                    </Ellipse.GestureRecognizers>
+                                                </Ellipse>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
                                     
-                                    <!-- Amount Section -->
+                                    <!-- Amount Section (always visible) -->
                                     <VerticalStackLayout Grid.Row="2" Spacing="4">
                                         <Label Text="$0.00"
                                                FontSize="24"

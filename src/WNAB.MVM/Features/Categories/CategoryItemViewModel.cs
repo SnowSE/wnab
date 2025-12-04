@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using WNAB.Data;
 
 namespace WNAB.MVM;
@@ -34,7 +35,7 @@ public partial class CategoryItemViewModel : ObservableObject
     private string editColor = "#ef4444";
 
     /// <summary>
-    /// Available color options for the color picker.
+    /// Available color options for the color picker (static).
     /// </summary>
     public static List<string> ColorOptions { get; } = new()
     {
@@ -48,9 +49,23 @@ public partial class CategoryItemViewModel : ObservableObject
         "#14b8a6"  // teal
     };
 
+    /// <summary>
+    /// Instance property to access color options for binding in XAML.
+    /// </summary>
+    public List<string> AvailableColors => ColorOptions;
+
     public CategoryItemViewModel(Category category)
     {
         _category = category ?? throw new ArgumentNullException(nameof(category));
+    }
+
+    /// <summary>
+    /// Select color command for inline editing color picker.
+    /// </summary>
+    [RelayCommand]
+    private void SelectColor(string color)
+    {
+        EditColor = color;
     }
 
     /// <summary>
