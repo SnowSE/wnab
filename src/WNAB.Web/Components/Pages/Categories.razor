@@ -60,25 +60,61 @@
             @foreach (var c in ViewModel.Model.Items)
             {
                 <div class="category-card">
-                    <div class="category-card-header d-flex align-items-start justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="category-dot" style="background-color:@(string.IsNullOrWhiteSpace(c.Color) ? "#E53E3E" : c.Color)"></div>
-                            <div class="fw-semibold">@c.Name</div>
+                    @if (!c.IsEditing)
+                    {
+                        <!-- View Mode -->
+                        <div class="category-card-header d-flex align-items-start justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="category-dot" style="background-color:@(string.IsNullOrWhiteSpace(c.Color) ? "#E53E3E" : c.Color)"></div>
+                                <div class="fw-semibold">@c.Name</div>
+                            </div>
+                            <div class="category-actions">
+                                <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => OnEditCategoryClick(c)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => OnDeleteCategoryClick(c)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="category-actions">
-                            <button class="btn btn-link btn-sm text-dark p-1" title="Edit" @onclick="() => EditCategory(c)">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-link btn-sm text-danger p-1" title="Delete" @onclick="() => DeleteCategory(c)">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </div>
-                    </div>
 
-                    <div class="category-card-body mt-4">
-                        <div class="category-amount">$0.00</div>
-                        <div class="text-muted small">Total spent</div>
-                    </div>
+                        <div class="category-card-body mt-4">
+                            <div class="category-amount">$0.00</div>
+                            <div class="text-muted small">Total spent</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Edit Mode -->
+                        <div class="category-card-header d-flex align-items-start justify-content-between">
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   @bind="c.EditName" 
+                                   placeholder="Category Name" />
+                            <div class="category-actions ms-2">
+                                <button class="btn btn-link btn-sm text-success p-1" @onclick="() => OnSaveCategoryClick(c)" title="Save">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                <button class="btn btn-link btn-sm text-danger p-1" @onclick="() => OnCancelEditClick(c)" title="Cancel">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="category-card-body mt-3">
+                            <label class="form-label small text-muted mb-2">Color</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                @foreach (var color in ColorOptions)
+                                {
+                                    <button type="button" 
+                                            class="btn btn-sm p-0 color-swatch-btn" 
+                                            style="width: 28px; height: 28px; background-color:@color; border: 3px solid @(color == c.EditColor ? "#000" : "transparent"); border-radius: 50%;" 
+                                            @onclick="() => c.EditColor = color">
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             }
         </div>
@@ -96,14 +132,23 @@
             {
                 <div class="alert alert-info mb-3">@AddCategoryStatusMessage</div>
             }
-            <EditForm Model="AddCategoryModel" OnValidSubmit="@OnCreateCategorySubmit">
+            <EditForm Model="this" OnValidSubmit="@OnCreateCategorySubmit">
                 <div class="mb-3">
                     <label class="form-label">Category Name</label>
-                    <input class="form-control" @bind="AddCategoryModel.Name" required />
+                    <input class="form-control" @bind="NewCategoryName" required />
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Color</label>
-                    <input class="form-control" @bind="AddCategoryModel.Color" />
+                    <div class="d-flex gap-2 flex-wrap">
+                        @foreach (var color in ColorOptions)
+                        {
+                            <button type="button" 
+                                    class="btn btn-sm p-0 color-swatch-btn" 
+                                    style="width: 36px; height: 36px; background-color:@color; border: 3px solid @(color == NewCategoryColor ? "#000" : "transparent"); border-radius: 50%;" 
+                                    @onclick="() => NewCategoryColor = color">
+                            </button>
+                        }
+                    </div>
                 </div>
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <button type="button" class="btn btn-secondary" @onclick="ToggleAddForm">Cancel</button>
@@ -119,53 +164,18 @@
         </div>
     </div>
 }
-
-<!-- Inline Edit Category Form -->
-@if (IsEditFormVisible && ViewModel.Model.IsLoggedIn)
-{
-    <div class="card mb-4 shadow-sm border-warning">
-        <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Edit Category</h5>
-        </div>
-        <div class="card-body">
-            @if (!string.IsNullOrWhiteSpace(EditCategoryStatusMessage))
-            {
-                <div class="alert alert-info mb-3">@EditCategoryStatusMessage</div>
-            }
-            <EditForm Model="EditCategoryModel" OnValidSubmit="@OnEditCategorySubmit">
-                <div class="mb-3">
-                    <label class="form-label">Category Name</label>
-                    <input class="form-control" @bind="EditCategoryModel.Name" required />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Color</label>
-                    <input class="form-control" @bind="EditCategoryModel.Color" />
-                </div>
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <button type="button" class="btn btn-secondary" @onclick="ToggleEditForm">Cancel</button>
-                    <button class="btn btn-warning" type="submit" disabled="@IsEditCategoryBusy">
-                        @if (IsEditCategoryBusy)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        }
-                        Update Category
-                    </button>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-}
+</div>
 
 @code {
-    // Inline form state
+    // Use color options from CategoryItemViewModel
+    private static List<string> ColorOptions => CategoryItemViewModel.ColorOptions;
+
+    // Inline Add form state
     private bool IsAddFormVisible = false;
-    private bool IsEditFormVisible = false;
-    private Category AddCategoryModel = new Category();
-    private Category EditCategoryModel = new Category();
+    private string NewCategoryName = string.Empty;
+    private string NewCategoryColor = "#ef4444";
     private string? AddCategoryStatusMessage;
-    private string? EditCategoryStatusMessage;
     private bool IsAddCategoryBusy = false;
-    private bool IsEditCategoryBusy = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -197,14 +207,8 @@
     {
         IsAddFormVisible = !IsAddFormVisible;
         AddCategoryStatusMessage = null;
-        AddCategoryModel = new Category();
-    }
-
-    private void ToggleEditForm()
-    {
-        IsEditFormVisible = false;
-        EditCategoryStatusMessage = null;
-        EditCategoryModel = new Category();
+        NewCategoryName = string.Empty;
+        NewCategoryColor = "#ef4444";
     }
 
     private async Task RefreshCategories()
@@ -218,11 +222,12 @@
         IsAddCategoryBusy = true;
         try
         {
-            // Replace with actual ViewModel logic
-            var request = new WNAB.SharedDTOs.CreateCategoryRequest(AddCategoryModel.Name, AddCategoryModel.Color);
+            var request = new WNAB.SharedDTOs.CreateCategoryRequest(NewCategoryName, NewCategoryColor);
             await CategoryService.CreateCategoryAsync(request);
             AddCategoryStatusMessage = "Category created successfully!";
             IsAddFormVisible = false;
+            NewCategoryName = string.Empty;
+            NewCategoryColor = "#ef4444";
             await ViewModel.RefreshCommand.ExecuteAsync(null);
         }
         catch (Exception ex)
@@ -235,47 +240,37 @@
         }
     }
 
-    private async Task OnEditCategorySubmit()
+    private void OnEditCategoryClick(CategoryItemViewModel category)
     {
-        EditCategoryStatusMessage = null;
-        IsEditCategoryBusy = true;
-        try
+        category.StartEditing();
+    }
+
+    private async Task OnSaveCategoryClick(CategoryItemViewModel category)
+    {
+        if (string.IsNullOrWhiteSpace(category.EditName))
         {
-            // Replace with actual ViewModel logic
-            var request = new WNAB.SharedDTOs.EditCategoryRequest(EditCategoryModel.Id, EditCategoryModel.Name, EditCategoryModel.Color, EditCategoryModel.IsActive);
-            await CategoryService.UpdateCategoryAsync(EditCategoryModel.Id, request, default);
-            EditCategoryStatusMessage = "Category updated successfully!";
-            IsEditFormVisible = false;
-            await ViewModel.RefreshCommand.ExecuteAsync(null);
+            await JS.InvokeVoidAsync("alert", "Category name cannot be empty.");
+            return;
         }
-        catch (Exception ex)
+
+        var result = await ViewModel.Model.UpdateCategoryAsync(category.Id, category.EditName, category.EditColor, category.IsActive);
+        if (result.Success)
         {
-            EditCategoryStatusMessage = $"Error: {ex.Message}";
+            category.ApplyChanges();
         }
-        finally
+        else
         {
-            IsEditCategoryBusy = false;
+            await JS.InvokeVoidAsync("alert", result.ErrorMessage ?? "Failed to update category. Please try again.");
         }
     }
 
-    private void EditCategory(Category category)
+    private void OnCancelEditClick(CategoryItemViewModel category)
     {
-        if (category == null) return;
-        EditCategoryModel = new Category
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Color = category.Color,
-            IsActive = category.IsActive
-        };
-        IsEditFormVisible = true;
-        EditCategoryStatusMessage = null;
+        category.CancelEditing();
     }
 
-    private async Task DeleteCategory(Category category)
+    private async Task OnDeleteCategoryClick(CategoryItemViewModel category)
     {
-        if (category == null) return;
-
         var confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.");
         if (!confirmed) return;
 
@@ -298,4 +293,3 @@
         }
     }
 }
-</div>

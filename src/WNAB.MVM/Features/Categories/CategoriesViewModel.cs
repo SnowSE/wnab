@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using WNAB.Data;
 
 namespace WNAB.MVM;
 
@@ -60,28 +59,66 @@ public partial class CategoriesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Edit Category command - shows edit popup then refreshes the list.
+    /// Start inline editing for a category item.
     /// </summary>
     [RelayCommand]
-    private async Task EditCategory(Category category)
+    private void EditCategoryInline(CategoryItemViewModel categoryItem)
     {
-        if (category == null) return;
+        if (categoryItem == null) return;
+        categoryItem.StartEditing();
+    }
 
-        await _popupService.ShowEditCategoryAsync(category.Id, category.Name, category.Color, category.IsActive);
-        await Model.RefreshAsync();
+    /// <summary>
+    /// Save inline edits for a category item.
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveCategoryInline(CategoryItemViewModel categoryItem)
+    {
+        if (categoryItem == null) return;
+
+        if (string.IsNullOrWhiteSpace(categoryItem.EditName))
+        {
+            await _alertService.DisplayAlertAsync("Error", "Category name cannot be empty.");
+            return;
+        }
+
+        var (success, errorMessage) = await Model.UpdateCategoryAsync(
+            categoryItem.Id, 
+            categoryItem.EditName, 
+            categoryItem.EditColor, 
+            categoryItem.IsActive);
+
+        if (success)
+        {
+            categoryItem.ApplyChanges();
+        }
+        else
+        {
+            await _alertService.DisplayAlertAsync("Error", errorMessage ?? "Failed to update category. Please try again.");
+        }
+    }
+
+    /// <summary>
+    /// Cancel inline editing for a category item.
+    /// </summary>
+    [RelayCommand]
+    private void CancelEditCategoryInline(CategoryItemViewModel categoryItem)
+    {
+        if (categoryItem == null) return;
+        categoryItem.CancelEditing();
     }
 
     /// <summary>
     /// Delete Category command - confirms deletion then calls API.
     /// </summary>
     [RelayCommand]
-    private async Task DeleteCategory(Category category)
+    private async Task DeleteCategory(CategoryItemViewModel categoryItem)
     {
-        if (category == null) return;
+        if (categoryItem == null) return;
 
         var confirmed = await _alertService.DisplayAlertAsync(
             "Delete Category",
-            $"Are you sure you want to delete '{category.Name}'? This action cannot be undone.",
+            $"Are you sure you want to delete '{categoryItem.Name}'? This action cannot be undone.",
             "Delete",
             "Cancel");
 
@@ -89,7 +126,7 @@ public partial class CategoriesViewModel : ObservableObject
 
         try
         {
-            await _categoryService.DeleteCategoryAsync(category.Id);
+            await _categoryService.DeleteCategoryAsync(categoryItem.Id);
             await Model.RefreshAsync();
         }
         catch (Exception ex)

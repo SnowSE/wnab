@@ -13,7 +13,7 @@ public partial class CategoriesModel : ObservableObject
     private readonly CategoryManagementService _service;
     private readonly IAuthenticationService _authService;
 
-    public ObservableCollection<Category> Items { get; } = new();
+    public ObservableCollection<CategoryItemViewModel> Items { get; } = new();
 
     [ObservableProperty]
     private bool isBusy;
@@ -85,7 +85,10 @@ public partial class CategoriesModel : ObservableObject
 
             var items = await _service.GetCategoriesForUserAsync();
             foreach (var c in items)
-                Items.Add(c);
+            {
+                var categoryItem = new CategoryItemViewModel(c);
+                Items.Add(categoryItem);
+            }
 
             StatusMessage = items.Count == 0 ? "No categories found" : $"Loaded {items.Count} categories";
         }
@@ -108,6 +111,27 @@ public partial class CategoriesModel : ObservableObject
         if (IsLoggedIn)
         {
             await LoadCategoriesAsync();
+        }
+    }
+
+    /// <summary>
+    /// Update a category with new name and color.
+    /// Returns a tuple with success status and error message (if any).
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> UpdateCategoryAsync(int categoryId, string newName, string? newColor, bool isActive)
+    {
+        try
+        {
+            var request = new SharedDTOs.EditCategoryRequest(categoryId, newName, newColor, isActive);
+            await _service.UpdateCategoryAsync(categoryId, request);
+            StatusMessage = "Category updated successfully";
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            var errorMsg = $"Error updating category: {ex.Message}";
+            StatusMessage = errorMsg;
+            return (false, errorMsg);
         }
     }
 }
