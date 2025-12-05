@@ -22,14 +22,26 @@ public static class MauiProgram
 
 		// Add configuration from appsettings.json
 		var assembly = Assembly.GetExecutingAssembly();
-		using var stream = assembly.GetManifestResourceStream("WNAB.Maui.appsettings.json");
-		if (stream != null)
+		var configBuilder = new ConfigurationBuilder();
+		
+		// Load base appsettings.json
+		using var baseStream = assembly.GetManifestResourceStream("WNAB.Maui.appsettings.json");
+		if (baseStream != null)
 		{
-			var config = new ConfigurationBuilder()
-				.AddJsonStream(stream)
-				.Build();
-			builder.Configuration.AddConfiguration(config);
+			configBuilder.AddJsonStream(baseStream);
 		}
+
+#if !DEBUG
+		// Load production settings in Release mode (overrides base settings)
+		using var prodStream = assembly.GetManifestResourceStream("WNAB.Maui.appsettings.Production.json");
+		if (prodStream != null)
+		{
+			configBuilder.AddJsonStream(prodStream);
+		}
+#endif
+
+		var config = configBuilder.Build();
+		builder.Configuration.AddConfiguration(config);
 
 		// Register Budget logic services
 		builder.Services.AddScoped<IBudgetService, BudgetService>();
