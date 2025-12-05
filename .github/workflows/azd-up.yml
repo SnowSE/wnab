@@ -1,0 +1,33 @@
+name: Deploy with azd up
+
+on:
+  workflow_dispatch:    # manual trigger
+  push:
+    branches: [ main ]  # or any branch you want
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+      
+# name: Checkout repository
+#       uses: actions/checkout@v4
+
+      
+# name: Log in to Azure
+#       uses: azure/login@v2
+#       with:
+#         creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      
+# name: Install azd
+#       uses: Azure/azure-dev@v1
+
+      
+# name: Set environment name
+#       run: azd env select ${{ secrets.AZD_ENV_NAME }} || azd env new ${{ secrets.AZD_ENV_NAME }}
+
+      
+# name: Run azd up
+#       run: azd up --no-prompt
