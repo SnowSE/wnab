@@ -6,18 +6,16 @@ namespace WNAB.MVM;
 
 /// <summary>
 /// ViewModel for PlanBudgetPage - thin coordination layer between View and Model.
-/// Handles UI-specific concerns like navigation and popups, delegates business logic to Model.
+/// Handles UI-specific concerns like navigation, delegates business logic to Model.
 /// </summary>
 public partial class PlanBudgetViewModel : ObservableObject
 {
-    private readonly IMVMPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
     private readonly IAlertService _alertService;
     
-    public PlanBudgetViewModel(PlanBudgetModel model, IMVMPopupService popupService, IAuthenticationService authenticationService, IAlertService alertService)
+    public PlanBudgetViewModel(PlanBudgetModel model, IAuthenticationService authenticationService, IAlertService alertService)
     {
         Model = model;
-        _popupService = popupService;
         _authenticationService = authenticationService;
         _alertService = alertService;
         
@@ -321,17 +319,6 @@ public partial class PlanBudgetViewModel : ObservableObject
     private void ToggleCategoriesVisibility()
     {
         Model.ToggleCategoriesVisibility();
-    }
-
-    /// <summary>
-    /// Add Category command - shows popup then refreshes to include new category.
-    /// Pure UI coordination - shows popup and triggers Model to handle new category.
-    /// </summary>
-    [RelayCommand]
-    private async Task AddCategory()
-    {
-        await _popupService.ShowAddCategoryAsync();
-        await Model.HandleNewCategoryAsync();
     }
 
     /// <summary>

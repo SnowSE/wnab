@@ -17,12 +17,20 @@
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="16">
             <!-- Add Category Button -->
-            <Button Text="+ Add Category"
-                    CornerRadius="8"
+            <Button CornerRadius="8"
                     HorizontalOptions="End"
-                    Command="{Binding AddCategoryCommand}"
+                    Command="{Binding ToggleAddFormCommand}"
                     IsEnabled="{Binding Model.IsLoggedIn}"
                     VerticalOptions="Center">
+                <Button.Text>
+                    <Binding Path="IsAddFormVisible">
+                        <Binding.Converter>
+                            <converters:BoolToTextConverter xmlns:converters="clr-namespace:WNAB.Maui.Converters" 
+                                                            TrueText="Cancel"
+                                                            FalseText="+ Add Category" />
+                        </Binding.Converter>
+                    </Binding>
+                </Button.Text>
                 <Button.Padding>
                     <OnIdiom x:TypeArguments="Thickness"
                              Phone="12,8"
@@ -30,6 +38,75 @@
                              Desktop="16,12" />
                 </Button.Padding>
             </Button>
+
+            <!-- Inline Add Category Form -->
+            <Border IsVisible="{Binding IsAddFormVisible}"
+                    Padding="16"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    StrokeShape="RoundRectangle 12"
+                    Margin="0,8">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="➕ Create New Category"
+                           FontSize="20"
+                           FontAttributes="Bold" />
+
+                    <!-- Error Message -->
+                    <Label Text="{Binding AddCategoryModel.ErrorMessage}"
+                           IsVisible="{Binding AddCategoryModel.ErrorMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}"
+                           TextColor="Red"
+                           FontSize="14" />
+
+                    <!-- Category Name -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Category Name" FontAttributes="Bold" />
+                        <Entry Text="{Binding AddCategoryModel.Name}"
+                               Placeholder="Enter category name"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
+                    </VerticalStackLayout>
+
+                    <!-- Color Picker -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Color" FontAttributes="Bold" />
+                        <HorizontalStackLayout Spacing="8"
+                                               BindableLayout.ItemsSource="{Binding AddCategoryModel.ColorOptions}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+                                    <Ellipse Fill="{Binding ., Converter={StaticResource StringToColorConverter}}" 
+                                             WidthRequest="36" 
+                                             HeightRequest="36" 
+                                             StrokeThickness="3">
+                                        <Ellipse.Stroke>
+                                            <MultiBinding Converter="{StaticResource ColorSelectionMultiConverter}">
+                                                <Binding Path="." />
+                                                <Binding Source="{RelativeSource AncestorType={x:Type local:CategoriesViewModel}}" Path="AddCategoryModel.SelectedColor" />
+                                            </MultiBinding>
+                                        </Ellipse.Stroke>
+                                        <Ellipse.GestureRecognizers>
+                                            <TapGestureRecognizer Tapped="OnColorTapped" CommandParameter="{Binding .}" />
+                                        </Ellipse.GestureRecognizers>
+                                    </Ellipse>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Action Buttons -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
+                        <Button Text="Cancel"
+                                Command="{Binding CancelAddCategoryCommand}"
+                                BackgroundColor="Gray"
+                                TextColor="White" />
+                        <Button Grid.Column="1"
+                                Text="Create Category"
+                                Command="{Binding SaveNewCategoryCommand}"
+                                BackgroundColor="#28A745"
+                                TextColor="White"
+                                IsEnabled="{Binding AddCategoryModel.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Login prompt when not logged in -->
             <Label Text="Please use the Login page to sign in first." 

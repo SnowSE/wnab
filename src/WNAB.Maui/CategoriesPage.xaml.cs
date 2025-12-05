@@ -30,4 +30,15 @@ public partial class CategoriesPage : ContentPage
 
         await _viewModel.InitializeAsync();
     }
+
+    /// <summary>
+    /// Handle color selection in the inline add category form.
+    /// </summary>
+    private void OnColorTapped(object sender, TappedEventArgs e)
+    {
+        if (e.Parameter is string color)
+        {
+            _viewModel.AddCategoryModel.SelectedColor = color;
+        }
+    }
 }

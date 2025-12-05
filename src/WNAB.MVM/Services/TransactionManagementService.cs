@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using WNAB.SharedDTOs;
 
 namespace WNAB.MVM;
@@ -9,10 +10,12 @@ namespace WNAB.MVM;
 public class TransactionManagementService : ITransactionManagementService
 {
     private readonly HttpClient _http;
+    private readonly ILogger<TransactionManagementService>? _logger;
 
-    public TransactionManagementService(HttpClient http)
+    public TransactionManagementService(HttpClient http, ILogger<TransactionManagementService>? logger = null)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
+        _logger = logger;
     }
 
     public async Task<int> CreateTransactionAsync(TransactionRecord record, CancellationToken ct = default)
@@ -131,11 +134,21 @@ public class TransactionManagementService : ITransactionManagementService
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
 
+        _logger?.LogInformation("[TransactionManagementService] UpdateTransactionSplitAsync called: SplitId={SplitId}, CategoryAllocationId={AllocationId}, Amount={Amount}, Description={Description}", 
+            request.Id, request.CategoryAllocationId, request.Amount, request.Description);
+
         var response = await _http.PutAsJsonAsync($"transactionsplits/{request.Id}", request, ct);
+        
+        _logger?.LogInformation("[TransactionManagementService] API response status: {StatusCode}", response.StatusCode);
+        
         response.EnsureSuccessStatusCode();
 
         var updated = await response.Content.ReadFromJsonAsync<TransactionSplitResponse>(cancellationToken: ct);
         if (updated is null) throw new InvalidOperationException("API returned no content when updating transaction split.");
+        
+        _logger?.LogInformation("[TransactionManagementService] API returned: SplitId={SplitId}, CategoryAllocationId={AllocationId}, CategoryName={CategoryName}", 
+            updated.Id, updated.CategoryAllocationId, updated.CategoryName);
+        
         return updated;
     }
 

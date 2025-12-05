@@ -147,9 +147,15 @@
 
                     <!-- Splits Section (always visible) -->
                     <VerticalStackLayout Spacing="12">
-                        <Label Text="Category"
-                               FontAttributes="Bold"
-                               FontSize="16" />
+                        <HorizontalStackLayout Spacing="4">
+                            <Label Text="Category"
+                                   FontAttributes="Bold"
+                                   FontSize="16" />
+                            <Label Text="{Binding AddTransactionViewModel.Model.TransactionDate, StringFormat='(for {0:MMMM yyyy})'}"
+                                   FontSize="12"
+                                   TextColor="Gray"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
 
                         <CollectionView ItemsSource="{Binding AddTransactionViewModel.Model.Splits}">
                             <CollectionView.ItemTemplate>
@@ -298,7 +304,7 @@
                                         StrokeThickness="1"
                                         StrokeShape="RoundRectangle 12">
                                     <Border.IsVisible>
-                                        <MultiBinding Converter="{StaticResource IsEditingTransactionConverter}">
+                                        <MultiBinding Converter="{staticResource IsEditingTransactionConverter}">
                                             <Binding Path="Id" />
                                             <Binding Source="{RelativeSource AncestorType={x:Type local:TransactionsViewModel}}" Path="EditingTransactionId" />
                                         </MultiBinding>
@@ -356,6 +362,10 @@
                                                 <Label Text="Splits"
                                                        FontAttributes="Bold"
                                                        FontSize="14"
+                                                       VerticalOptions="Center" />
+                                                <Label Text="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=EditTransactionViewModel.Model.TransactionDate, StringFormat='(for {0:MMMM yyyy})'}"
+                                                       FontSize="12"
+                                                       TextColor="Gray"
                                                        VerticalOptions="Center" />
                                                 <Button Text="➕ Add Split"
                                                         Command="{Binding Source={RelativeSource AncestorType={x:Type local:TransactionsViewModel}}, Path=EditTransactionViewModel.AddSplitCommand}"

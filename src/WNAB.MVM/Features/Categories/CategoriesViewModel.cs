@@ -5,29 +5,35 @@ namespace WNAB.MVM;
 
 /// <summary>
 /// ViewModel for CategoriesPage - thin coordination layer between View and Model.
-/// Handles UI-specific concerns like navigation and popups, delegates business logic to Model.
+/// Handles UI-specific concerns like navigation, delegates business logic to Model.
+/// Uses inline editing instead of popups.
 /// </summary>
 public partial class CategoriesViewModel : ObservableObject
 {
-    private readonly IMVMPopupService _popupService;
     private readonly CategoryManagementService _categoryService;
     private readonly IAlertService _alertService;
+    private readonly AddCategoryModel _addCategoryModel;
 
     public CategoriesModel Model { get; }
+    
+    /// <summary>
+    /// Model for inline add category form.
+    /// </summary>
+    public AddCategoryModel AddCategoryModel => _addCategoryModel;
 
-    // Popup visibility properties
+    /// <summary>
+    /// Controls visibility of inline add category form.
+    /// </summary>
     [ObservableProperty]
-    private bool canSeeAddPopup;
+    private bool _isAddFormVisible;
 
-    [ObservableProperty]
-    private bool canSeeEditPopup;
-
-    public CategoriesViewModel(CategoriesModel model, IMVMPopupService popupService, CategoryManagementService categoryService, IAlertService alertService)
+    public CategoriesViewModel(CategoriesModel model, CategoryManagementService categoryService, IAlertService alertService, AddCategoryModel addCategoryModel)
     {
         Model = model;
-        _popupService = popupService;
         _categoryService = categoryService;
         _alertService = alertService;
+        _addCategoryModel = addCategoryModel;
+        _isAddFormVisible = false;
     }
 
     /// <summary>
@@ -48,14 +54,41 @@ public partial class CategoriesViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Add Category command - shows popup then refreshes the list.
-    /// Pure UI coordination - shows popup and triggers refresh.
+    /// Toggle add category form visibility.
     /// </summary>
     [RelayCommand]
-    private async Task AddCategory()
+    private void ToggleAddForm()
     {
-        await _popupService.ShowAddCategoryAsync();
-        await Model.RefreshAsync();
+        _isAddFormVisible = !_isAddFormVisible;
+        if (!_isAddFormVisible)
+        {
+            _addCategoryModel.Reset();
+        }
+    }
+
+    /// <summary>
+    /// Cancel add category - hides form and resets.
+    /// </summary>
+    [RelayCommand]
+    private void CancelAddCategory()
+    {
+        _isAddFormVisible = false;
+        _addCategoryModel.Reset();
+    }
+
+    /// <summary>
+    /// Save new category from inline form.
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveNewCategory()
+    {
+        var success = await _addCategoryModel.CreateCategoryAsync();
+        if (success)
+        {
+            _isAddFormVisible = false;
+            _addCategoryModel.Reset();
+            await Model.RefreshAsync();
+        }
     }
 
     /// <summary>

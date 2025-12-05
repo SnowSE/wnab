@@ -308,6 +308,7 @@ public partial class AddTransactionModel : ObservableObject
     /// <summary>
     /// Create the transaction by building the record and calling the service.
     /// Returns success message if created, error message if failed.
+    /// If no allocation exists for a category, one will be auto-created with $0 budget.
     /// </summary>
     public async Task<(bool success, string message)> CreateTransactionAsync()
     {
@@ -327,7 +328,7 @@ public partial class AddTransactionModel : ObservableObject
             // Convert selected date to UTC for PostgreSQL compatibility
             var utcTransactionDate = DateTime.SpecifyKind(TransactionDate, DateTimeKind.Utc);
             
-            // Always use splits - look up allocations for each split at save time
+            // Always use splits - look up or create allocations for each split at save time
             var splitRecords = new List<TransactionSplitRecord>();
             
             foreach (var split in Splits)
@@ -350,17 +351,11 @@ public partial class AddTransactionModel : ObservableObject
                 }
                 else
                 {
-                    var allocation = await _allocations.FindAllocationAsync(
+                    // Use FindOrCreateAllocationAsync to auto-create if missing
+                    var allocation = await _allocations.FindOrCreateAllocationAsync(
                         split.Model.SelectedCategory.Id, 
                         TransactionDate.Month, 
                         TransactionDate.Year);
-                    
-                    if (allocation == null)
-                    {
-                        var errorMsg = $"No budget allocation found for {split.Model.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                        StatusMessage = errorMsg;
-                        return (false, errorMsg);
-                    }
                     
                     splitRecords.Add(new TransactionSplitRecord(
                         allocation.Id, 

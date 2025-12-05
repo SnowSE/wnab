@@ -154,18 +154,11 @@ public partial class AddSplitToTransactionModel : ObservableObject
             // Handle different category scenarios
             if (SelectedCategory != null && SelectedCategory.Id > 0)
             {
-                // Regular category - find allocation at save time
-                var allocation = await _allocations.FindAllocationAsync(
+                // Regular category - find or create allocation at save time
+                var allocation = await _allocations.FindOrCreateAllocationAsync(
                     SelectedCategory.Id,
                     TransactionDate.Month,
                     TransactionDate.Year);
-
-                if (allocation == null)
-                {
-                    var errorMsg = $"No budget allocation found for {SelectedCategory.Name} in {TransactionDate:MMMM yyyy}. Please create a budget first.";
-                    StatusMessage = errorMsg;
-                    return (false, errorMsg);
-                }
 
                 allocationId = allocation.Id;
             }

@@ -5,19 +5,17 @@ namespace WNAB.MVM;
 
 /// <summary>
 /// ViewModel for MainPage - thin coordination layer between View and Model.
-/// Handles UI-specific concerns like navigation and popups, delegates business logic to Model.
+/// Handles UI-specific concerns like navigation, delegates business logic to Model.
 /// </summary>
 public partial class MainPageViewModel : ObservableObject
 {
-    private readonly IMVMPopupService _popupService;
     private readonly IAuthenticationService _authenticationService;
 
     public MainPageModel Model { get; }
 
-    public MainPageViewModel(MainPageModel model, IMVMPopupService popupService, IAuthenticationService authenticationService)
+    public MainPageViewModel(MainPageModel model, IAuthenticationService authenticationService)
     {
         Model = model;
-        _popupService = popupService;
         _authenticationService = authenticationService;
         
         // Subscribe to Model's IsSignedIn changes to update computed property

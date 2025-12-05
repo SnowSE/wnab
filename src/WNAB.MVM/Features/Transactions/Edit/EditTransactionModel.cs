@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging;
 using WNAB.Data;
 using WNAB.SharedDTOs;
 
@@ -13,6 +14,7 @@ public partial class EditTransactionModel : ObservableObject
     private readonly CategoryAllocationManagementService _allocations;
     private readonly IAuthenticationService _authService;
     private readonly IBudgetSnapshotService _budgetSnapshotService;
+    private readonly ILogger<EditTransactionModel>? _logger;
 
     // Virtual category IDs are negative to avoid colliding with real database IDs.
     private int _virtualCategoryIdSeed = -1000;
@@ -48,7 +50,7 @@ public partial class EditTransactionModel : ObservableObject
     private bool isLoggedIn;
 
     [ObservableProperty]
-  private bool isBusy;
+    private bool isBusy;
 
     public ObservableCollection<Account> AvailableAccounts { get; } = new();
     public ObservableCollection<Category> AvailableCategories { get; } = new();
@@ -70,7 +72,8 @@ public partial class EditTransactionModel : ObservableObject
         CategoryManagementService categories,
         CategoryAllocationManagementService allocations,
         IAuthenticationService authService,
-        IBudgetSnapshotService budgetSnapshotService)
+        IBudgetSnapshotService budgetSnapshotService,
+        ILogger<EditTransactionModel>? logger = null)
     {
         _transactions = transactions;
         _accounts = accounts;
@@ -78,11 +81,12 @@ public partial class EditTransactionModel : ObservableObject
         _allocations = allocations;
         _authService = authService;
         _budgetSnapshotService = budgetSnapshotService;
+        _logger = logger;
     }
 
     public async Task InitializeAsync()
     {
-      await CheckUserSessionAsync();
+        await CheckUserSessionAsync();
         if (IsLoggedIn)
         {
             await LoadAccountsAsync();
@@ -98,20 +102,20 @@ public partial class EditTransactionModel : ObservableObject
         {
             var transaction = await _transactions.GetTransactionByIdAsync(id);
           
-      if (transaction == null)
-     {
-     StatusMessage = "Transaction not found";
-         return;
+            if (transaction == null)
+            {
+                StatusMessage = "Transaction not found";
+                return;
             }
 
             AccountId = transaction.AccountId;
-    Payee = transaction.Payee;
-  Description = transaction.Description;
-       Amount = transaction.Amount;
-         TransactionDate = transaction.TransactionDate;
-       IsReconciled = transaction.IsReconciled;
+            Payee = transaction.Payee;
+            Description = transaction.Description;
+            Amount = transaction.Amount;
+            TransactionDate = transaction.TransactionDate;
+            IsReconciled = transaction.IsReconciled;
 
-      SelectedAccount = AvailableAccounts.FirstOrDefault(a => a.Id == AccountId);
+            SelectedAccount = AvailableAccounts.FirstOrDefault(a => a.Id == AccountId);
       
             // Ensure categories are loaded before loading splits
             if (AvailableCategories.Count == 0)
@@ -122,10 +126,10 @@ public partial class EditTransactionModel : ObservableObject
             // Load splits for this transaction
             await LoadSplitsAsync(id);
       
-   StatusMessage = "Ready to edit transaction";
+            StatusMessage = "Ready to edit transaction";
         }
-  catch (Exception ex)
-  {
+        catch (Exception ex)
+        {
             StatusMessage = $"Error loading transaction: {ex.Message}";
         }
     }
@@ -133,33 +137,33 @@ public partial class EditTransactionModel : ObservableObject
     private async Task CheckUserSessionAsync()
     {
         try
-{
-   IsLoggedIn = await _authService.IsAuthenticatedAsync();
+        {
+            IsLoggedIn = await _authService.IsAuthenticatedAsync();
             if (!IsLoggedIn)
-    {
+            {
                 StatusMessage = "Please log in first";
- }
+            }
         }
         catch (Exception ex)
-   {
+        {
             IsLoggedIn = false;
             StatusMessage = $"Error checking login: {ex.Message}";
-}
+        }
     }
 
     private async Task LoadAccountsAsync()
-  {
+    {
         try
-      {
+        {
             var accounts = await _accounts.GetAccountsForUserAsync();
-         AvailableAccounts.Clear();
-         foreach (var account in accounts)
+            AvailableAccounts.Clear();
+            foreach (var account in accounts)
                 AvailableAccounts.Add(account);
-}
+        }
         catch (Exception ex)
         {
-   StatusMessage = $"Error loading accounts: {ex.Message}";
-      }
+            StatusMessage = $"Error loading accounts: {ex.Message}";
+        }
     }
 
     private async Task LoadCategoriesAsync()
@@ -315,12 +319,18 @@ public partial class EditTransactionModel : ObservableObject
     /// Finds and sets the CategoryAllocationId for a split based on its selected category.
     /// Should be called when a split's category is changed.
     /// Handles Income (CategoryId = -1), No Category (null), and regular categories.
+    /// If no allocation exists for the category/month/year, one will be auto-created with $0 budget.
     /// </summary>
     public async Task UpdateSplitCategoryAllocationAsync(EditableSplitItem split)
     {
+        _logger?.LogInformation("[EditTransactionModel] UpdateSplitCategoryAllocationAsync called for split {SplitId}, IsNew={IsNew}", split.Id, split.IsNew);
+        _logger?.LogInformation("[EditTransactionModel] SelectedCategory: {CategoryName} (Id={CategoryId})", 
+            split.SelectedCategory?.Name ?? "null", split.SelectedCategory?.Id);
+        
         if (split.SelectedCategory == null)
         {
             // No category selected
+            _logger?.LogInformation("[EditTransactionModel] No category selected, setting CategoryAllocationId to null");
             split.CategoryAllocationId = null;
             return;
         }
@@ -328,27 +338,33 @@ public partial class EditTransactionModel : ObservableObject
         if (split.SelectedCategory.Id == -1)
         {
             // Income - set to null
+            _logger?.LogInformation("[EditTransactionModel] Income category selected (Id=-1), setting CategoryAllocationId to null");
             split.CategoryAllocationId = null;
             return;
         }
 
         try
         {
-            // Regular category - find the allocation for this category in the transaction's month/year
-            var allocation = await _allocations.FindAllocationAsync(
+            // Regular category - find or create the allocation for this category in the transaction's month/year
+            _logger?.LogInformation("[EditTransactionModel] Finding or creating allocation for CategoryId={CategoryId}, Month={Month}, Year={Year}", 
+                split.SelectedCategory.Id, TransactionDate.Month, TransactionDate.Year);
+            
+            // Use FindOrCreateAllocationAsync to auto-create if missing
+            var allocation = await _allocations.FindOrCreateAllocationAsync(
                 split.SelectedCategory.Id,
                 TransactionDate.Month,
                 TransactionDate.Year);
 
-            split.CategoryAllocationId = allocation?.Id;
-
-            if (allocation == null)
-            {
-                StatusMessage = $"No budget allocation found for {split.SelectedCategory.Name} in {TransactionDate:MMMM yyyy}";
-            }
+            _logger?.LogInformation("[EditTransactionModel] FindOrCreateAllocationAsync returned: {AllocationId}", allocation.Id);
+            
+            split.CategoryAllocationId = allocation.Id;
+            
+            _logger?.LogInformation("[EditTransactionModel] Set CategoryAllocationId to {AllocationId} for split {SplitId}", 
+                allocation.Id, split.Id);
         }
         catch (Exception ex)
         {
+            _logger?.LogError(ex, "[EditTransactionModel] Error finding/creating allocation for category {CategoryId}", split.SelectedCategory.Id);
             StatusMessage = $"Error finding allocation: {ex.Message}";
             split.CategoryAllocationId = null;
         }
@@ -411,14 +427,14 @@ public partial class EditTransactionModel : ObservableObject
 
     public string? ValidateForSave()
     {
-      if (!IsLoggedIn)
-    return "Please log in first";
+        if (!IsLoggedIn)
+            return "Please log in first";
 
- if (AccountId <= 0)
-       return "Please select an account";
+        if (AccountId <= 0)
+            return "Please select an account";
 
-      if (string.IsNullOrWhiteSpace(Payee))
-          return "Please enter a payee";
+        if (string.IsNullOrWhiteSpace(Payee))
+            return "Please enter a payee";
 
         if (Amount == 0)
             return "Please enter an amount";
@@ -432,24 +448,24 @@ public partial class EditTransactionModel : ObservableObject
         if (validationError != null)
         {
             StatusMessage = validationError;
-  return (false, validationError);
+            return (false, validationError);
         }
 
         try
         {
-   IsBusy = true;
-    StatusMessage = "Updating transaction...";
+            IsBusy = true;
+            StatusMessage = "Updating transaction...";
 
             var utcTransactionDate = DateTime.SpecifyKind(TransactionDate, DateTimeKind.Utc);
 
             var request = new EditTransactionRequest(
                 TransactionId,
-     AccountId,
+                AccountId,
                 Payee,
-         Description,
+                Description,
                 Amount,
-       utcTransactionDate,
-      IsReconciled
+                utcTransactionDate,
+                IsReconciled
             );
 
             await _transactions.UpdateTransactionAsync(request);
@@ -465,10 +481,10 @@ public partial class EditTransactionModel : ObservableObject
             return (true, "Transaction updated successfully!");
         }
         catch (Exception ex)
- {
-         var errorMsg = $"Error updating transaction: {ex.Message}";
+        {
+            var errorMsg = $"Error updating transaction: {ex.Message}";
             StatusMessage = errorMsg;
-   return (false, errorMsg);
+            return (false, errorMsg);
         }
         finally
         {
@@ -478,8 +494,11 @@ public partial class EditTransactionModel : ObservableObject
 
     private async Task UpdateSplitsAsync()
     {
+        _logger?.LogInformation("[EditTransactionModel] UpdateSplitsAsync called with {SplitCount} splits", Splits.Count);
+        
         // First, delete any splits marked for deletion
         var splitsToDelete = Splits.Where(s => s.IsMarkedForDeletion && !s.IsNew).ToList();
+        _logger?.LogInformation("[EditTransactionModel] Deleting {Count} splits marked for deletion", splitsToDelete.Count);
         foreach (var split in splitsToDelete)
         {
             await _transactions.DeleteTransactionSplitAsync(split.Id);
@@ -500,14 +519,22 @@ public partial class EditTransactionModel : ObservableObject
             if (split.IsMarkedForDeletion)
                 continue;
 
+            _logger?.LogInformation("[EditTransactionModel] Processing split: Id={SplitId}, IsNew={IsNew}, SelectedCategory={CategoryName}, CurrentAllocationId={AllocationId}", 
+                split.Id, split.IsNew, split.SelectedCategory?.Name ?? "null", split.CategoryAllocationId);
+
             // Update CategoryAllocationId based on SelectedCategory
             // This handles Income (null allocation), No Category (null), and regular categories
             await UpdateSplitCategoryAllocationAsync(split);
+
+            _logger?.LogInformation("[EditTransactionModel] After UpdateSplitCategoryAllocationAsync: CategoryAllocationId={AllocationId}", split.CategoryAllocationId);
 
             if (split.IsNew && split.Amount != 0)
             {
                 // Create new split - handle Income and No Category cases
                 int? allocationId = split.CategoryAllocationId;
+                
+                _logger?.LogInformation("[EditTransactionModel] Creating new split: TransactionId={TransactionId}, AllocationId={AllocationId}, Amount={Amount}, Description={Description}", 
+                    TransactionId, allocationId, split.Amount, split.Description);
                 
                 var createRequest = new TransactionSplitRecord(
                     allocationId,
@@ -521,6 +548,9 @@ public partial class EditTransactionModel : ObservableObject
                 // Update existing split - handle Income and No Category cases
                 int? allocationId = split.CategoryAllocationId;
                 
+                _logger?.LogInformation("[EditTransactionModel] Updating existing split: SplitId={SplitId}, AllocationId={AllocationId}, Amount={Amount}, Description={Description}", 
+                    split.Id, allocationId, split.Amount, split.Description);
+                
                 var updateRequest = new EditTransactionSplitRequest(
                     split.Id,
                     allocationId,
@@ -529,18 +559,20 @@ public partial class EditTransactionModel : ObservableObject
                 await _transactions.UpdateTransactionSplitAsync(updateRequest);
             }
         }
+        
+        _logger?.LogInformation("[EditTransactionModel] UpdateSplitsAsync completed");
     }
 
-public void Clear()
+    public void Clear()
     {
- TransactionId = 0;
-   Payee = string.Empty;
+        TransactionId = 0;
+        Payee = string.Empty;
         Description = string.Empty;
         Amount = 0;
- SelectedAccount = null;
-      TransactionDate = DateTime.Today;
-     IsReconciled = false;
+        SelectedAccount = null;
+        TransactionDate = DateTime.Today;
+        IsReconciled = false;
         Splits.Clear();
-StatusMessage = string.Empty;
+        StatusMessage = string.Empty;
     }
 }

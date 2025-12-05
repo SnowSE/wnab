@@ -1,6 +1,5 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 
@@ -20,9 +19,6 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 				fonts.AddFont("fa-solid-900.ttf", "FontAwesomeSolid");
 			});
-
-		// TODO: Fix service defaults conflict between WNAB.ServiceDefaults and WNAB.Maui.ServiceDefaults
-		// Microsoft.Extensions.Hosting.Extensions.AddServiceDefaults(builder);
 
 		// Add configuration from appsettings.json
 		var assembly = Assembly.GetExecutingAssembly();
@@ -46,18 +42,19 @@ public static class MauiProgram
         builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
 		builder.Services.AddSingleton<AuthenticationDelegatingHandler>();
 
-		// DI registrations for MVVM
-		builder.Services.AddSingleton<IMVMPopupService, PopupService>();
+		// Alert service for MAUI
 		builder.Services.AddSingleton<IAlertService, MauiAlertService>();
+		
+		// Main page
         builder.Services.AddSingleton<MainPageModel>();
 		builder.Services.AddSingleton<MainPageViewModel>();
 		builder.Services.AddSingleton<MainPage>();
 
 		builder.Services.AddSingleton<LandingPage>();
 
+		// Transaction ViewModels (inline editing)
 		builder.Services.AddSingleton<AddTransactionModel>();
 		builder.Services.AddSingleton<AddTransactionViewModel>();
-		builder.Services.AddSingleton<TransactionPopup>();
 
         builder.Services.AddSingleton<EditTransactionModel>();
 		builder.Services.AddSingleton<EditTransactionViewModel>();
@@ -68,17 +65,11 @@ public static class MauiProgram
 		builder.Services.AddSingleton<AddSplitToTransactionModel>();
 		builder.Services.AddSingleton<AddSplitToTransactionViewModel>();
 
+		// Category Models (inline editing)
 		builder.Services.AddSingleton<AddCategoryModel>();
-		builder.Services.AddSingleton<AddCategoryViewModel>();
-		builder.Services.AddSingleton<AddCategoryPopup>();
 
-		builder.Services.AddSingleton<EditCategoryModel>();
-		builder.Services.AddSingleton<EditCategoryViewModel>();
-		builder.Services.AddSingleton<EditCategoryPopup>();
-
+		// Account Models (inline editing)
 		builder.Services.AddSingleton<AddAccountModel>();
-		builder.Services.AddSingleton<AddAccountViewModel>();
-		builder.Services.AddSingleton<AddAccountPopup>();
 
 		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
 		builder.Services.AddHttpClient("wnab-api", client =>

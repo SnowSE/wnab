@@ -325,6 +325,16 @@
         }
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        // Refresh data when navigating back to this page
+        // This ensures we pick up any changes made on other pages (like Transactions)
+        if (_isInitialized && ViewModel.Model.IsLoggedIn)
+        {
+            await ViewModel.RefreshCommand.ExecuteAsync(null);
+        }
+    }
+
     protected override void OnAfterRender(bool firstRender)
     {
         base.OnAfterRender(firstRender);

@@ -151,6 +151,9 @@ public class TransactionSplitDBService
         string? description,
         CancellationToken cancellationToken = default)
     {
+        logger.LogInformation("[TransactionSplitDBService] UpdateTransactionSplitAsync called: SplitId={SplitId}, UserId={UserId}, CategoryAllocationId={AllocationId}, Amount={Amount}, Description={Description}", 
+            splitId, userId, categoryAllocationId, amount, description);
+
         // Guard: prevent saving unrelated pending changes in this context
         if (_db.ChangeTracker.HasChanges())
             throw new InvalidOperationException("Context has pending changes; aborting transaction split update.");
@@ -166,26 +169,42 @@ public class TransactionSplitDBService
         if (split is null)
             throw new InvalidOperationException("Transaction split not found or does not belong to user");
 
+        logger.LogInformation("[TransactionSplitDBService] Found split: CurrentAllocationId={CurrentAllocationId}, NewAllocationId={NewAllocationId}", 
+            split.CategoryAllocationId, categoryAllocationId);
+
         // Validate new allocation belongs to user's categories if allocation is being changed
         // Skip validation if new categoryAllocationId is null (Income)
         if (split.CategoryAllocationId != categoryAllocationId && categoryAllocationId.HasValue)
         {
+            logger.LogInformation("[TransactionSplitDBService] Allocation is changing from {OldId} to {NewId}, validating new allocation belongs to user", 
+                split.CategoryAllocationId, categoryAllocationId);
+            
             var newAllocationBelongsToUser = await _db.Allocations
                 .AnyAsync(a => a.Id == categoryAllocationId && a.Category.UserId == userId, cancellationToken);
             
             if (!newAllocationBelongsToUser)
+            {
+                logger.LogError("[TransactionSplitDBService] New allocation {AllocationId} does not belong to user {UserId}", categoryAllocationId, userId);
                 throw new InvalidOperationException("New category allocation does not belong to user");
+            }
+            
+            logger.LogInformation("[TransactionSplitDBService] New allocation validated successfully");
         }
 
         var utcNow = DateTime.UtcNow;
 
         // Update split properties
+        logger.LogInformation("[TransactionSplitDBService] Updating split properties: CategoryAllocationId={AllocationId}, Amount={Amount}, Description={Description}", 
+            categoryAllocationId, amount, description);
+        
         split.CategoryAllocationId = categoryAllocationId;
         split.Amount = amount;
         split.Description = description;
         split.UpdatedAt = utcNow;
 
+        logger.LogInformation("[TransactionSplitDBService] Calling SaveChangesAsync...");
         var affected = await _db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("[TransactionSplitDBService] SaveChangesAsync completed, affected rows: {Affected}", affected);
 
         // Postcondition: ensure only the split was updated
         if (affected != 1)
@@ -202,6 +221,9 @@ public class TransactionSplitDBService
                 categoryName = split.CategoryAllocation.Category.Name;
             }
         }
+
+        logger.LogInformation("[TransactionSplitDBService] Returning response: SplitId={SplitId}, CategoryAllocationId={AllocationId}, CategoryName={CategoryName}", 
+            split.Id, split.CategoryAllocationId, categoryName);
 
         return new TransactionSplitResponse(
             split.Id,

@@ -80,7 +80,7 @@
 
 				<div class="row g-3 mt-2">
 					<div class="col-md-9">
-						<label class="form-label mb-2">Category</label>
+						<label class="form-label mb-2">Category <small class="text-muted">(for @ViewModel.AddTransactionViewModel.Model.TransactionDate.ToString("MMMM yyyy"))</small></label>
 
 						<div class="border rounded p-3 bg-light">
 							@foreach (var split in ViewModel.AddTransactionViewModel.Model.Splits)
@@ -265,7 +265,7 @@
 
 										<!-- Editable Splits Section -->
 										<div class="mb-3">
-											<h6 class="mb-2">Splits</h6>
+											<h6 class="mb-2">Splits <small class="text-muted fw-normal">(for @ViewModel.EditTransactionViewModel.Model.TransactionDate.ToString("MMMM yyyy"))</small></h6>
 											@foreach (var split in ViewModel.EditTransactionViewModel.Model.Splits.Where(s => !s.IsMarkedForDeletion))
 											{
 												<div class="row g-2 mb-2 align-items-end" @key="@($"edit-split-{split.Id}-{split.GetHashCode()}")">

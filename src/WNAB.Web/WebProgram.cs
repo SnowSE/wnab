@@ -99,28 +99,25 @@ builder.Services.AddScoped<TransactionManagementService>(sp =>
 // Register WNAB.MVM services for shared business logic
 builder.Services.AddScoped<WebAuthenticationService>();
 builder.Services.AddScoped<WNAB.MVM.IAuthenticationService, WebAuthenticationService>();
-builder.Services.AddScoped<WNAB.MVM.IMVMPopupService, BlazorPopupService>();
 builder.Services.AddScoped<WNAB.MVM.IAlertService, BlazorAlertService>();
 
 // Register Budget logic services
 builder.Services.AddScoped<IBudgetService, BudgetService>();
 builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
 builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-// Use the existing Scoped registrations from above (lines 90-97)
+// Use the existing Scoped registrations from above
 builder.Services.AddScoped<ICategoryAllocationManagementService>(sp => sp.GetRequiredService<CategoryAllocationManagementService>());
 builder.Services.AddScoped<ITransactionManagementService>(sp => sp.GetRequiredService<TransactionManagementService>());
 
 // Register all Models (business logic layer)
 builder.Services.AddScoped<AccountsModel>();
 builder.Services.AddScoped<AddCategoryModel>();
-builder.Services.AddScoped<EditCategoryModel>();
 builder.Services.AddScoped<CategoriesModel>();
 builder.Services.AddScoped<TransactionsModel>();
 builder.Services.AddScoped<PlanBudgetModel>();
 
-// Register Modal/Popup Models
+// Register Add/Edit Models (for inline forms)
 builder.Services.AddScoped<AddAccountModel>();
-builder.Services.AddScoped<AddCategoryModel>();
 builder.Services.AddScoped<AddTransactionModel>();
 builder.Services.AddScoped<EditTransactionModel>();
 builder.Services.AddScoped<EditTransactionSplitModel>();
@@ -128,15 +125,11 @@ builder.Services.AddScoped<AddSplitToTransactionModel>();
 
 // Register all ViewModels (UI coordination layer)
 builder.Services.AddScoped<AccountsViewModel>();
-builder.Services.AddScoped<AddCategoryViewModel>();
-builder.Services.AddScoped<EditCategoryViewModel>();
 builder.Services.AddScoped<CategoriesViewModel>();
 builder.Services.AddScoped<TransactionsViewModel>();
 builder.Services.AddScoped<PlanBudgetViewModel>();
 
-// Register Modal/Popup ViewModels
-builder.Services.AddScoped<AddAccountViewModel>();
-builder.Services.AddScoped<AddCategoryViewModel>();
+// Register Inline form ViewModels
 builder.Services.AddScoped<AddTransactionViewModel>();
 builder.Services.AddScoped<EditTransactionViewModel>();
 builder.Services.AddScoped<EditTransactionSplitViewModel>();

@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 using WNAB.Data;
 using WNAB.SharedDTOs;
 
@@ -8,11 +9,13 @@ namespace WNAB.MVM;
 public class CategoryAllocationManagementService : ICategoryAllocationManagementService
 {
     private readonly HttpClient _http;
+    private readonly ILogger<CategoryAllocationManagementService>? _logger;
 
 
-    public CategoryAllocationManagementService(HttpClient http)
+    public CategoryAllocationManagementService(HttpClient http, ILogger<CategoryAllocationManagementService>? logger = null)
     {
         _http = http ?? throw new ArgumentNullException(nameof(http));
+        _logger = logger;
     }
 
     public async Task<int> CreateCategoryAllocationAsync(CategoryAllocationRecord record, CancellationToken ct = default)
@@ -35,8 +38,84 @@ public class CategoryAllocationManagementService : ICategoryAllocationManagement
     /// </summary>
     public async Task<CategoryAllocation?> FindAllocationAsync(int categoryId, int month, int year, CancellationToken ct = default)
     {
+        _logger?.LogInformation("[CategoryAllocationManagementService] FindAllocationAsync called: CategoryId={CategoryId}, Month={Month}, Year={Year}", 
+            categoryId, month, year);
+        
         var allocations = await GetAllocationsForCategoryAsync(categoryId, ct);
-        return allocations.FirstOrDefault(a => a.Month == month && a.Year == year && a.IsActive);
+        
+        _logger?.LogInformation("[CategoryAllocationManagementService] GetAllocationsForCategoryAsync returned {Count} allocations for category {CategoryId}", 
+            allocations.Count, categoryId);
+        
+        foreach (var a in allocations)
+        {
+            _logger?.LogDebug("[CategoryAllocationManagementService] Allocation: Id={Id}, Month={Month}, Year={Year}, IsActive={IsActive}", 
+                a.Id, a.Month, a.Year, a.IsActive);
+        }
+        
+        var result = allocations.FirstOrDefault(a => a.Month == month && a.Year == year && a.IsActive);
+        
+        _logger?.LogInformation("[CategoryAllocationManagementService] FindAllocationAsync result: {AllocationId}", result?.Id);
+        
+        return result;
+    }
+
+    /// <summary>
+    /// Finds an existing allocation for the category/month/year, or creates a new one with $0 budget if none exists.
+    /// This ensures transactions can always be categorized without requiring a pre-existing budget allocation.
+    /// </summary>
+    public async Task<CategoryAllocation> FindOrCreateAllocationAsync(int categoryId, int month, int year, CancellationToken ct = default)
+    {
+        _logger?.LogInformation("[CategoryAllocationManagementService] FindOrCreateAllocationAsync called: CategoryId={CategoryId}, Month={Month}, Year={Year}", 
+            categoryId, month, year);
+        
+        // First, try to find an existing allocation
+        var existing = await FindAllocationAsync(categoryId, month, year, ct);
+        
+        if (existing != null)
+        {
+            _logger?.LogInformation("[CategoryAllocationManagementService] Found existing allocation: Id={AllocationId}", existing.Id);
+            return existing;
+        }
+        
+        // No allocation exists, create one with $0 budget
+        _logger?.LogInformation("[CategoryAllocationManagementService] No allocation found, creating new $0 allocation for CategoryId={CategoryId}, Month={Month}, Year={Year}", 
+            categoryId, month, year);
+        
+        var record = new CategoryAllocationRecord(
+            CategoryId: categoryId,
+            BudgetedAmount: 0m,
+            Month: month,
+            Year: year,
+            EditorName: "Auto-created",
+            PercentageAllocation: null,
+            OldAmount: null,
+            EditedMemo: "Auto-created when categorizing a transaction"
+        );
+        
+        var newAllocationId = await CreateCategoryAllocationAsync(record, ct);
+        
+        _logger?.LogInformation("[CategoryAllocationManagementService] Created new allocation: Id={AllocationId}", newAllocationId);
+        
+        // Fetch the newly created allocation to return the full object
+        var allocations = await GetAllocationsForCategoryAsync(categoryId, ct);
+        var newAllocation = allocations.FirstOrDefault(a => a.Id == newAllocationId);
+        
+        if (newAllocation == null)
+        {
+            // Fallback: construct a minimal allocation object if fetch fails
+            _logger?.LogWarning("[CategoryAllocationManagementService] Could not fetch newly created allocation, constructing minimal object");
+            newAllocation = new CategoryAllocation
+            {
+                Id = newAllocationId,
+                CategoryId = categoryId,
+                BudgetedAmount = 0m,
+                Month = month,
+                Year = year,
+                IsActive = true
+            };
+        }
+        
+        return newAllocation;
     }
 
     /// <summary>

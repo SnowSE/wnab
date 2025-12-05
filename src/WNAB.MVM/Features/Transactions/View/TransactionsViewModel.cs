@@ -3,9 +3,11 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace WNAB.MVM;
 
+/// <summary>
+/// ViewModel for TransactionsPage - uses inline editing instead of popups.
+/// </summary>
 public partial class TransactionsViewModel : ObservableObject
 {
-    private readonly IMVMPopupService _popupService;
     private readonly AddTransactionViewModel _addTransactionViewModel;
     private readonly EditTransactionViewModel _editTransactionViewModel;
     private readonly EditTransactionSplitViewModel _editTransactionSplitViewModel;
@@ -34,14 +36,12 @@ public partial class TransactionsViewModel : ObservableObject
 
     public TransactionsViewModel(
         TransactionsModel model, 
-        IMVMPopupService popupService,
         AddTransactionViewModel addTransactionViewModel,
         EditTransactionViewModel editTransactionViewModel,
         EditTransactionSplitViewModel editTransactionSplitViewModel,
         AddSplitToTransactionViewModel addSplitToTransactionViewModel)
     {
         Model = model;
-        _popupService = popupService;
         _addTransactionViewModel = addTransactionViewModel;
         _editTransactionViewModel = editTransactionViewModel;
         _editTransactionSplitViewModel = editTransactionSplitViewModel;
@@ -92,13 +92,6 @@ public partial class TransactionsViewModel : ObservableObject
             IsAddFormVisible = false;
             await Model.RefreshAsync();
         }
-    }
-
-    [RelayCommand]
-    private async Task AddTransaction()
-    {
-        await _popupService.ShowNewTransactionAsync();
-        await Model.RefreshAsync();
     }
 
     [RelayCommand]

@@ -1,9 +1,9 @@
 @page "/accounts"
+@using WNAB.MVM
 @inject AccountsViewModel ViewModel
 @inject WNAB.MVM.IAuthenticationService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
-@inject WNAB.MVM.AddAccountModel AddAccountModel
 @implements IDisposable
 
 <div class="accounts-container">
@@ -40,35 +40,35 @@
             @if (!ViewModel.Model.ShowInactive)
             {
                 <button class="btn btn-outline-secondary"
-                        @onclick="async () => await ToggleAddAccountForm()"
+                        @onclick="ToggleAddAccountForm"
                         disabled="@(!ViewModel.Model.IsLoggedIn)">
-                    <i class="bi bi-@(ViewModel.CanSeeAddPopup ? "x-circle" : "plus-circle") me-1"></i>
-                    @(ViewModel.CanSeeAddPopup ? "Cancel" : "Add Account")
+                    <i class="bi bi-@(ViewModel.IsAddFormVisible ? "x-circle" : "plus-circle") me-1"></i>
+                    @(ViewModel.IsAddFormVisible ? "Cancel" : "Add Account")
                 </button>
             }
         </div>
     </div>
 
-    @if (ViewModel.CanSeeAddPopup)
+    @if (ViewModel.IsAddFormVisible)
     {
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Create New Account</h5>
             </div>
             <div class="card-body">
-                @if (!string.IsNullOrWhiteSpace(AddAccountStatusMessage))
+                @if (!string.IsNullOrWhiteSpace(ViewModel.AddAccountModel.StatusMessage))
                 {
-                    <div class="alert alert-info mb-3">@AddAccountStatusMessage</div>
+                    <div class="alert alert-info mb-3">@ViewModel.AddAccountModel.StatusMessage</div>
                 }
-                <EditForm Model="AddAccountModel" OnValidSubmit="OnCreateAccountSubmit">
+                <EditForm Model="ViewModel.AddAccountModel" OnValidSubmit="OnCreateAccountSubmit">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Account Name</label>
-                            <InputText class="form-control" @bind-Value="AddAccountModel.Name" required />
+                            <InputText class="form-control" @bind-Value="ViewModel.AddAccountModel.Name" required />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Account Type</label>
-                            <InputSelect class="form-select" @bind-Value="AddAccountModel.AccountTypeString">
+                            <InputSelect class="form-select" @bind-Value="ViewModel.AddAccountModel.AccountTypeString">
                                 @foreach (var type in WNAB.MVM.AddAccountModel.AccountTypeOptions)
                                 {
                                     <option value="@type">@type</option>
@@ -77,9 +77,9 @@
                         </div>
                     </div>
                     <div class="d-flex justify-content-end gap-2 mt-3">
-                        <button type="button" class="btn btn-secondary" @onclick="async () => await ToggleAddAccountForm()">Cancel</button>
-                        <button class="btn btn-primary" type="submit" disabled="@AddAccountModel.IsBusy">
-                            @if (AddAccountModel.IsBusy)
+                        <button type="button" class="btn btn-secondary" @onclick="ToggleAddAccountForm">Cancel</button>
+                        <button class="btn btn-primary" type="submit" disabled="@ViewModel.AddAccountModel.IsBusy">
+                            @if (ViewModel.AddAccountModel.IsBusy)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                             }
@@ -238,23 +238,6 @@
 </div>
 
 @code {
-    // Inline Add Account form state
-    // Remove IsAddAccountFormVisible, use ViewModel.canSeeAddPopup instead
-    // Simple variables for Add Account form
-    private string NewAccountName = "";
-    private WNAB.Data.AccountType NewAccountType = WNAB.Data.AccountType.Checking;
-    private string? AddAccountStatusMessage;
-    private bool IsAddAccountBusy = false;
-
-    // Update ToggleAddAccountForm to be async
-    private async Task ToggleAddAccountForm()
-    {
-        ViewModel.CanSeeAddPopup = !ViewModel.CanSeeAddPopup;
-        AddAccountStatusMessage = null;
-        NewAccountName = "";
-        NewAccountType = WNAB.Data.AccountType.Checking;
-    }
-
     protected override async Task OnInitializedAsync()
     {
         // Check if user is authenticated and token is valid
@@ -265,16 +248,21 @@
 
             if (!isAuthenticated || isTokenExpired)
             {
-                // Force reload to update authentication state
                 Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
                 return;
             }
         }
 
         // Subscribe to property changes to trigger UI updates
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
 
         await ViewModel.InitializeAsync();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -291,25 +279,14 @@
         return ViewModel.Model.Items?.Sum(a => a.CachedBalance) ?? 0;
     }
 
-    // (Removed duplicate ToggleAddAccountForm)
+    private void ToggleAddAccountForm()
+    {
+        ViewModel.ToggleAddFormCommand.Execute(null);
+    }
 
     private async Task OnCreateAccountSubmit()
     {
-        AddAccountStatusMessage = null;
-        try
-        {
-            var success = await AddAccountModel.CreateAccountAsync();
-            AddAccountStatusMessage = AddAccountModel.StatusMessage;
-            if (success)
-            {
-                ViewModel.CanSeeAddPopup = false;
-                await ViewModel.Model.RefreshAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            AddAccountStatusMessage = $"Error: {ex.Message}";
-        }
+        await ViewModel.SaveNewAccountCommand.ExecuteAsync(null);
     }
 
     private async Task OnToggleShowInactiveClick()
@@ -331,15 +308,13 @@
         }
 
         var result = await ViewModel.Model.UpdateAccountAsync(account.Id, account.EditAccountName, account.EditAccountType, account.Account.IsActive);
-        var success = result.Success;
-        var errorMessage = result.ErrorMessage;
-        if (success)
+        if (result.Success)
         {
             account.ApplyChanges();
         }
         else
         {
-            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to update account. Please try again.");
+            await JS.InvokeVoidAsync("alert", result.ErrorMessage ?? "Failed to update account. Please try again.");
         }
     }
 
@@ -356,11 +331,9 @@
         if (!confirmed) return;
 
         var result = await ViewModel.Model.DeactivateAccountAsync(account.Id);
-        var success = result.Success;
-        var errorMessage = result.ErrorMessage;
-        if (!success)
+        if (!result.Success)
         {
-            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to deactivate account. Please try again.");
+            await JS.InvokeVoidAsync("alert", result.ErrorMessage ?? "Failed to deactivate account. Please try again.");
         }
     }
 
@@ -372,21 +345,22 @@
         if (!confirmed) return;
 
         var result = await ViewModel.Model.ReactivateAccountAsync(account.Id);
-        var success = result.Success;
-        var errorMessage = result.ErrorMessage;
-        if (success)
+        if (result.Success)
         {
-            // Refresh to show the reactivated account in the active list
             await ViewModel.Model.LoadAccountsAsync();
         }
         else
         {
-            await JS.InvokeVoidAsync("alert", errorMessage ?? "Failed to reactivate account. Please try again.");
+            await JS.InvokeVoidAsync("alert", result.ErrorMessage ?? "Failed to reactivate account. Please try again.");
         }
     }
 
     public void Dispose()
     {
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
         if (ViewModel?.Model != null)
         {
             ViewModel.Model.PropertyChanged -= OnModelPropertyChanged;

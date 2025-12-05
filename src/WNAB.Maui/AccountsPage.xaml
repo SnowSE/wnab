@@ -45,16 +45,18 @@
                 </VerticalStackLayout>
 
                 <Button Grid.Column="1"
-                        Command="{Binding AddAccountCommand}"
+                        Command="{Binding ToggleAddFormCommand}"
                         IsEnabled="{Binding Model.IsLoggedIn}"
                         IsVisible="{Binding Model.ShowInactive, Converter={StaticResource InvertedBoolConverter}}"
                         CornerRadius="8"
                         VerticalOptions="Center">
                     <Button.Text>
-                        <OnIdiom x:TypeArguments="x:String"
-                                 Phone="+ Add"
-                                 Tablet="+ Add Account"
-                                 Desktop="+ Add Account" />
+                        <Binding Path="IsAddFormVisible">
+                            <Binding.Converter>
+                                <converters:BoolToTextConverter TrueText="Cancel"
+                                                                FalseText="+ Add Account" />
+                            </Binding.Converter>
+                        </Binding>
                     </Button.Text>
                     <Button.Padding>
                         <OnIdiom x:TypeArguments="Thickness"
@@ -85,6 +87,64 @@
                     </Button.Padding>
                 </Button>
             </Grid>
+
+            <!-- Inline Add Account Form -->
+            <Border IsVisible="{Binding IsAddFormVisible}"
+                    Padding="16"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light={StaticResource Gray300}, Dark={StaticResource Gray600}}"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark={StaticResource Gray900}}"
+                    StrokeShape="RoundRectangle 12"
+                    Margin="0,8">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="➕ Create New Account"
+                           FontSize="20"
+                           FontAttributes="Bold" />
+
+                    <!-- Status Message -->
+                    <Label Text="{Binding AddAccountModel.StatusMessage}"
+                           IsVisible="{Binding AddAccountModel.StatusMessage, Converter={StaticResource IsNotNullOrEmptyConverter}}"
+                           TextColor="DarkSlateGray"
+                           FontSize="14" />
+
+                    <!-- Account Name -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Account Name" FontAttributes="Bold" />
+                        <Entry Text="{Binding AddAccountModel.Name}"
+                               Placeholder="Enter account name"
+                               BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}" />
+                    </VerticalStackLayout>
+
+                    <!-- Account Type -->
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Account Type" FontAttributes="Bold" />
+                        <Picker SelectedItem="{Binding AddAccountModel.AccountTypeString}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray800}}">
+                            <Picker.ItemsSource>
+                                <x:Array Type="{x:Type x:String}">
+                                    <x:String>Checking</x:String>
+                                    <x:String>Savings</x:String>
+                                    <x:String>Misc</x:String>
+                                </x:Array>
+                            </Picker.ItemsSource>
+                        </Picker>
+                    </VerticalStackLayout>
+
+                    <!-- Action Buttons -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
+                        <Button Text="Cancel"
+                                Command="{Binding CancelAddAccountCommand}"
+                                BackgroundColor="Gray"
+                                TextColor="White" />
+                        <Button Grid.Column="1"
+                                Text="Create Account"
+                                Command="{Binding SaveNewAccountCommand}"
+                                BackgroundColor="#28A745"
+                                TextColor="White"
+                                IsEnabled="{Binding AddAccountModel.IsBusy, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
 
             <!-- Login prompt when not logged in -->
             <Label Text="Please use the Login page to sign in first."

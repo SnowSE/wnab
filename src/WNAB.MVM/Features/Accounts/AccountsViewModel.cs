@@ -5,29 +5,31 @@ namespace WNAB.MVM;
 
 /// <summary>
 /// ViewModel for AccountsPage - thin coordination layer between View and Model.
-/// Handles UI-specific concerns like navigation and popups, delegates business logic to Model.
+/// Handles UI-specific concerns like navigation, delegates business logic to Model.
+/// Uses inline editing for both editing and adding accounts.
 /// </summary>
 public partial class AccountsViewModel : ObservableObject
 {
-    private readonly IMVMPopupService _popupService;
+    private readonly AddAccountModel _addAccountModel;
 
     public AccountsModel Model { get; }
+    
+    /// <summary>
+    /// Model for inline add account form.
+    /// </summary>
+    public AddAccountModel AddAccountModel => _addAccountModel;
 
-    // Popup visibility is handled by [ObservableProperty] auto-generated properties below.
-
-    // Popup visibility properties
+    /// <summary>
+    /// Controls visibility of inline add account form.
+    /// </summary>
     [ObservableProperty]
-    private bool canSeeAddPopup;
+    private bool _isAddFormVisible;
 
-    [ObservableProperty]
-    private bool canSeeEditPopup;
-
-    public AccountsViewModel(AccountsModel model, IMVMPopupService popupService)
+    public AccountsViewModel(AccountsModel model, AddAccountModel addAccountModel)
     {
         Model = model;
-        _popupService = popupService;
-        CanSeeAddPopup = false;
-        CanSeeEditPopup = false;
+        _addAccountModel = addAccountModel;
+        _isAddFormVisible = false;
     }
 
     /// <summary>
@@ -36,6 +38,7 @@ public partial class AccountsViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await Model.InitializeAsync();
+        await _addAccountModel.InitializeAsync();
     }
 
     /// <summary>
@@ -48,14 +51,41 @@ public partial class AccountsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Add Account command - shows popup then refreshes the list.
-    /// Pure UI coordination - shows popup and triggers refresh.
+    /// Toggle add account form visibility.
     /// </summary>
     [RelayCommand]
-    private async Task AddAccount()
+    private void ToggleAddForm()
     {
-        await _popupService.ShowAddAccountAsync();
-        await Model.RefreshAsync();
+        IsAddFormVisible = !IsAddFormVisible;
+        if (!IsAddFormVisible)
+        {
+            _addAccountModel.ResetForm();
+        }
+    }
+
+    /// <summary>
+    /// Cancel add account - hides form and resets.
+    /// </summary>
+    [RelayCommand]
+    private void CancelAddAccount()
+    {
+        IsAddFormVisible = false;
+        _addAccountModel.ResetForm();
+    }
+
+    /// <summary>
+    /// Save new account from inline form.
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveNewAccount()
+    {
+        var success = await _addAccountModel.CreateAccountAsync();
+        if (success)
+        {
+            IsAddFormVisible = false;
+            _addAccountModel.ResetForm();
+            await Model.RefreshAsync();
+        }
     }
 
     /// <summary>
