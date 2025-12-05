@@ -3,7 +3,7 @@ using Scalar.Aspire;
 var builder = DistributedApplication.CreateBuilder(args);
 
 IResourceBuilder<IResourceWithConnectionString> db;
-IResourceBuilder<IResourceWithConnectionString> mailResource;
+//IResourceBuilder<IResourceWithConnectionString> mailResource;
 
 if (builder.ExecutionContext.IsPublishMode)
 {
@@ -16,7 +16,7 @@ if (builder.ExecutionContext.IsPublishMode)
     // Use Azure Communication Services for email in production
     // Or configure SendGrid or another email service
     // For now, we'll use a placeholder connection string that the API can handle
-    mailResource = builder.AddConnectionString("mailpit");
+    //mailResource = builder.AddConnectionString("mailpit");
 }
 else
 {
@@ -34,14 +34,14 @@ else
     db = postgres.AddDatabase("wnabdb");
 
     // Local development uses Mailpit for email testing
-    mailResource = builder.AddMailPit("mailpit")
-        .WithLifetime(ContainerLifetime.Persistent);
+    //mailResource = builder.AddMailPit("mailpit")
+    //    .WithLifetime(ContainerLifetime.Persistent);
 }
 
 var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
     .WithExternalHttpEndpoints()
     .WithReference(db)
-    .WithReference(mailResource)
+    //.WithReference(mailResource)
     .WaitFor(db);
 
 var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
