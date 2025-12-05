@@ -54,6 +54,16 @@ public partial class EditTransactionModel : ObservableObject
     public ObservableCollection<Category> AvailableCategories { get; } = new();
     public ObservableCollection<EditableSplitItem> Splits { get; } = new();
 
+    /// <summary>
+    /// Returns true if the sum of non-deleted splits equals the transaction amount.
+    /// </summary>
+    public bool AreSplitsBalanced => Math.Abs(SplitDifference) < 0.01m;
+
+    /// <summary>
+    /// Returns the difference between the transaction amount and the sum of non-deleted splits.
+    /// </summary>
+    public decimal SplitDifference => Amount - Splits.Where(s => !s.IsMarkedForDeletion).Sum(s => s.Amount);
+
     public EditTransactionModel(
         TransactionManagementService transactions,
         AccountManagementService accounts,
@@ -185,34 +195,28 @@ public partial class EditTransactionModel : ObservableObject
             Splits.Clear();
             foreach (var split in transactionSplits)
             {
-                var category = ResolveSplitCategory(split.CategoryName, split.CategoryAllocationId);
-                // removed category, will use it later.
-                // Splits.Add(new EditableSplitItem(
-                //     split.Id,
-                //     split.CategoryAllocationId,
-                //     category,
-                //     split.Amount,
-                //     split.Description,
-                //     split.CategoryName));
+                // Find category from AvailableCategories to ensure same object reference
+                Category? category = null;
+                if (split.CategoryAllocationId == null || string.Equals(split.CategoryName, "Income", StringComparison.OrdinalIgnoreCase))
+                {
+                    category = AvailableCategories.FirstOrDefault(c => c.Id == -1);
+                }
+                else if (!string.IsNullOrWhiteSpace(split.CategoryName))
+                {
+                    category = AvailableCategories.FirstOrDefault(c => 
+                        string.Equals(c.Name?.Trim(), split.CategoryName?.Trim(), StringComparison.OrdinalIgnoreCase));
+                }
+                
                 var item = new EditableSplitItem(
                     split.Id,
                     split.CategoryAllocationId,
-                    null, // pass null first!
+                    category,
                     split.Amount,
                     split.Description,
                     split.CategoryName);
 
                 Splits.Add(item);
-
-                // Defer setting the real category until UI is ready
-                MainThread.BeginInvokeOnMainThread(async () =>
-                {
-                    await Task.Delay(100); // let CollectionView create the Picker
-                    item.SelectedCategory = category;
-                });
             }
-
-            SyncSplitCategoryReferences();
         }
         catch (Exception ex)
         {
@@ -292,7 +296,14 @@ public partial class EditTransactionModel : ObservableObject
 
     public void AddNewSplit()
     {
-        Splits.Add(new EditableSplitItem());
+        var newSplit = new EditableSplitItem();
+        // Default to Income category if available
+        var incomeCategory = AvailableCategories.FirstOrDefault(c => c.Id == -1);
+        if (incomeCategory != null)
+        {
+            newSplit.SelectedCategory = incomeCategory;
+        }
+        Splits.Add(newSplit);
     }
 
     public void RemoveSplit(EditableSplitItem split)
@@ -343,6 +354,35 @@ public partial class EditTransactionModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Marks a split for deletion. The actual delete happens when SaveTransaction is called.
+    /// For new splits that haven't been saved yet, removes them immediately from the list.
+    /// </summary>
+    public void MarkSplitForDeletion(EditableSplitItem split)
+    {
+        if (split.IsNew)
+        {
+            // New splits haven't been saved to DB yet, just remove from list
+            Splits.Remove(split);
+            return;
+        }
+
+        // Mark existing split for deletion - will be deleted on Save
+        split.IsMarkedForDeletion = true;
+    }
+
+    /// <summary>
+    /// Restores a split that was marked for deletion.
+    /// </summary>
+    public void UnmarkSplitForDeletion(EditableSplitItem split)
+    {
+        split.IsMarkedForDeletion = false;
+    }
+
+    /// <summary>
+    /// Legacy method for immediate deletion. Use MarkSplitForDeletion instead for safe editing.
+    /// </summary>
+    [Obsolete("Use MarkSplitForDeletion for safe editing. This method deletes immediately.")]
     public async Task<bool> DeleteSplitAsync(EditableSplitItem split)
     {
         if (split.IsNew)
@@ -438,13 +478,31 @@ public partial class EditTransactionModel : ObservableObject
 
     private async Task UpdateSplitsAsync()
     {
+        // First, delete any splits marked for deletion
+        var splitsToDelete = Splits.Where(s => s.IsMarkedForDeletion && !s.IsNew).ToList();
+        foreach (var split in splitsToDelete)
+        {
+            await _transactions.DeleteTransactionSplitAsync(split.Id);
+            Splits.Remove(split);
+        }
+
+        // Remove any new splits that were marked for deletion (they never hit DB)
+        var newSplitsToRemove = Splits.Where(s => s.IsMarkedForDeletion && s.IsNew).ToList();
+        foreach (var split in newSplitsToRemove)
+        {
+            Splits.Remove(split);
+        }
+
+        // Now process remaining splits
         foreach (var split in Splits)
         {
-            // Ensure CategoryAllocationId is set correctly before saving
-            if (split.SelectedCategory != null)
-            {
-                await UpdateSplitCategoryAllocationAsync(split);
-            }
+            // Skip splits marked for deletion (should already be handled above)
+            if (split.IsMarkedForDeletion)
+                continue;
+
+            // Update CategoryAllocationId based on SelectedCategory
+            // This handles Income (null allocation), No Category (null), and regular categories
+            await UpdateSplitCategoryAllocationAsync(split);
 
             if (split.IsNew && split.Amount != 0)
             {

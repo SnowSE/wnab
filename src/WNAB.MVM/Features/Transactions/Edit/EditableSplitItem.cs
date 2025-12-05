@@ -29,6 +29,13 @@ public partial class EditableSplitItem : ObservableObject
     [ObservableProperty]
     private bool isNew;
 
+    /// <summary>
+    /// When true, this split is marked for deletion and will be deleted on Save.
+    /// The UI should hide or strike-through marked splits.
+    /// </summary>
+    [ObservableProperty]
+    private bool isMarkedForDeletion;
+
     public EditableSplitItem()
     {
         IsNew = true;

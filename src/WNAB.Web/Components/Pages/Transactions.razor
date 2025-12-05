@@ -88,10 +88,8 @@
 								<div class="row g-2 mb-2 align-items-center">
 									<div class="col-md-6">
 										<select class="form-select form-select-sm"
-												value="@(split.Model.SelectedCategory?.Id ?? 0)"
+												value="@(split.Model.SelectedCategory?.Id ?? -1)"
 												@onchange="(e) => OnSplitCategoryChanged(split, e)">
-											<option value="-1">Income</option>
-											@* <option value="0">No Category</option> *@
 											@foreach (var category in ViewModel.AddTransactionViewModel.Model.AvailableCategories)
 											{
 												<option value="@category.Id">@category.Name</option>
@@ -180,7 +178,7 @@
 				<tbody>
 					@foreach (var transaction in ViewModel.Model.Items)
 					{
-						var isEditing = _editingTransactionId == transaction.Id;
+						var isEditing = ViewModel.EditingTransactionId == transaction.Id;
 						
 						@if (!isEditing)
 						{
@@ -237,48 +235,46 @@
 										<div class="row g-2 mb-2">
 											<div class="col-md-3">
 												<label class="form-label small">Date</label>
-												<input type="date" class="form-control form-control-sm" @bind="_editDate" />
+												<input type="date" class="form-control form-control-sm" @bind="ViewModel.EditTransactionViewModel.Model.TransactionDate" />
 											</div>
 											<div class="col-md-3">
 												<label class="form-label small">Payee</label>
-												<input class="form-control form-control-sm" @bind="_editPayee" />
+												<input class="form-control form-control-sm" @bind="ViewModel.EditTransactionViewModel.Model.Payee" />
 											</div>
-										<div class="col-md-3">
-											<label class="form-label small">Account</label>
-											<select class="form-select form-select-sm" @bind="_editAccountId">
-												<option value="0">Select account...</option>
-												@foreach (var account in _availableAccounts)
-												{
-													<option value="@account.Id">@account.AccountName</option>
-												}
-											</select>
-										</div>
+											<div class="col-md-3">
+												<label class="form-label small">Account</label>
+												<select class="form-select form-select-sm" @bind="ViewModel.EditTransactionViewModel.Model.AccountId">
+													<option value="0">Select account...</option>
+													@foreach (var account in ViewModel.EditTransactionViewModel.Model.AvailableAccounts)
+													{
+														<option value="@account.Id">@account.AccountName</option>
+													}
+												</select>
+											</div>
 											<div class="col-md-3">
 												<label class="form-label small">Amount</label>
-												<input type="number" step="0.01" class="form-control form-control-sm" @bind="_editAmount" />
+												<input type="number" step="0.01" class="form-control form-control-sm" @bind="ViewModel.EditTransactionViewModel.Model.Amount" />
 											</div>
 										</div>
 										<div class="row g-2 mb-3">
 											<div class="col-md-12">
 												<label class="form-label small">Memo</label>
-												<input class="form-control form-control-sm" @bind="_editDescription" />
+												<input class="form-control form-control-sm" @bind="ViewModel.EditTransactionViewModel.Model.Description" />
 											</div>
 										</div>
 
 										<!-- Editable Splits Section -->
 										<div class="mb-3">
 											<h6 class="mb-2">Splits</h6>
-											@for (int i = 0; i < _editingSplits.Count; i++)
+											@foreach (var split in ViewModel.EditTransactionViewModel.Model.Splits.Where(s => !s.IsMarkedForDeletion))
 											{
-												var index = i;
-												var split = _editingSplits[index];
-												<div class="row g-2 mb-2 align-items-end" @key="@($"edit-split-{index}")">
+												<div class="row g-2 mb-2 align-items-end" @key="@($"edit-split-{split.Id}-{split.GetHashCode()}")">
 													<div class="col-md-4">
 														<label class="form-label small">Category</label>
-														<select class="form-select form-select-sm" @bind="split.CategoryId">
-															<option value="-1">Income</option>
-															@* <option value="0">No Category</option> *@
-															@foreach (var category in _availableCategories)
+														<select class="form-select form-select-sm" 
+																value="@(split.SelectedCategory?.Id ?? -1)"
+																@onchange="(e) => OnEditSplitCategoryChanged(split, e)">
+															@foreach (var category in ViewModel.EditTransactionViewModel.Model.AvailableCategories)
 															{
 																<option value="@category.Id">@category.Name</option>
 															}
@@ -293,7 +289,10 @@
 														<input class="form-control form-control-sm" @bind="split.Description" />
 													</div>
 													<div class="col-md-1">
-														<button type="button" class="btn btn-sm btn-danger w-100" @onclick="() => RemoveEditingSplit(index)" title="Delete Split">
+														<button type="button" class="btn btn-sm btn-danger w-100" 
+																@onclick="() => MarkSplitForDeletion(split)" 
+																title="Delete Split"
+																disabled="@(ViewModel.EditTransactionViewModel.Model.Splits.Count(s => !s.IsMarkedForDeletion) <= 1)">
 															<i class="bi bi-trash"></i>
 														</button>
 													</div>
@@ -335,31 +334,17 @@
 @code {
 	// LLM-Dev: Thin presentation layer - all logic delegated to ViewModel
 
-	// Local state for inline editing
-	private class EditingSplit
-	{
-		public int Id { get; set; }
-		public int? CategoryAllocationId { get; set; }
-		public int? CategoryId { get; set; }  // Store the category ID, not allocation ID
-		public string CategoryName { get; set; } = "";
-		public decimal Amount { get; set; }
-		public string? Description { get; set; }
-	}
-
-	private int? _editingTransactionId = null;
-	private List<EditingSplit> _editingSplits = new();
-	private DateTime _editDate;
-	private string _editPayee = "";
-	private int _editAccountId;
-	private string _editAccount = "";
-	private decimal _editAmount;
-	private string _editDescription = "";
-	private List<Account> _availableAccounts = new();
-	private List<Category> _availableCategories = new();
-
-	private bool AreSplitsBalanced => Math.Abs(GetSplitDifference()) < 0.01m;
+	// Computed property for split balance validation
+	private bool AreSplitsBalanced => ViewModel.EditingTransactionId.HasValue 
+		? Math.Abs(GetSplitDifference()) < 0.01m 
+		: true;
 	
-	private decimal GetSplitDifference() => _editAmount - _editingSplits.Sum(s => s.Amount);
+	private decimal GetSplitDifference() 
+	{
+		if (!ViewModel.EditingTransactionId.HasValue) return 0;
+		var activeSplits = ViewModel.EditTransactionViewModel.Model.Splits.Where(s => !s.IsMarkedForDeletion);
+		return ViewModel.EditTransactionViewModel.Model.Amount - activeSplits.Sum(s => s.Amount);
+	}
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -380,6 +365,7 @@
 		ViewModel.PropertyChanged += OnViewModelPropertyChanged;
 		ViewModel.Model.PropertyChanged += OnModelPropertyChanged;
 		ViewModel.AddTransactionViewModel.Model.PropertyChanged += OnAddTransactionModelPropertyChanged;
+		ViewModel.EditTransactionViewModel.Model.PropertyChanged += OnEditTransactionModelPropertyChanged;
 
 		await ViewModel.InitializeAsync();
 	}
@@ -399,6 +385,11 @@
 		InvokeAsync(StateHasChanged);
 	}
 
+	private void OnEditTransactionModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
 	private async Task OnRefreshClick()
 	{
 		await ViewModel.RefreshCommand.ExecuteAsync(null);
@@ -410,317 +401,78 @@
 		await ViewModel.SaveTransactionInlineCommand.ExecuteAsync(null);
 	}
 
-	// Inline editing methods
-	private void StartEditTransaction(int transactionId)
+	// Inline editing methods - now delegates to ViewModel
+	private async Task StartEditTransaction(int transactionId)
 	{
-		// Cancel any other editing
-		if (_editingTransactionId.HasValue && _editingTransactionId.Value != transactionId)
+		// Cancel any other editing first
+		if (ViewModel.EditingTransactionId.HasValue && ViewModel.EditingTransactionId.Value != transactionId)
 		{
-			CancelEditTransaction();
+			ViewModel.CancelEditTransactionCommand.Execute(null);
 		}
 
-		_editingTransactionId = transactionId;
-		
-		// Load transaction data into local edit fields
-		var transaction = ViewModel.Model.Items.FirstOrDefault(t => t.Id == transactionId);
-		if (transaction != null)
-		{
-			_editDate = transaction.Date;
-			_editPayee = transaction.Payee;
-			_editAccount = transaction.AccountName;
-			_editAmount = transaction.Amount;
-			_editDescription = transaction.Description ?? "";
-			
-			// Load available accounts and categories from AddTransactionViewModel
-			_availableAccounts = ViewModel.AddTransactionViewModel.Model.AvailableAccounts.ToList();
-			_availableCategories = ViewModel.AddTransactionViewModel.Model.AvailableCategories.ToList();
-			
-			// Find the account ID by name (since TransactionItem doesn't expose AccountId)
-			var account = _availableAccounts.FirstOrDefault(a => a.AccountName == transaction.AccountName);
-			_editAccountId = account?.Id ?? 0;
-			
-			// Load splits for this transaction
-			_editingSplits = transaction.Splits.Select(s => {
-				// Find the category by name to get its ID
-				var category = _availableCategories.FirstOrDefault(c => c.Name == s.CategoryName);
-				return new EditingSplit
-				{
-					Id = s.Id,
-					CategoryAllocationId = s.CategoryAllocationId,
-					CategoryId = category?.Id ?? (s.CategoryName == "Income" ? -1 : 0),
-					CategoryName = s.CategoryName,
-					Amount = s.Amount,
-					Description = s.Description
-				};
-			}).ToList();
-			
-			// If no splits, add one empty split
-			if (_editingSplits.Count == 0)
-			{
-				_editingSplits.Add(new EditingSplit 
-				{ 
-					Id = 0, 
-					CategoryAllocationId = null,
-					CategoryId = 0,
-					CategoryName = "No Category",
-					Amount = 0, 
-					Description = "" 
-				});
-			}
-		}
-		
-		StateHasChanged();
+		// Load the transaction into the EditTransactionViewModel
+		await ViewModel.ModifyTransactionCommand.ExecuteAsync(transactionId);
 	}
 
 	private void CancelEditTransaction()
 	{
-		_editingTransactionId = null;
-		_editingSplits.Clear();
-		StateHasChanged();
+		ViewModel.CancelEditTransactionCommand.Execute(null);
 	}
 
 	private async Task SaveEditTransaction()
 	{
-		if (!_editingTransactionId.HasValue) return;
-
-		var transactionId = _editingTransactionId.Value;
-		
-		// Capture the current split IDs BEFORE making any changes
-		var transaction = ViewModel.Model.Items.FirstOrDefault(t => t.Id == transactionId);
-		var existingSplitIds = transaction?.Splits.Select(s => s.Id).ToHashSet() ?? new HashSet<int>();
-		
-		// Load the transaction for editing using ViewModel
-		await ViewModel.ModifyTransactionCommand.ExecuteAsync(transactionId);
-		
-		// Update the EditTransactionViewModel with our local values
-		ViewModel.EditTransactionViewModel.Model.TransactionDate = _editDate;
-		ViewModel.EditTransactionViewModel.Model.Payee = _editPayee;
-		ViewModel.EditTransactionViewModel.Model.AccountId = _editAccountId;
-		ViewModel.EditTransactionViewModel.Model.Amount = _editAmount;
-		ViewModel.EditTransactionViewModel.Model.Description = _editDescription;
-		
-		// Save the transaction first
+		// The ViewModel's SaveEditTransactionCommand handles everything including splits
 		await ViewModel.SaveEditTransactionCommand.ExecuteAsync(null);
-
-		// Now handle splits - determine which to update, create, or delete
-		var editingSplitIds = _editingSplits.Where(s => s.Id > 0).Select(s => s.Id).ToHashSet();
-		
-		// Delete any splits that were removed (do this first to avoid conflicts)
-		foreach (var existingId in existingSplitIds)
-		{
-			if (!editingSplitIds.Contains(existingId))
-			{
-				await ViewModel.DeleteTransactionSplitCommand.ExecuteAsync(existingId);
-			}
-		}
-
-		// Update or create splits
-		foreach (var editingSplit in _editingSplits)
-		{
-			if (editingSplit.Id > 0 && existingSplitIds.Contains(editingSplit.Id))
-			{
-				// Existing split - update it
-				await JSRuntime.InvokeVoidAsync("console.log", $"Updating existing split {editingSplit.Id} with category ID {editingSplit.CategoryId}");
-				
-				// Load the split into the edit view model
-				await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(editingSplit.Id);
-				
-				// Update the split based on category selection
-				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
-				{
-					// Regular category - find it and let the allocation lookup happen
-					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
-					if (category != null)
-					{
-						ViewModel.EditTransactionSplitViewModel.Model.SelectedCategory = category;
-						
-						// Wait for the allocation lookup to complete before saving
-						await ViewModel.EditTransactionSplitViewModel.Model.FindAndSetAllocationAsync(category.Id);
-						
-						ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
-						ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
-						
-						await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
-					}
-				}
-				else if (editingSplit.CategoryId == -1)
-				{
-					// Income - set CategoryAllocationId to null
-					ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = null;
-					ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
-					ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
-					await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
-				}
-				else
-				{
-					// No category (CategoryId == 0 or null) - set allocation to null
-					ViewModel.EditTransactionSplitViewModel.Model.CategoryAllocationId = null;
-					ViewModel.EditTransactionSplitViewModel.Model.Amount = editingSplit.Amount;
-					ViewModel.EditTransactionSplitViewModel.Model.Description = editingSplit.Description;
-					await ViewModel.SaveEditTransactionSplitCommand.ExecuteAsync(null);
-				}
-			}
-			else if (editingSplit.Id == 0)
-			{
-				// New split - create it
-				// First, load the transaction context (this sets the transaction date)
-				await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
-				
-				// Handle different category scenarios
-				if (editingSplit.CategoryId.HasValue && editingSplit.CategoryId.Value > 0)
-				{
-					// Regular category - find it and let the allocation lookup happen
-					var category = _availableCategories.FirstOrDefault(c => c.Id == editingSplit.CategoryId.Value);
-					if (category != null)
-					{
-						await JSRuntime.InvokeVoidAsync("console.log", $"Creating split with category {category.Name}, amount {editingSplit.Amount}");
-						
-						ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
-						ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
-						ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
-						
-						await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
-						await JSRuntime.InvokeVoidAsync("console.log", "Split creation command executed");
-					}
-					else
-					{
-						await JSRuntime.InvokeVoidAsync("console.error", $"Category not found for ID {editingSplit.CategoryId}");
-					}
-				}
-				else if (editingSplit.CategoryId == -1)
-				{
-					// Income - create split with null CategoryAllocationId
-					await JSRuntime.InvokeVoidAsync("console.log", $"Creating income split, amount {editingSplit.Amount}");
-					
-					// Create a virtual "Income" category
-					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = new Category { Id = -1, Name = "Income", UserId = 0 };
-					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
-					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
-					
-					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
-					await JSRuntime.InvokeVoidAsync("console.log", "Income split creation command executed");
-				}
-				else
-				{
-					// No category (CategoryId == 0 or null) - create uncategorized split
-					await JSRuntime.InvokeVoidAsync("console.log", $"Creating uncategorized split, amount {editingSplit.Amount}");
-					
-					ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = null;
-					ViewModel.AddSplitToTransactionViewModel.Model.Amount = editingSplit.Amount;
-					ViewModel.AddSplitToTransactionViewModel.Model.Notes = editingSplit.Description;
-					
-					await ViewModel.SaveAddSplitToTransactionCommand.ExecuteAsync(null);
-					await JSRuntime.InvokeVoidAsync("console.log", "Uncategorized split creation command executed");
-				}
-			}
-		}
-
-		await JSRuntime.InvokeVoidAsync("console.log", "Refreshing transaction list...");
-		
-		// Refresh and close edit mode
-		await ViewModel.RefreshCommand.ExecuteAsync(null);
-		
-		await JSRuntime.InvokeVoidAsync("console.log", "Refresh complete");
-		CancelEditTransaction();
 	}
 
 	private void AddEditingSplit()
 	{
-		_editingSplits.Add(new EditingSplit 
-		{ 
-			Id = 0, 
-			CategoryAllocationId = null,
-			CategoryId = 0,
-			CategoryName = "No Category",
-			Amount = 0, 
-			Description = "" 
-		});
+		ViewModel.EditTransactionViewModel.Model.AddNewSplit();
 		StateHasChanged();
 	}
 
-	private async Task RemoveEditingSplit(int index)
+	private void MarkSplitForDeletion(EditableSplitItem split)
 	{
-		if (_editingSplits.Count <= 1)
-		{
-			await JSRuntime.InvokeVoidAsync("alert", "A transaction must have at least one split.");
-			return;
-		}
+		ViewModel.EditTransactionViewModel.Model.MarkSplitForDeletion(split);
+		StateHasChanged();
+	}
 
-		if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this split?"))
+	// Helper method for edit split category selection
+	private void OnEditSplitCategoryChanged(EditableSplitItem split, ChangeEventArgs e)
+	{
+		if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
 		{
-			_editingSplits.RemoveAt(index);
+			// Find the category from the AvailableCategories list (includes Income with Id=-1)
+			var category = ViewModel.EditTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
+			split.SelectedCategory = category;
 			StateHasChanged();
 		}
 	}
 
-	// Helper methods for split category selection
+	// Helper methods for split category selection in Add form
 	private int GetSelectedCategoryId(AddTransactionSplitViewModel split)
 	{
-		return split.Model.SelectedCategory?.Id ?? 0;
+		return split.Model.SelectedCategory?.Id ?? -1;
 	}
 
 	private void OnSplitCategoryChanged(AddTransactionSplitViewModel split, ChangeEventArgs e)
 	{
 		if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
 		{
-			if (categoryId == -1)
-			{
-				// Create a virtual "Income" category
-				split.Model.SelectedCategory = new Category { Id = -1, Name = "Income", UserId = 0 };
-			}
-			else if (categoryId == 0)
-			{
-				split.Model.SelectedCategory = null;
-			}
-			else
-			{
-				var category = ViewModel.AddTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
-				split.Model.SelectedCategory = category;
-			}
-		}
-	}
-
-	// Helper method for add split to transaction form
-	private void OnAddSplitCategoryChanged(ChangeEventArgs e)
-	{
-		if (e.Value != null && int.TryParse(e.Value.ToString(), out int categoryId))
-		{
-			var category = ViewModel.AddSplitToTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
-			ViewModel.AddSplitToTransactionViewModel.Model.SelectedCategory = category;
+			// Find the category from the AvailableCategories list (includes Income with Id=-1)
+			var category = ViewModel.AddTransactionViewModel.Model.AvailableCategories.FirstOrDefault(c => c.Id == categoryId);
+			split.Model.SelectedCategory = category;
+			StateHasChanged();
 		}
 	}
 
 	// Action handlers for transactions
-	private async Task ModifyTransaction(int transactionId)
-	{
-		await ViewModel.ModifyTransactionCommand.ExecuteAsync(transactionId);
-	}
-
 	private async Task DeleteTransaction(int transactionId)
 	{
 		if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this transaction?"))
 		{
 			await ViewModel.DeleteTransactionCommand.ExecuteAsync(transactionId);
 		}
-	}
-
-	// Action handlers for splits
-	private async Task ModifySplit(int splitId)
-	{
-		await ViewModel.ModifyTransactionSplitCommand.ExecuteAsync(splitId);
-	}
-
-	private async Task DeleteSplit(int splitId)
-	{
-		if (await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this split?"))
-		{
-			await ViewModel.DeleteTransactionSplitCommand.ExecuteAsync(splitId);
-		}
-	}
-
-	private async Task AddSplitToTransaction(int transactionId)
-	{
-		await ViewModel.AddSplitToTransactionCommand.ExecuteAsync(transactionId);
 	}
 
 	private string GetAlertClass(string message)
@@ -745,6 +497,10 @@
 		if (ViewModel?.AddTransactionViewModel?.Model != null)
 		{
 			ViewModel.AddTransactionViewModel.Model.PropertyChanged -= OnAddTransactionModelPropertyChanged;
+		}
+		if (ViewModel?.EditTransactionViewModel?.Model != null)
+		{
+			ViewModel.EditTransactionViewModel.Model.PropertyChanged -= OnEditTransactionModelPropertyChanged;
 		}
 	}
 }

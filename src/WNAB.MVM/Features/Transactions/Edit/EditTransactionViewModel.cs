@@ -49,8 +49,8 @@ public partial class EditTransactionViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task DeleteSplit(EditableSplitItem split)
+    private void DeleteSplit(EditableSplitItem split)
     {
-        await Model.DeleteSplitAsync(split);
+        Model.MarkSplitForDeletion(split);
     }
 }

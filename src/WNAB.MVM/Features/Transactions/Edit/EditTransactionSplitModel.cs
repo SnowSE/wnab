@@ -165,8 +165,11 @@ public partial class EditTransactionSplitModel : ObservableObject
         if (!IsLoggedIn)
             return "Please log in first";
 
-        if (CategoryAllocationId <= 0)
-            return "Please select a category";
+        // CategoryAllocationId can be null for Income, or a positive value for regular categories.
+        // Only reject if we expect a category but don't have a valid allocation.
+        // If SelectedCategory is set and is not Income (Id != -1), then we need a valid allocation.
+        if (SelectedCategory != null && SelectedCategory.Id != -1 && (CategoryAllocationId == null || CategoryAllocationId <= 0))
+            return "Please select a category with a valid budget allocation";
 
         if (Amount == 0)
             return "Please enter an amount";

@@ -30,4 +30,20 @@ public class Category
 
     // Parameterless ctor for EF Core
     public Category() { }
+
+    // Override Equals and GetHashCode so that MAUI Picker (and other controls) can match
+    // SelectedItem to ItemsSource by Id instead of reference equality.
+    public override bool Equals(object? obj)
+    {
+        if (obj is Category other)
+        {
+            return Id == other.Id;
+        }
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
 }

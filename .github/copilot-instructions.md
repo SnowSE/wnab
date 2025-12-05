@@ -4,3 +4,4 @@ Every time you finish a task or task list, read the files in and compare against
 Read errors before you move on.
 Unless given express permission: Do not run the program, but you can build and run tests. Do this after you have finished a todo or request.
 The first thing you should try when you see an error is a package restore with dotnet restore.
+When you build, build by project, don't build the entire solution unless the prompt tells you to do so. This will save time.
