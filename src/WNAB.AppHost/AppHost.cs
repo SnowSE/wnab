@@ -44,9 +44,12 @@ var api = builder.AddProject<Projects.WNAB_API>("wnab-api")
     //.WithReference(mailResource)
     .WaitFor(db);
 
+var keycloakSecret = builder.AddParameter("keycloakclientsecret", secret: true);
+
 var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
     .WithExternalHttpEndpoints()
-    .WithReference(api);
+    .WithReference(api)
+    .WithEnvironment("Keycloak__ClientSecret", keycloakSecret);
 
 // Only add MAUI project during local development, not during Azure deployment
 // MAUI is a client-side framework that cannot be containerized for cloud deployment
