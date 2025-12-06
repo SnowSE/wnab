@@ -19,22 +19,32 @@ public partial class TransactionsPage : ContentPage
         InitializeComponent();
         _viewModel = vm;
         _authService = authService;
-      BindingContext = vm;
+        BindingContext = vm;
+        
+        System.Diagnostics.Debug.WriteLine("TransactionsPage: Constructor - BindingContext set");
+        System.Diagnostics.Debug.WriteLine($"TransactionsPage: ViewModel.Model.Items.Count={vm.Model.Items.Count}");
     }
 
     // LLM-Dev: Added automatic initialization when page appears
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        
+        System.Diagnostics.Debug.WriteLine("TransactionsPage.OnAppearing: Starting");
 
         // Check authentication before loading page
         var isAuthenticated = await _authService.IsAuthenticatedAsync();
+        System.Diagnostics.Debug.WriteLine($"TransactionsPage.OnAppearing: IsAuthenticated={isAuthenticated}");
+        
         if (!isAuthenticated)
         {
+            System.Diagnostics.Debug.WriteLine("TransactionsPage.OnAppearing: Not authenticated, navigating to Landing");
             await Shell.Current.GoToAsync("//Landing");
-     return;
-      }
+            return;
+        }
 
-      await _viewModel.InitializeAsync();
+        System.Diagnostics.Debug.WriteLine("TransactionsPage.OnAppearing: Calling ViewModel.InitializeAsync");
+        await _viewModel.InitializeAsync();
+        System.Diagnostics.Debug.WriteLine($"TransactionsPage.OnAppearing: Completed, Items.Count={_viewModel.Model.Items.Count}");
     }
 }

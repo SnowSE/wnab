@@ -49,10 +49,16 @@ public partial class TransactionsModel : ObservableObject
     /// </summary>
     public async Task InitializeAsync()
     {
+        System.Diagnostics.Debug.WriteLine("TransactionsModel.InitializeAsync: Starting");
         await CheckUserSessionAsync();
         if (IsLoggedIn)
         {
+            System.Diagnostics.Debug.WriteLine("TransactionsModel.InitializeAsync: User is logged in, loading transactions");
             await LoadTransactionsAndSplitsAsync();
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("TransactionsModel.InitializeAsync: User not logged in, skipping load");
         }
     }
 
@@ -63,11 +69,15 @@ public partial class TransactionsModel : ObservableObject
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine("TransactionsModel.CheckUserSessionAsync: Starting");
             IsLoggedIn = await _authService.IsAuthenticatedAsync();
+            System.Diagnostics.Debug.WriteLine($"TransactionsModel.CheckUserSessionAsync: IsLoggedIn={IsLoggedIn}");
+            
             if (IsLoggedIn)
             {
                 var userName = await _authService.GetUserNameAsync();
                 StatusMessage = $"Logged in as {userName ?? "user"}";
+                System.Diagnostics.Debug.WriteLine($"TransactionsModel.CheckUserSessionAsync: User={userName}");
             }
             else
             {
@@ -75,10 +85,12 @@ public partial class TransactionsModel : ObservableObject
                 StatusMessage = "Please log in to view transactions";
                 Items.Clear();
                 Splits.Clear();
+                System.Diagnostics.Debug.WriteLine("TransactionsModel.CheckUserSessionAsync: Not logged in, cleared collections");
             }
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"TransactionsModel.CheckUserSessionAsync: Exception - {ex.Message}");
             IsLoggedIn = false;
             StatusMessage = "Error checking login status";
             Items.Clear();
@@ -94,6 +106,7 @@ public partial class TransactionsModel : ObservableObject
     {
         if (IsBusy || !IsLoggedIn)
         {
+            System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Skipping - IsBusy={IsBusy}, IsLoggedIn={IsLoggedIn}");
             return;
         }
 
@@ -101,6 +114,7 @@ public partial class TransactionsModel : ObservableObject
         {
             IsBusy = true;
             StatusMessage = "Loading transactions and splits...";
+            System.Diagnostics.Debug.WriteLine("LoadTransactionsAndSplitsAsync: Starting");
 
             // Load both in parallel for better performance
             var transactionsTask = _transactions.GetTransactionsForUserAsync();
@@ -110,6 +124,8 @@ public partial class TransactionsModel : ObservableObject
 
             var transactionsList = transactionsTask.Result;
             var splitsList = splitsTask.Result;
+
+            System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Retrieved {transactionsList.Count} transactions and {splitsList.Count} splits");
 
             // Clear collections
             Items.Clear();
@@ -127,6 +143,7 @@ public partial class TransactionsModel : ObservableObject
                  t.Amount,
                   t.AccountName,
                   transactionSplits));
+                System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Added transaction ID={t.Id}, Payee={t.Payee}, Amount={t.Amount}");
             }
 
             // Populate Splits collection (keep for compatibility)
@@ -135,6 +152,8 @@ public partial class TransactionsModel : ObservableObject
                 Splits.Add(s);
             }
 
+            System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Items.Count={Items.Count}, Splits.Count={Splits.Count}");
+
             StatusMessage = transactionsList.Count == 0
                 ? "No transactions found"
                 : $"Loaded {transactionsList.Count} transactions and {splitsList.Count} splits";
@@ -142,9 +161,13 @@ public partial class TransactionsModel : ObservableObject
             // Notify property changed to ensure UI updates
             OnPropertyChanged(nameof(Items));
             OnPropertyChanged(nameof(Splits));
+            
+            System.Diagnostics.Debug.WriteLine("LoadTransactionsAndSplitsAsync: Completed successfully");
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Exception - {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"LoadTransactionsAndSplitsAsync: Stack trace - {ex.StackTrace}");
             StatusMessage = $"Error loading data: {ex.Message}";
         }
         finally
@@ -330,10 +353,16 @@ public partial class TransactionsModel : ObservableObject
     /// </summary>
     public async Task RefreshAsync()
     {
+        System.Diagnostics.Debug.WriteLine("TransactionsModel.RefreshAsync: Starting");
         await CheckUserSessionAsync();
         if (IsLoggedIn)
         {
+            System.Diagnostics.Debug.WriteLine("TransactionsModel.RefreshAsync: User is logged in, loading transactions");
             await LoadTransactionsAndSplitsAsync();
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("TransactionsModel.RefreshAsync: User not logged in");
         }
     }
 }

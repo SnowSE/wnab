@@ -95,23 +95,37 @@ public partial class AddCategoryModel : ObservableObject
             IsSuccessful = false;
             ErrorMessage = null;
 
+            System.Diagnostics.Debug.WriteLine("CreateCategoryAsync: Starting");
+
             // Validate authentication
+            System.Diagnostics.Debug.WriteLine("CreateCategoryAsync: Validating authentication");
             if (!await ValidateAuthenticationAsync())
+            {
+                System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Authentication failed - {ErrorMessage}");
                 return false;
+            }
 
             // Validate input
+            System.Diagnostics.Debug.WriteLine("CreateCategoryAsync: Validating input");
             if (!IsValid())
+            {
+                System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Validation failed - {ErrorMessage}");
                 return false;
+            }
 
             // Build DTO and send via service (userId comes from auth token)
+            System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Creating category '{Name}' with color '{SelectedColor}'");
             var request = new CreateCategoryRequest(Name, SelectedColor);
-            await _categories.CreateCategoryAsync(request);
+            var categoryId = await _categories.CreateCategoryAsync(request);
+            System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Category created with ID {categoryId}");
 
             IsSuccessful = true;
             return true;
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Exception - {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync: Stack trace - {ex.StackTrace}");
             ErrorMessage = $"Error creating category: {ex.Message}";
             IsSuccessful = false;
             return false;

@@ -31,6 +31,7 @@
             <converters:AllocationProgressWidthConverter x:Key="AllocationProgressWidthConverter" />
             <converters:AllocationProgressConverter x:Key="AllocationProgressConverter" />
             <converters:IsEditingTransactionConverter x:Key="IsEditingTransactionConverter" />
+            <converters:IsNotEditingTransactionConverter x:Key="IsNotEditingTransactionConverter" />
             <converters:ColorSelectionMultiConverter x:Key="ColorSelectionMultiConverter" />
             <converters:StringToColorConverter x:Key="StringToColorConverter" />
         </ResourceDictionary>

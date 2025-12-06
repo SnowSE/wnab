@@ -59,8 +59,10 @@ public partial class CategoriesViewModel : ObservableObject
     [RelayCommand]
     private void ToggleAddForm()
     {
-        _isAddFormVisible = !_isAddFormVisible;
-        if (!_isAddFormVisible)
+        System.Diagnostics.Debug.WriteLine($"ToggleAddForm called. Current state: {IsAddFormVisible}");
+        IsAddFormVisible = !IsAddFormVisible;
+        System.Diagnostics.Debug.WriteLine($"ToggleAddForm new state: {IsAddFormVisible}");
+        if (!IsAddFormVisible)
         {
             _addCategoryModel.Reset();
         }
@@ -72,7 +74,7 @@ public partial class CategoriesViewModel : ObservableObject
     [RelayCommand]
     private void CancelAddCategory()
     {
-        _isAddFormVisible = false;
+        IsAddFormVisible = false;
         _addCategoryModel.Reset();
     }
 
@@ -82,12 +84,28 @@ public partial class CategoriesViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveNewCategory()
     {
+        System.Diagnostics.Debug.WriteLine("SaveNewCategory command executed");
+        System.Diagnostics.Debug.WriteLine($"Category Name: '{_addCategoryModel.Name}'");
+        System.Diagnostics.Debug.WriteLine($"Selected Color: '{_addCategoryModel.SelectedColor}'");
+        
         var success = await _addCategoryModel.CreateCategoryAsync();
+        
+        System.Diagnostics.Debug.WriteLine($"CreateCategoryAsync returned: {success}");
+        if (_addCategoryModel.ErrorMessage != null)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error: {_addCategoryModel.ErrorMessage}");
+        }
+        
         if (success)
         {
-            _isAddFormVisible = false;
+            IsAddFormVisible = false;
             _addCategoryModel.Reset();
             await Model.RefreshAsync();
+        }
+        else
+        {
+            // Show error to user if creation failed
+            await _alertService.DisplayAlertAsync("Error", _addCategoryModel.ErrorMessage ?? "Failed to create category.");
         }
     }
 

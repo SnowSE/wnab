@@ -304,7 +304,7 @@
                                         StrokeThickness="1"
                                         StrokeShape="RoundRectangle 12">
                                     <Border.IsVisible>
-                                        <MultiBinding Converter="{staticResource IsEditingTransactionConverter}">
+                                        <MultiBinding Converter="{StaticResource IsEditingTransactionConverter}">
                                             <Binding Path="Id" />
                                             <Binding Source="{RelativeSource AncestorType={x:Type local:TransactionsViewModel}}" Path="EditingTransactionId" />
                                         </MultiBinding>
@@ -447,15 +447,12 @@
 
                                 <!-- Read-Only View (hidden when editing) -->
                                 <VerticalStackLayout Spacing="0">
-                                    <VerticalStackLayout.Triggers>
-                                        <DataTrigger TargetType="VerticalStackLayout"
-                                                     Value="{Binding Id}">
-                                            <DataTrigger.Binding>
-                                                <Binding Source="{RelativeSource AncestorType={x:Type local:TransactionsViewModel}}" Path="EditingTransactionId" />
-                                            </DataTrigger.Binding>
-                                            <Setter Property="IsVisible" Value="False" />
-                                        </DataTrigger>
-                                    </VerticalStackLayout.Triggers>
+                                    <VerticalStackLayout.IsVisible>
+                                        <MultiBinding Converter="{StaticResource IsNotEditingTransactionConverter}">
+                                            <Binding Path="Id" />
+                                            <Binding Source="{RelativeSource AncestorType={x:Type local:TransactionsViewModel}}" Path="EditingTransactionId" />
+                                        </MultiBinding>
+                                    </VerticalStackLayout.IsVisible>
 
                                 <!-- Read-Only Transaction Row -->
                                 <Border Padding="16"

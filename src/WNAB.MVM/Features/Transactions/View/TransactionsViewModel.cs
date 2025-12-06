@@ -50,17 +50,23 @@ public partial class TransactionsViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        System.Diagnostics.Debug.WriteLine("TransactionsViewModel.InitializeAsync: Starting");
+        System.Diagnostics.Debug.WriteLine($"TransactionsViewModel.InitializeAsync: EditingTransactionId={EditingTransactionId}");
         await Model.InitializeAsync();
+        System.Diagnostics.Debug.WriteLine($"TransactionsViewModel.InitializeAsync: Model initialized, Items.Count={Model.Items.Count}");
         await _addTransactionViewModel.InitializeAsync();
         await _editTransactionViewModel.InitializeAsync();
         await _editTransactionSplitViewModel.InitializeAsync();
         await _addSplitToTransactionViewModel.InitializeAsync();
+        System.Diagnostics.Debug.WriteLine($"TransactionsViewModel.InitializeAsync: Completed, EditingTransactionId={EditingTransactionId}");
     }
 
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        System.Diagnostics.Debug.WriteLine("TransactionsViewModel.RefreshAsync: Called");
         await Model.RefreshAsync();
+        System.Diagnostics.Debug.WriteLine($"TransactionsViewModel.RefreshAsync: Completed, Items.Count={Model.Items.Count}");
     }
 
     [RelayCommand]
