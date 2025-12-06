@@ -28,5 +28,18 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+
+	<!-- OAuth callback URL scheme for WebAuthenticator / custom redirect (wnab://callback) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>wnab.oauth.callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>wnab</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
