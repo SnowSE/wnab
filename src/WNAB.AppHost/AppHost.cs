@@ -10,7 +10,8 @@ if (builder.ExecutionContext.IsPublishMode)
     builder.AddAzureContainerAppEnvironment("env");
 
     // Use Azure PostgreSQL Flexible Server for production
-    var postgres = builder.AddAzurePostgresFlexibleServer("postgres");
+    var postgres = builder.AddAzurePostgresFlexibleServer("postgres")
+        .WithPasswordAuthentication();
     db = postgres.AddDatabase("wnabdb");
 
     // Use Azure Communication Services for email in production
