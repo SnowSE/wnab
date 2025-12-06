@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
 
       - name: Remove MAUI project reference for CI/CD
-        run: dotnet sln remove src/WNAB.Maui/WNAB.Maui.csproj
+        run: dotnet remove src/WNAB.AppHost/WNAB.AppHost.csproj reference src/WNAB.Maui/WNAB.Maui.csproj
         shell: pwsh
 
       - name: Provision Infrastructure
