@@ -8,6 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>c3f87951-e3c4-4400-ada5-76bcb629f5cf</UserSecretsId>
+    <DefineConstants Condition="'$(GITHUB_ACTIONS)' == 'true'">$(DefineConstants);EXCLUDE_MAUI</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WNAB.API\WNAB.API.csproj" />
-	  <ProjectReference Include="..\WNAB.Maui\WNAB.Maui.csproj" Condition="'$(GITHUB_ACTIONS)' != 'true'">
+	  <ProjectReference Include="..\WNAB.Maui\WNAB.Maui.csproj" />
 		  <SetTargetFramework>TargetFramework=net10.0-windows10.0.19041</SetTargetFramework>
 	  </ProjectReference>
     <ProjectReference Include="..\WNAB.Web\WNAB.Web.csproj" />

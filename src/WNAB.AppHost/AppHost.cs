@@ -55,8 +55,10 @@ var web = builder.AddProject<Projects.WNAB_Web>("wnab-web")
 // MAUI is a client-side framework that cannot be containerized for cloud deployment
 if (!builder.ExecutionContext.IsPublishMode)
 {
+#if !EXCLUDE_MAUI
     builder.AddProject<Projects.WNAB_Maui>("wnab-maui")
         .WithReference(api);
+#endif
 
     var tunnel = builder.AddDevTunnel("wnab-tunnel")
         .WithReference(web.GetEndpoint("http"));
