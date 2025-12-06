@@ -43,12 +43,12 @@ public static class MauiProgram
 		var config = configBuilder.Build();
 		builder.Configuration.AddConfiguration(config);
 
-		// Register Budget logic services
-		builder.Services.AddScoped<IBudgetService, BudgetService>();
-		builder.Services.AddScoped<IBudgetSnapshotService, BudgetSnapshotService>(sp => new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-		builder.Services.AddScoped<IUserService, UserService>(sp => new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-        builder.Services.AddScoped<ICategoryAllocationManagementService, CategoryAllocationManagementService>();
-		builder.Services.AddScoped<ITransactionManagementService, TransactionManagementService>();
+		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
+		builder.Services.AddHttpClient("wnab-api", client =>
+		{
+			client.BaseAddress = new Uri(apiBaseUrl);
+		})
+		.AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
         // Authentication services
         builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
@@ -56,6 +56,31 @@ public static class MauiProgram
 
 		// Alert service for MAUI
 		builder.Services.AddSingleton<IAlertService, MauiAlertService>();
+
+		// Register HTTP-based services - both concrete types AND interfaces
+		builder.Services.AddSingleton<AccountManagementService>(sp => 
+			new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton<CategoryManagementService>(sp => 
+			new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		
+		// CategoryAllocationManagementService - register concrete type and interface pointing to same instance
+		builder.Services.AddSingleton<CategoryAllocationManagementService>(sp => 
+			new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton<ICategoryAllocationManagementService>(sp => 
+			sp.GetRequiredService<CategoryAllocationManagementService>());
+		
+		// TransactionManagementService - register concrete type and interface pointing to same instance
+		builder.Services.AddSingleton<TransactionManagementService>(sp => 
+			new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton<ITransactionManagementService>(sp => 
+			sp.GetRequiredService<TransactionManagementService>());
+
+		// Register Budget logic services
+		builder.Services.AddSingleton<IBudgetSnapshotService>(sp => 
+			new BudgetSnapshotService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton<IUserService>(sp => 
+			new UserService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
+		builder.Services.AddSingleton<IBudgetService, BudgetService>();
 		
 		// Main page
         builder.Services.AddSingleton<MainPageModel>();
@@ -83,19 +108,6 @@ public static class MauiProgram
 		// Account Models (inline editing)
 		builder.Services.AddSingleton<AddAccountModel>();
 
-		var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7077/";
-		builder.Services.AddHttpClient("wnab-api", client =>
-		{
-			client.BaseAddress = new Uri(apiBaseUrl);
-		})
-		.AddHttpMessageHandler<AuthenticationDelegatingHandler>();
-
-		// Use the shared Logic services with the same named client
-		builder.Services.AddSingleton(sp => new AccountManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-		builder.Services.AddSingleton(sp => new CategoryManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-		builder.Services.AddSingleton(sp => new CategoryAllocationManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-		builder.Services.AddSingleton(sp => new TransactionManagementService(sp.GetRequiredService<IHttpClientFactory>().CreateClient("wnab-api")));
-
 		// ViewModels/Pages
 		builder.Services.AddSingleton<CategoriesModel>();
 		builder.Services.AddSingleton<CategoriesViewModel>();
@@ -113,7 +125,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<PlanBudgetViewModel>();
 
 #if DEBUG
-	builder.Logging.AddDebug();
+		builder.Logging.AddDebug();
 #endif
 
 		var app = builder.Build();

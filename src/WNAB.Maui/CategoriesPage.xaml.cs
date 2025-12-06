@@ -13,6 +13,10 @@ public partial class CategoriesPage : ContentPage
         _viewModel = vm;
         _authService = authService;
         BindingContext = vm;
+        
+        System.Diagnostics.Debug.WriteLine("CategoriesPage: BindingContext set to CategoriesViewModel");
+        System.Diagnostics.Debug.WriteLine($"CategoriesPage: AddCategoryModel is {(vm.AddCategoryModel != null ? "NOT NULL" : "NULL")}");
+
     }
 
     // LLM-Dev:v7 Added automatic initialization when page appears to refresh on navigation, following AccountsPage pattern
