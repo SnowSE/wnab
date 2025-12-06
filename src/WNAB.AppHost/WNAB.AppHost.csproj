@@ -22,7 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WNAB.API\WNAB.API.csproj" />
-	  <ProjectReference Include="..\WNAB.Maui\WNAB.Maui.csproj">
+	  <ProjectReference Include="..\WNAB.Maui\WNAB.Maui.csproj" Condition="'$(CI)' != 'true'">
 		  <SetTargetFramework>TargetFramework=net10.0-windows10.0.19041</SetTargetFramework>
 	  </ProjectReference>
     <ProjectReference Include="..\WNAB.Web\WNAB.Web.csproj" />
