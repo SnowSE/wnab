@@ -49,12 +49,10 @@ jobs:
         working-directory: ./src/WNAB.AppHost
         env:
           AZURE_KEYCLOAKCLIENTSECRET: ${{ secrets.AZURE_KEYCLOAKCLIENTSECRET }}
-          AZURE_CONNECTIONSTRINGS__WNABDB: ${{ secrets.KADEN_CONNECTIONSTRING }}
 
       - name: Deploy Application
         run: azd deploy --no-prompt
         working-directory: ./src/WNAB.AppHost
         env:
           AZURE_KEYCLOAKCLIENTSECRET: ${{ secrets.AZURE_KEYCLOAKCLIENTSECRET }}
-          AZURE_CONNECTIONSTRINGS__WNABDB: ${{ secrets.KADEN_CONNECTIONSTRING }}
         
