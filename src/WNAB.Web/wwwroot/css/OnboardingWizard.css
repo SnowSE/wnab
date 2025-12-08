@@ -5,6 +5,16 @@
     gap: 2rem;
     margin: 2rem;
 }
+
+/* Mobile: Stack vertically */
+@media (max-width: 768px) {
+    .wizard-container {
+        flex-direction: column;
+        gap: 1rem;
+        margin: 1rem;
+    }
+}
+
 .wizard-content {
     flex: 1;
     background: #fff;
@@ -13,6 +23,14 @@
     padding: 2rem;
     z-index: 1;
 }
+
+@media (max-width: 768px) {
+    .wizard-content {
+        padding: 1rem;
+        order: 2;
+    }
+}
+
 .wizard-modal-sidebar {
     position: relative;
     display: flex;
@@ -25,6 +43,18 @@
     margin-left: 2rem;
     z-index: 2;
 }
+
+/* Mobile: Full width, no margin, show first */
+@media (max-width: 768px) {
+    .wizard-modal-sidebar {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+        margin-left: 0;
+        order: 1;
+    }
+}
+
 .wizard-modal {
     background: #f8f9fa;
     border-radius: 12px;
@@ -37,10 +67,18 @@
     min-width: 0;
     max-width: none;
 }
+
+@media (max-width: 768px) {
+    .wizard-modal {
+        padding: 1.5rem 1rem;
+    }
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px);}
     to { opacity: 1; transform: translateY(0);}
 }
+
 .wizard-highlight {
     position: absolute;
     border-radius: 8px;
@@ -49,7 +87,22 @@
     box-shadow: 0 0 0 4px #007bff44, 0 2px 8px rgba(0,0,0,0.08);
     animation: highlightFadeIn 0.5s;
     transition: box-shadow 0.3s;
+    outline: none !important;
 }
+
+/* Remove focus outline that appears like tab selection */
+.wizard-highlight:focus {
+    outline: none !important;
+}
+
+/* Also ensure it can't receive focus at all */
+.wizard-highlight {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
 @keyframes highlightFadeIn {
     from { box-shadow: 0 0 0 0 #007bff00; }
     to { box-shadow: 0 0 0 4px #007bff44, 0 2px 8px rgba(0,0,0,0.08); }
@@ -68,4 +121,11 @@
 }
 .wizard-highlight-transactions {
     top: 40px; left: 40px; width: 360px; height: 100px;
+}
+
+/* Mobile: Hide highlights as they don't make sense in stacked layout */
+@media (max-width: 768px) {
+    .wizard-highlight {
+        display: none;
+    }
 }

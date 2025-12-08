@@ -3,24 +3,23 @@
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <TelemetryErrorBoundary>
-  <ChildContent>
-    <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-   <FocusOnNavigate RouteData="routeData" Selector="h1" />
-         </ChildContent>
+            <ChildContent>
+                <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+            </ChildContent>
             <ErrorContent Context="error">
-          @if (error is Microsoft.AspNetCore.Components.NavigationException)
-       {
-  @* Navigation exceptions are expected when redirecting, just ignore them *@
+                @if (error is Microsoft.AspNetCore.Components.NavigationException)
+                {
+                    @* Navigation exceptions are expected when redirecting, just ignore them *@
                 }
-            else
-    {
-          <div class="alert alert-danger m-3">
- <h4>An error occurred</h4>
-         <p>@error.Message</p>
-    <a href="/landing" class="btn btn-primary">Return to Login</a>
-          </div>
-        }
-  </ErrorContent>
+                else
+                {
+                    <div class="alert alert-danger m-3">
+                        <h4>An error occurred</h4>
+                        <p>@error.Message</p>
+                        <a href="/landing" class="btn btn-primary">Return to Login</a>
+                    </div>
+                }
+            </ErrorContent>
         </TelemetryErrorBoundary>
     </Found>
 </Router>

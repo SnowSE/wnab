@@ -19,6 +19,27 @@ main {
     flex-shrink: 0;
 }
 
+/* Hide sidebar on mobile, show only when toggler is checked */
+@media (max-width: 640.98px) {
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        width: 250px;
+    }
+
+    .page {
+        flex-direction: column;
+    }
+
+    main {
+        width: 100%;
+        overflow-x: hidden;
+    }
+}
+
 .top-row {
     background-color: #f7f7f7;
     border-bottom: 1px solid #d6d5d5;
@@ -46,6 +67,7 @@ main {
 @media (max-width: 640.98px) {
     .top-row {
         justify-content: space-between;
+        padding-left: 4rem !important;
     }
 
     .top-row ::deep a, .top-row ::deep .btn-link {
@@ -92,3 +114,57 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+.navbar-toggler {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.navbar-toggler-label {
+    cursor: pointer;
+    width: 3.5rem;
+    height: 2.5rem;
+    position: fixed;
+    top: 0.5rem;
+    left: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(118, 75, 162, 0.9);
+    z-index: 1001;
+    display: none;
+    transition: background-color 0.2s ease;
+}
+
+.navbar-toggler-label:hover {
+    background-color: rgba(138, 95, 182, 0.95);
+}
+
+.navbar-toggler:checked ~ .navbar-toggler-label {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Show hamburger on mobile */
+@media (max-width: 640.98px) {
+    .navbar-toggler-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .navbar-toggler:checked ~ .sidebar {
+        left: 0;
+    }
+}
