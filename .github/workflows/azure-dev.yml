@@ -18,11 +18,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
-      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_CLIENT_ID: ${{ vars.KADEN_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.KADEN_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.KADEN_SUBSCRIPTION_ID }}
+      AZURE_ENV_NAME: ${{ vars.KADEN_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.KADEN_LOCATION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
