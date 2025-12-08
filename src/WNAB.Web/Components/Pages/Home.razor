@@ -188,7 +188,7 @@
                             
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="small text-muted">Available (All Time):</span>
-                                <span class="small fw-bold text-primary">@ViewModel.Model.GetAvailableFromSnapshot(allocation).ToString("C")</span>
+                                <span class="small fw-bold @(ViewModel.Model.GetAvailableFromSnapshot(allocation) < 0 ? "text-danger" : "text-primary")">@ViewModel.Model.GetAvailableFromSnapshot(allocation).ToString("C")</span>
                             </div>
                         </div>
 

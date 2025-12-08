@@ -49,6 +49,7 @@ jobs:
         working-directory: ./src/WNAB.AppHost
         env:
           AZURE_KEYCLOAKCLIENTSECRET: ${{ secrets.AZURE_KEYCLOAKCLIENTSECRET }}
+          AZURE_CONNECTIONSTRINGS__WNABDB: ${{ secrets.KADEN_CONNECTIONSTRING }}
           AZURE_POSTGRES_PASSWORD: ${{ secrets.KADEN_POSTGRES_PASSWORD }}
 
       - name: Deploy Application
@@ -57,4 +58,5 @@ jobs:
         env:
           AZURE_KEYCLOAKCLIENTSECRET: ${{ secrets.AZURE_KEYCLOAKCLIENTSECRET }}
           AZURE_POSTGRES_PASSWORD: ${{ secrets.KADEN_POSTGRES_PASSWORD }}
+          AZURE_CONNECTIONSTRINGS__WNABDB: ${{ secrets.KADEN_CONNECTIONSTRING }}
         
